@@ -1,0 +1,12 @@
+{
+  "title": "Demo route",
+  "note": "An example to show the format. Not a real speedrun route.",
+  "steps": [
+    { "character": "tidus",   "activate": ["n222"],                 "spheres": { "Ability": 1 }, "note": "Cheer" },
+    { "character": "wakka",   "activate": ["n538"],                 "spheres": { "Ability": 1 } },
+    { "character": "kimahri", "activate": ["n359"],                 "spheres": { "Ability": 1 } },
+    { "character": "tidus",   "activate": ["n247", "n256", "n207"], "spheres": { "Power": 2, "Ability": 1 } },
+    { "character": "tidus",   "teleport": "n538",                   "spheres": { "Teleport": 1 }, "note": "Jumps to the node Wakka activated" },
+    { "character": "tidus",   "activate": ["n541"],                 "spheres": { "Speed": 1 } }
+  ]
+}

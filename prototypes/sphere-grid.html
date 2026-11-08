@@ -10,125 +10,114 @@
     --bg-1: #4a4f86; --bg-2: #6a6fa8; --bg-3: #8c8fc4;
     --text: #fff; --text-dim: #c9cbe8; --label: #e8e8ff; --gold: #ffd84a;
     --shadow: 0 2px 0 rgba(0,0,0,.55), 0 0 4px rgba(0,0,0,.35);
-    --tidus: #2f74ff; --wakka: #f39424;
-    --grid-bg: #eceef2; --node: #d6d9df; --node-edge: #7d838c; --line: #a3a8b0; --ink: #4a4f58;
+    --grid-bg: #eceef2; --line: #a3a8b0;
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; }
   body {
     min-height: 100vh; color: var(--text);
-    font-family: "Ubuntu", "Segoe UI", sans-serif; font-weight: 500;
-    text-shadow: var(--shadow);
+    font-family: "Ubuntu", "Segoe UI", sans-serif; font-weight: 500; text-shadow: var(--shadow);
     background:
       radial-gradient(ellipse at 15% 20%, rgba(255,255,255,.10), transparent 45%),
       repeating-linear-gradient(115deg, rgba(255,255,255,.025) 0 2px, transparent 2px 9px),
       linear-gradient(160deg, var(--bg-3), var(--bg-2) 40%, var(--bg-1));
     background-attachment: fixed;
-    padding: 24px 16px 40px;
+    padding: 20px 16px 32px;
   }
-  .wrap { max-width: 1180px; margin: 0 auto; }
+  .wrap { max-width: 1400px; margin: 0 auto; }
   .label { font-size: .8rem; font-weight: 700; letter-spacing: .08em; color: var(--label); margin: 0 0 2px 2px; }
   .panel {
     background: linear-gradient(90deg, rgba(30,30,70,.85), rgba(70,70,130,.55) 60%, rgba(70,70,130,.15));
     border-top: 2px solid rgba(255,255,255,.25); border-bottom: 2px solid rgba(0,0,0,.35);
-    padding: 10px 18px 10px 40px; font-size: 1.25rem; margin-bottom: 20px;
+    padding: 10px 18px 10px 40px; margin-bottom: 18px;
   }
   .panel h1 { margin: 0; font-size: 1.5rem; }
-  .panel span { color: var(--text-dim); font-size: 1rem; margin-left: 12px; }
+  .panel span { color: var(--text-dim); font-size: 1rem; margin-left: 12px; font-weight: 500; }
 
-  .layout { display: grid; grid-template-columns: 1fr 300px; gap: 22px; align-items: start; }
-  @media (max-width: 820px) { .layout { grid-template-columns: 1fr; } }
+  .layout { display: grid; grid-template-columns: 1fr 320px; gap: 20px; align-items: start; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
 
   .frame {
-    border: 2px solid #9fa2c8; border-radius: 6px;
+    position: relative; border: 2px solid #9fa2c8; border-radius: 6px; padding: 6px;
     box-shadow: inset 0 0 0 2px #2a2a55, 0 4px 14px rgba(0,0,0,.35);
-    padding: 6px; background: linear-gradient(180deg, rgba(60,62,110,.9), rgba(40,40,85,.9));
+    background: linear-gradient(180deg, rgba(60,62,110,.9), rgba(40,40,85,.9));
   }
-  svg.grid { display: block; width: 100%; height: auto; background: var(--grid-bg); border-radius: 3px; }
-  svg text { text-shadow: none; font-family: "Ubuntu", sans-serif; }
+  svg.grid { display: block; width: 100%; height: min(72vh, 820px); min-height: 380px; background: var(--grid-bg); border-radius: 3px; cursor: grab; touch-action: none; }
+  svg.grid.dragging { cursor: grabbing; }
+  svg text { text-shadow: none; font-family: "Ubuntu", sans-serif; pointer-events: none; }
+  .view-btns { position: absolute; right: 14px; top: 14px; display: flex; gap: 4px; }
+  .view-btns button { flex: none; padding: 4px 9px; font-size: .8rem; }
 
-  /* Grid: greyscale base */
-  .edge { stroke: var(--line); stroke-width: 7; stroke-linecap: round; transition: stroke .3s; }
-  .edge.walk-tidus { stroke: var(--tidus); }
-  .edge.walk-wakka { stroke: var(--wakka); }
-  .node .body { fill: var(--node); stroke: var(--node-edge); stroke-width: 2.5; transition: fill .3s, stroke .3s; }
-  .node .inner { fill: none; stroke: var(--node-edge); stroke-width: 2; transition: stroke .3s; }
-  .node .lock { fill: #6b7079; stroke: #3d4148; stroke-width: 2.5; }
-  .node .lockt { fill: #fff; font-size: 15px; font-weight: 700; }
-  .node .val { fill: var(--ink); font-size: 14px; font-weight: 700; }
-  .node .name { fill: var(--ink); font-size: 15px; font-weight: 500; }
-  .node.on-tidus .body { fill: var(--tidus); stroke: #fff; }
-  .node.on-wakka .body { fill: var(--wakka); stroke: #fff; }
-  .node.on-tidus .inner, .node.on-wakka .inner { stroke: #fff; }
-  .node.on-tidus .name { fill: var(--tidus); font-weight: 700; }
-  .ring { fill: none; stroke: var(--gold); stroke-width: 4; animation: ring .7s ease-out forwards; }
-  @keyframes ring { from { r: 14; opacity: 1; } to { r: 46; opacity: 0; } }
-
-  /* Character tags */
-  .tag { transition: transform .28s ease, opacity .25s ease; }
-  .tag rect { stroke: #fff; stroke-width: 2; }
-  .tag text { fill: #fff; font-size: 15px; font-weight: 700; }
-
-  /* Teleports */
-  .tele { fill: none; stroke: var(--tidus); stroke-width: 3; stroke-dasharray: 9 7;
-          animation: march 1s linear infinite; opacity: .85; }
-  .tele.new { animation: march 1s linear infinite, fadein .5s ease-out; }
-  .tele-label { fill: var(--tidus); font-size: 13px; font-weight: 700; }
+  /* greyscale base, colour on top */
+  #base { filter: grayscale(1); opacity: .42; }
+  .edge { fill: none; stroke: var(--line); stroke-linecap: round; }
+  .walk { fill: none; stroke-linecap: round; }
+  .pop > g { transform-box: fill-box; transform-origin: center; animation: pop .45s ease-out; }
+  @keyframes pop { 0% { transform: scale(.4); } 60% { transform: scale(1.25); } 100% { transform: scale(1); } }
+  .ring { fill: none; stroke: var(--gold); animation: ring .7s ease-out forwards; }
+  @keyframes ring { from { opacity: 1; } to { opacity: 0; r: 40; } }
+  .lbl { opacity: .38; }
+  .lbl.on { opacity: 1; }
+  .tag { transition: transform .26s ease, opacity .25s ease; }
+  .tag text { fill: #fff; font-weight: 700; }
+  .tele { fill: none; stroke-dasharray: 9 7; animation: march 1s linear infinite; }
   @keyframes march { to { stroke-dashoffset: -32; } }
-  @keyframes fadein { from { opacity: 0; } }
 
-  /* Steps panel */
-  .side { display: grid; gap: 16px; }
+  /* side panel */
+  .side { display: grid; gap: 14px; }
   .box {
     background: linear-gradient(180deg, rgba(60,62,110,.9), rgba(40,40,85,.9));
-    border: 2px solid #9fa2c8; border-radius: 6px; box-shadow: inset 0 0 0 2px #2a2a55;
-    padding: 12px 14px;
+    border: 2px solid #9fa2c8; border-radius: 6px; box-shadow: inset 0 0 0 2px #2a2a55; padding: 12px 14px;
   }
   .box h2 { margin: 0 0 10px; font-size: .8rem; letter-spacing: .1em; color: var(--label); }
-  ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-  .step {
-    position: relative; padding: 8px 10px 8px 34px; border-radius: 3px; cursor: pointer;
-    background: rgba(255,255,255,.05); transition: opacity .2s, background .2s;
-  }
+  ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 46vh; overflow-y: auto; }
+  .step { position: relative; padding: 7px 10px 7px 34px; border-radius: 3px; cursor: pointer; background: rgba(255,255,255,.05); }
   .step .n { position: absolute; left: 8px; top: 8px; width: 20px; height: 20px; border-radius: 50%;
-             background: #1d1d45; border: 1px solid #9fa2c8; font-size: .75rem; display: grid; place-items: center; }
+             background: #1d1d45; border: 2px solid var(--c, #9fa2c8); font-size: .72rem; display: grid; place-items: center; }
   .step.past { opacity: .5; }
-  .step.current { background: linear-gradient(90deg, rgba(255,255,255,.22), rgba(255,255,255,.04));
-                  box-shadow: inset 3px 0 0 var(--gold); }
-  .step.tp .n { background: var(--tidus); }
-  .step .t { font-size: .95rem; }
-  .step .note { font-size: .8rem; color: var(--text-dim); margin-top: 3px; }
-  .chips { margin-top: 5px; display: flex; flex-wrap: wrap; gap: 4px; }
-  .chip { font-size: .72rem; font-weight: 700; padding: 1px 7px; border-radius: 9px; text-shadow: none; color: #1b1b2b; }
+  .step.current { background: linear-gradient(90deg, rgba(255,255,255,.22), rgba(255,255,255,.04)); box-shadow: inset 3px 0 0 var(--gold); }
+  .who { font-weight: 700; color: color-mix(in srgb, var(--c) 65%, white); text-shadow: 0 0 1px #000, 0 1px 0 rgba(0,0,0,.7); }
+  .step .t { font-size: .92rem; }
+  .step .note { font-size: .78rem; color: var(--text-dim); margin-top: 2px; }
+  .chips { margin-top: 4px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .chip { font-size: .7rem; font-weight: 700; padding: 1px 7px; border-radius: 9px; text-shadow: none; color: #1b1b2b; }
   .Power { background: #ff8a8a; } .Mana { background: #b99bff; } .Speed { background: #7fe0d0; }
   .Ability { background: #ffe07a; } .Teleport { background: #8fb4ff; } .Warp { background: #d6a0ff; }
-  .totals { display: flex; flex-wrap: wrap; gap: 6px; }
-  .btns { display: flex; gap: 8px; margin-top: 10px; }
+  .Fortune { background: #ffd34a; } .Key { background: #c9cbd6; }
+  .btns { display: flex; gap: 6px; margin-top: 10px; }
   button {
-    flex: 1; font: inherit; color: var(--text); text-shadow: var(--shadow); padding: 8px 0; cursor: pointer;
+    flex: 1; font: inherit; color: var(--text); text-shadow: var(--shadow); padding: 7px 0; cursor: pointer;
     background: linear-gradient(180deg, #7476b8, #3b3c7a); border: 1px solid #c9cbf0; border-radius: 3px;
     box-shadow: inset 0 1px 0 rgba(255,255,255,.3);
   }
   button:hover { filter: brightness(1.15); }
-  .keys { font-size: .78rem; color: var(--text-dim); margin-top: 8px; line-height: 1.5; }
+  button.on { background: linear-gradient(180deg, #ffe58a, #d6a516); color: #2a1d00; text-shadow: none; }
+  .keys { font-size: .76rem; color: var(--text-dim); margin-top: 8px; line-height: 1.55; }
   kbd { font-family: inherit; padding: 0 5px; border: 1px solid #9fa2c8; border-radius: 3px; background: #1d1d45; }
+  .error { padding: 30px; text-align: center; color: #fff; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <p class="label">HELP</p>
-  <header class="panel"><h1>Sphere Grid <span>Tidus · prototype section</span></h1></header>
+  <header class="panel"><h1>Sphere Grid <span id="routeTitle">Loading…</span></h1></header>
 
   <div class="layout">
     <div class="frame">
-      <svg class="grid" id="grid" viewBox="50 10 820 475" aria-label="Sphere Grid section">
+      <svg class="grid" id="grid" aria-label="Sphere Grid">
         <defs>
-          <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-            <path d="M0 0 L10 5 L0 10 z" fill="var(--tidus)"/>
+          <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M0 0 L10 5 L0 10 z" fill="context-stroke"/>
           </marker>
         </defs>
-        <g id="edges"></g><g id="teles"></g><g id="nodes"></g><g id="fx"></g><g id="tags"></g>
+        <g id="base"></g><g id="walk"></g><g id="teles"></g><g id="active"></g><g id="labels"></g><g id="fx"></g><g id="tags"></g>
       </svg>
+      <div class="view-btns">
+        <button id="follow" class="on" title="Camera follows each step">Follow</button>
+        <button id="whole" title="Show the whole grid">Whole grid</button>
+        <button id="zin" aria-label="Zoom in">+</button>
+        <button id="zout" aria-label="Zoom out">−</button>
+      </div>
     </div>
 
     <aside class="side">
@@ -142,205 +131,262 @@
           <button id="reset" aria-label="Reset">↺</button>
         </div>
         <div class="keys"><kbd>Scroll</kbd> over the page to step, no need to click away from the game.<br>
+          <kbd>Ctrl</kbd>+<kbd>Scroll</kbd> or +/− zoom · drag the grid to pan<br>
           <kbd>Space</kbd>/<kbd>↓</kbd> next · <kbd>↑</kbd> back · <kbd>P</kbd> play · <kbd>R</kbd> reset</div>
       </div>
       <div class="box">
         <h2>SPHERES USED SO FAR</h2>
-        <div class="totals" id="totals"></div>
+        <div class="chips" id="totals"></div>
       </div>
     </aside>
   </div>
 </div>
 
+<script src="../assets/grid-icons.js"></script>
+<script src="../assets/grid-layout.js"></script>
 <script>
-/* ================= DATA =================
-   In the real site: grid.json (written once, ideally by a tracing tool)
-   and one small YAML/JSON route file per character section.            */
+(async () => {
+const $ = id => document.getElementById(id);
+const NS = "http://www.w3.org/2000/svg";
+const TYPES = window.GRID_TYPES, CHARS = window.GRID_CHARACTERS, L = window.GridLayout;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
-const NODES = {
-  ts:    { x: 120, y: 400, t: "stat", v: "+1",   s: "Agl" },
-  n1:    { x: 120, y: 290, t: "stat", v: "+1",   s: "Str" },
-  flee:  { x: 120, y: 170, t: "ability", name: "Flee" },
-  n2:    { x: 240, y: 170, t: "stat", v: "+1",   s: "Agl" },
-  cheer: { x: 360, y: 170, t: "ability", name: "Cheer" },
-  n3:    { x: 360, y: 290, t: "stat", v: "+200", s: "HP" },
-  n4:    { x: 240, y: 400, t: "empty" },
-  l1:    { x: 360, y: 400, t: "lock", name: "L1" },
-  n5:    { x: 480, y: 290, t: "stat", v: "+1",   s: "Str" },
-  n6:    { x: 580, y: 290, t: "empty" },
-  w1:    { x: 680, y: 290, t: "stat", v: "+20",  s: "MP" },
-  w2:    { x: 680, y: 170, t: "stat", v: "+1",   s: "Str" },
-  haste: { x: 800, y: 170, t: "ability", name: "Haste" },
-  xs:    { x: 800, y: 60,  t: "ability", name: "Extract Speed" },
-  w3:    { x: 680, y: 400, t: "stat", v: "+1",   s: "Def" },
-  l2:    { x: 800, y: 400, t: "lock", name: "L2" },
-};
-const EDGES = [
-  ["ts","n1"],["n1","flee"],["flee","n2"],["n2","cheer"],["cheer","n3"],["n3","l1"],
-  ["ts","n4"],["n4","l1"],["n3","n5"],["n5","n6"],["n6","w1"],["w1","w2"],
-  ["w2","haste"],["haste","xs"],["w1","w3"],["w3","l2"],
-];
+/* ================= LOAD ================= */
+const routeName = new URLSearchParams(location.search).get("route") || "demo";
+let grid, route;
+try {
+  [grid, route] = await Promise.all([
+    fetch("../sphere-grid/grid.json").then(r => { if (!r.ok) throw r; return r.json(); }),
+    fetch(`../sphere-grid/routes/${encodeURIComponent(routeName)}.json`).then(r => { if (!r.ok) throw r; return r.json(); }),
+  ]);
+} catch {
+  $("routeTitle").textContent = "";
+  document.querySelector(".layout").innerHTML = `<div class="box error">Couldn't load the grid or route “${esc(routeName)}”.<br>Open this page through a local server (see README).</div>`;
+  return;
+}
+$("routeTitle").textContent = route.title + (route.note ? ` · ${route.note}` : "");
 
-/* Other characters' progress at this point in the run */
-const OTHERS = { wakka: { name: "Wakka", nodes: ["w1","w2","w3"], at: "w3" } };
-
-const ROUTE = {
-  character: "tidus", name: "Tidus", start: "ts",
-  steps: [
-    { activate: ["n1", "flee"],  spheres: { Power: 1, Ability: 1 }, note: "After Kimahri" },
-    { activate: ["n2", "cheer"], spheres: { Speed: 1, Ability: 1 } },
-    { teleport: "w2",            spheres: { Teleport: 1 }, note: "Lands on a node Wakka activated" },
-    { activate: ["haste"],       spheres: { Ability: 1 } },
-  ],
-};
-
-/* ================= LOGIC ================= */
-const COLORS = { tidus: "var(--tidus)", wakka: "var(--wakka)" };
-const adj = {};
-for (const [a, b] of EDGES) { (adj[a] ??= []).push(b); (adj[b] ??= []).push(a); }
+const R = grid.meta.nodeRadius;
+const N = new Map(grid.nodes.map(n => [n.id, n]));
+const adj = new Map();
 const ek = (a, b) => a < b ? a + "|" + b : b + "|" + a;
-const nodeName = id => { const n = NODES[id]; return n.name ?? `${n.v} ${n.s}`; };
+const edgeByKey = new Map();
+for (const e of grid.edges) {
+  (adj.get(e.a) || adj.set(e.a, []).get(e.a)).push(e.b);
+  (adj.get(e.b) || adj.set(e.b, []).get(e.b)).push(e.a);
+  edgeByKey.set(ek(e.a, e.b), e);
+}
+const nodeName = id => { const n = N.get(id); return n.name || (n.value ? `${n.value} ${TYPES[n.type].label}` : TYPES[n.type].label); };
+const charName = c => CHARS[c]?.name || c;
+const charColor = c => CHARS[c]?.color || "#888";
 
-function path(from, to, state) {           // BFS; locks block unless activated
-  const prev = { [from]: null }, q = [from];
-  while (q.length) {
-    const c = q.shift();
-    if (c === to) break;
-    for (const nb of adj[c] || []) {
-      if (nb in prev) continue;
-      if (NODES[nb].t === "lock" && nb !== to && !state.act.has(nb)) continue;
-      prev[nb] = c; q.push(nb);
+/* ================= SIMULATE THE ROUTE ================= */
+/* state: where each character stands, who activated which node, which links were walked, teleports */
+const starts = {};
+for (const n of grid.nodes) if (n.start) starts[n.start] = n.id;
+const clone = s => ({ pos: { ...s.pos }, act: new Map(s.act), walk: new Map(s.walk), teles: [...s.teles] });
+
+function path(from, to, s) {          // shortest walk; locks block unless already opened
+  const prev = new Map([[from, null]]), q = [from];
+  for (let i = 0; i < q.length; i++) {
+    const c = q[i]; if (c === to) break;
+    for (const nb of adj.get(c) || []) {
+      if (prev.has(nb)) continue;
+      if (TYPES[N.get(nb).type].lock && nb !== to && !s.act.has(nb)) continue;
+      prev.set(nb, c); q.push(nb);
     }
   }
-  const out = []; for (let c = to; c && c !== from; c = prev[c]) out.unshift(c);
+  if (!prev.has(to)) return null;
+  const out = []; for (let c = to; c !== from; c = prev.get(c)) out.unshift(c);
   return out;
 }
-const clone = s => ({ pos: s.pos, act: new Set(s.act), walk: new Set(s.walk), teles: [...s.teles] });
 
-/* Expand each route step into animation sub-frames */
-const FRAMES = [{ pos: ROUTE.start, act: new Set(), walk: new Set(), teles: [] }];
-const SUBS = [[]];
-for (const step of ROUTE.steps) {
-  let s = clone(FRAMES.at(-1)); const subs = [];
-  if (step.teleport) {
-    step.saves = path(s.pos, step.teleport, s).length;
-    s = clone(s); s.teles.push([s.pos, step.teleport]); s.pos = step.teleport;
-    subs.push({ state: s, action: "teleport" });
+const FRAMES = [{ pos: { ...starts }, act: new Map(), walk: new Map(), teles: [] }];
+const SUBS = [[]], FOCUS = [Object.values(starts)];
+const problems = [];
+route.steps.forEach((step, i) => {
+  const ch = step.character;
+  let s = clone(FRAMES.at(-1));
+  const subs = [], focus = [s.pos[ch]];
+  if (step.teleport || step.warp) {
+    const to = step.teleport || step.warp;
+    step.saves = path(s.pos[ch], to, s)?.length;
+    s = clone(s); s.teles.push({ ch, from: s.pos[ch], to }); s.pos[ch] = to;
+    subs.push({ state: s, action: "teleport", ch }); focus.push(to);
   }
   for (const target of step.activate || []) {
-    for (const n of path(s.pos, target, s)) {
-      s = clone(s); s.walk.add(ek(s.pos, n)); s.pos = n;
-      subs.push({ state: s, action: "move" });
+    const p = path(s.pos[ch], target, s);
+    if (!p) { problems.push(`Step ${i + 1}: ${charName(ch)} can't reach ${target}`); continue; }
+    for (const n of p) {
+      s = clone(s); s.walk.set(ek(s.pos[ch], n), s.walk.get(ek(s.pos[ch], n)) || ch); s.pos[ch] = n;
+      subs.push({ state: s, action: "move", ch }); focus.push(n);
     }
-    s = clone(s); s.act.add(target);
-    subs.push({ state: s, action: "activate", node: target });
+    s = clone(s); if (!s.act.has(target)) s.act.set(target, ch);
+    subs.push({ state: s, action: "activate", ch, node: target });
   }
-  FRAMES.push(s); SUBS.push(subs);
-}
+  FRAMES.push(s); SUBS.push(subs); FOCUS.push(focus);
+});
+if (problems.length) console.warn(problems.join("\n"));
 
-/* ================= RENDER ================= */
-const NS = "http://www.w3.org/2000/svg";
-const el = (tag, attrs = {}, parent) => {
-  const e = document.createElementNS(NS, tag);
-  for (const k in attrs) e.setAttribute(k, attrs[k]);
-  parent?.appendChild(e); return e;
-};
-const $ = id => document.getElementById(id);
-
-const edgeEls = {};
-for (const [a, b] of EDGES) {
-  const A = NODES[a], B = NODES[b];
-  edgeEls[ek(a, b)] = el("line", { x1: A.x, y1: A.y, x2: B.x, y2: B.y, class: "edge" }, $("edges"));
+/* ================= DRAW THE STATIC GRID ================= */
+const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent?.appendChild(e); return e; };
+const svg = $("grid");
+{
+  const out = [];
+  for (const e of grid.edges) out.push(`<path class="edge" d="${L.edgePath(N.get(e.a), N.get(e.b), e.bend)}" stroke-width="${R * 0.45}"/>`);
+  for (const n of grid.nodes) out.push(`<g transform="translate(${n.x} ${n.y}) scale(${L.nodeRadius(n, R)})">${gridIcon(n.type)}</g>`);
+  $("base").innerHTML = out.join("");
 }
-const nodeEls = {};
-for (const id in NODES) {
-  const n = NODES[id], g = el("g", { class: "node", transform: `translate(${n.x} ${n.y})` }, $("nodes"));
-  if (n.t === "stat") {
-    el("circle", { r: 15, class: "body" }, g);
-    el("text", { y: 34, "text-anchor": "middle", class: "val" }, g).textContent = `${n.v} ${n.s}`;
-  } else if (n.t === "ability") {
-    el("circle", { r: 21, class: "body" }, g);
-    el("circle", { r: 11, class: "inner" }, g);
-    el("text", { y: -30, "text-anchor": "middle", class: "name" }, g).textContent = n.name;
-  } else if (n.t === "lock") {
-    el("rect", { x: -19, y: -19, width: 38, height: 38, rx: 9, class: "lock" }, g);
-    el("text", { y: 6, "text-anchor": "middle", class: "lockt" }, g).textContent = n.name;
-  } else {
-    el("circle", { r: 8, class: "body" }, g);
+const labelEls = new Map();   // node id → [label elements]
+{
+  const out = [];
+  for (const n of grid.nodes) {
+    const t = TYPES[n.type];
+    if (n.value) {
+      const b = L.labelBox(n, "value", R);
+      out.push(`<text class="lbl" data-n="${n.id}" x="${b.cx}" y="${b.cy}" dominant-baseline="central" text-anchor="middle" font-size="${R * 0.75}" font-weight="700" fill="${t.ink || "#333"}" stroke="#fff" stroke-width="${R * 0.2}" paint-order="stroke">${esc(n.value)}</text>`);
+    }
+    if (n.name) {
+      const b = L.labelBox(n, "name", R);
+      out.push(`<g class="lbl" data-n="${n.id}">`);
+      if (Math.hypot(b.cx - n.x, b.cy - n.y) > L.nodeRadius(n, R) + b.h * 1.1)
+        out.push(`<line x1="${n.x}" y1="${n.y}" x2="${b.cx}" y2="${b.cy}" stroke="#8a3fd1" stroke-width="${R * 0.1}"/>`);
+      out.push(`<rect x="${b.cx - b.w / 2}" y="${b.cy - b.h / 2}" width="${b.w}" height="${b.h}" rx="${R * 0.3}" fill="#8a3fd1" stroke="#fff" stroke-width="${R * 0.08}"/>`);
+      out.push(`<text x="${b.cx}" y="${b.cy}" dominant-baseline="central" text-anchor="middle" font-size="${R * 0.85}" fill="#fff">${esc(n.name)}</text></g>`);
+    }
   }
-  nodeEls[id] = g;
+  $("labels").innerHTML = out.join("");
+  for (const e of $("labels").children) { const id = e.dataset.n; (labelEls.get(id) || labelEls.set(id, []).get(id)).push(e); }
 }
-/* Other characters: static colour */
-for (const key in OTHERS) {
-  const o = OTHERS[key];
-  o.nodes.forEach(id => nodeEls[id].classList.add("on-" + key));
-  for (const [a, b] of EDGES) if (o.nodes.includes(a) && o.nodes.includes(b)) edgeEls[ek(a, b)].classList.add("walk-" + key);
+
+/* character nameplates */
+const tags = {};
+for (const ch in starts) {
+  const g = el("g", { class: "tag" }, $("tags")), name = charName(ch), w = name.length * R * 0.62 + R;
+  el("rect", { x: -w / 2, y: 0, width: w, height: R * 1.45, rx: R * 0.2, fill: charColor(ch), stroke: "#fff", "stroke-width": R * 0.1 }, g);
+  el("text", { y: R * 0.75, "text-anchor": "middle", "dominant-baseline": "central", "font-size": R * 0.95 }, g).textContent = name;
+  tags[ch] = g;
 }
-function makeTag(name, color) {
-  const g = el("g", { class: "tag" }, $("tags"));
-  const w = name.length * 9 + 18;
-  el("rect", { x: -w / 2, y: 42, width: w, height: 24, rx: 3, fill: color }, g);   // nameplate under the node label
-  el("path", { d: "M-6 42 L0 35 L6 42 z", fill: color }, g);
-  el("text", { y: 59, "text-anchor": "middle" }, g).textContent = name;
-  return g;
+function placeTag(ch, id, stack = 0) {   // stack: how many other tags already sit on this node
+  const own = stack === 0 && N.get(id).start === ch && N.get(id).startAt;
+  const n = N.get(id), [dx, dy] = own ? n.startAt : [0, L.nodeRadius(n, R) + R * 1.55];
+  const oy = (own ? -R * 0.72 : 0) + stack * R * 1.65;   // startAt is the tag's centre
+  tags[ch].style.transform = `translate(${n.x + dx}px, ${n.y + dy + oy}px)`;
 }
-const place = (g, id) => { g.style.transform = `translate(${NODES[id].x}px, ${NODES[id].y}px)`; };
-for (const key in OTHERS) place(makeTag(OTHERS[key].name, COLORS[key]), OTHERS[key].at);
-const tag = makeTag(ROUTE.name, COLORS[ROUTE.character]);
 
-function render(s, action, node) {
-  const c = ROUTE.character;
-  for (const id in nodeEls) nodeEls[id].classList.toggle("on-" + c, s.act.has(id));
-  for (const k in edgeEls) if (!OTHERS.wakka || !edgeEls[k].classList.contains("walk-wakka"))
-    edgeEls[k].classList.toggle("walk-" + c, s.walk.has(k));
-
-  $("teles").innerHTML = "";
-  s.teles.forEach(([a, b], i) => {
-    const A = NODES[a], B = NODES[b], my = Math.min(A.y, B.y) - 150, mx = (A.x + B.x) / 2;
-    const isNew = action === "teleport" && i === s.teles.length - 1;
-    el("path", { d: `M${A.x} ${A.y - 24} Q${mx} ${my} ${B.x} ${B.y - 24}`, class: "tele" + (isNew ? " new" : ""),
-                 "marker-end": "url(#arrow)" }, $("teles"));
-    const apex = 0.5 * ((A.y + B.y) / 2 - 24) + 0.5 * my;     // top of the curve
-    el("text", { x: mx, y: apex - 10, "text-anchor": "middle", class: "tele-label" }, $("teles")).textContent = "Teleport";
-  });
-
-  if (action === "teleport") {             // vanish, jump, reappear
-    tag.style.opacity = 0;
-    setTimeout(() => {
-      tag.style.transition = "none"; place(tag, s.pos); tag.getBoundingClientRect();
-      tag.style.transition = ""; tag.style.opacity = 1;
-    }, 280);
-  } else { tag.style.opacity = 1; place(tag, s.pos); }
-
+/* ================= RENDER A STATE ================= */
+let shownAct = new Set();
+function render(s, action, node, ch) {
+  // walked links, in the colour of whoever walked them first
+  $("walk").innerHTML = [...s.walk].map(([k, c]) => {
+    const e = edgeByKey.get(k); if (!e) return "";
+    return `<path class="walk" d="${L.edgePath(N.get(e.a), N.get(e.b), e.bend)}" stroke="${charColor(c)}" stroke-width="${R * 0.55}"/>`;
+  }).join("");
+  // activated nodes in full colour, ringed in the character's colour
+  $("active").innerHTML = [...s.act].map(([id, c]) => {
+    const n = N.get(id), r = L.nodeRadius(n, R);
+    return `<g class="${id === node && action === "activate" ? "pop" : ""}" transform="translate(${n.x} ${n.y})"><g>
+      <circle r="${r + R * 0.3}" fill="none" stroke="${charColor(c)}" stroke-width="${R * 0.24}"/>
+      <g transform="scale(${r})">${gridIcon(n.type)}</g></g></g>`;
+  }).join("");
+  // labels light up for activated nodes
+  const now = new Set(s.act.keys());
+  for (const id of new Set([...now, ...shownAct])) for (const e of labelEls.get(id) || []) e.classList.toggle("on", now.has(id));
+  shownAct = now;
+  // teleport arcs
+  $("teles").innerHTML = s.teles.map(t => {
+    const A = N.get(t.from), B = N.get(t.to), dx = B.x - A.x, dy = B.y - A.y, len = Math.hypot(dx, dy) || 1;
+    const cx = (A.x + B.x) / 2 - dy / len * len * 0.28, cy = (A.y + B.y) / 2 + dx / len * len * 0.28;
+    const mx = (A.x + 2 * cx + B.x) / 4, my = (A.y + 2 * cy + B.y) / 4;
+    return `<path class="tele" d="M${A.x} ${A.y}Q${cx} ${cy} ${B.x} ${B.y}" stroke="${charColor(t.ch)}" stroke-width="${R * 0.28}" marker-end="url(#arrow)"/>
+      <text x="${mx}" y="${my - R * 0.6}" text-anchor="middle" font-size="${R * 0.95}" font-weight="700" fill="${charColor(t.ch)}" stroke="#fff" stroke-width="${R * 0.25}" paint-order="stroke">Teleport</text>`;
+  }).join("");
+  // nameplates (characters sharing a node stack downwards)
+  const onNode = {};
+  for (const c in tags) {
+    const stack = onNode[s.pos[c]] = (onNode[s.pos[c]] ?? -1) + 1;
+    if (action === "teleport" && c === ch) {
+      tags[c].style.opacity = 0;
+      setTimeout(() => { tags[c].style.transition = "none"; placeTag(c, s.pos[c], stack); tags[c].getBoundingClientRect(); tags[c].style.transition = ""; tags[c].style.opacity = 1; }, 280);
+    } else { tags[c].style.opacity = 1; placeTag(c, s.pos[c], stack); }
+  }
   if (action === "activate") {
-    const n = NODES[node];
-    const r = el("circle", { cx: n.x, cy: n.y, r: 14, class: "ring" }, $("fx"));
-    setTimeout(() => r.remove(), 750);
+    const n = N.get(node), ring = el("circle", { class: "ring", cx: n.x, cy: n.y, r: R, "stroke-width": R * 0.3 }, $("fx"));
+    setTimeout(() => ring.remove(), 750);
   }
 }
 
-/* Steps panel */
+/* ================= CAMERA ================= */
+const xs = grid.nodes.map(n => n.x), ys = grid.nodes.map(n => n.y), pad = R * 4;
+const WHOLE = { x: Math.min(...xs) - pad, y: Math.min(...ys) - pad, w: Math.max(...xs) - Math.min(...xs) + 2 * pad, h: Math.max(...ys) - Math.min(...ys) + 2 * pad };
+let vb = { ...WHOLE }, anim = 0, follow = true;
+const applyVB = () => svg.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+function fitBox(ids) {
+  const ps = ids.map(id => N.get(id));
+  let x0 = Math.min(...ps.map(p => p.x)), x1 = Math.max(...ps.map(p => p.x)), y0 = Math.min(...ps.map(p => p.y)), y1 = Math.max(...ps.map(p => p.y));
+  const minW = R * 30, aspect = svg.clientWidth / svg.clientHeight || 1.5;
+  let w = Math.max(x1 - x0 + R * 10, minW), h = Math.max(y1 - y0 + R * 10, minW / aspect);
+  if (w / h < aspect) w = h * aspect; else h = w / aspect;
+  return { x: (x0 + x1) / 2 - w / 2, y: (y0 + y1) / 2 - h / 2, w, h };
+}
+function flyTo(target, ms = 650) {
+  const from = { ...vb }, t0 = performance.now(), my = ++anim;
+  const ease = t => t < 0.5 ? 2 * t * t : 1 - (-2 * t + 2) ** 2 / 2;
+  const tick = now => {
+    if (my !== anim) return;
+    const t = Math.min(1, (now - t0) / ms), k = ease(t);
+    for (const p of ["x", "y", "w", "h"]) vb[p] = from[p] + (target[p] - from[p]) * k;
+    applyVB(); if (t < 1) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+function setFollow(on) { follow = on; $("follow").classList.toggle("on", on); }
+$("follow").onclick = () => { setFollow(!follow); if (follow) flyTo(fitBox(FOCUS[cur])); };
+$("whole").onclick = () => { setFollow(false); flyTo(WHOLE); };
+function zoomAt(f, cx = vb.x + vb.w / 2, cy = vb.y + vb.h / 2) {
+  anim++; setFollow(false);
+  const w = Math.min(WHOLE.w * 1.6, Math.max(R * 12, vb.w * f)), k = w / vb.w;
+  vb = { x: cx - (cx - vb.x) * k, y: cy - (cy - vb.y) * k, w, h: vb.h * k }; applyVB();
+}
+$("zin").onclick = () => zoomAt(0.7);
+$("zout").onclick = () => zoomAt(1 / 0.7);
+const toWorld = e => { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); };
+let drag = null;
+svg.addEventListener("pointerdown", e => { drag = { x: e.clientX, y: e.clientY, vb: { ...vb }, moved: false }; svg.setPointerCapture(e.pointerId); });
+svg.addEventListener("pointermove", e => {
+  if (!drag) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (!drag.moved && Math.hypot(dx, dy) < 4) return;
+  if (!drag.moved) { drag.moved = true; anim++; setFollow(false); svg.classList.add("dragging"); }
+  const s = vb.w / svg.clientWidth;
+  vb.x = drag.vb.x - dx * s; vb.y = drag.vb.y - dy * s; applyVB();
+});
+svg.addEventListener("pointerup", () => { drag = null; svg.classList.remove("dragging"); });
+
+/* ================= STEPS PANEL ================= */
 const stepEls = [];
-const startLi = document.createElement("li");
-startLi.className = "step"; startLi.innerHTML = `<span class="n">0</span><div class="t">Start on ${nodeName(ROUTE.start)}</div>`;
-$("steps").appendChild(startLi); stepEls.push(startLi);
-ROUTE.steps.forEach((st, i) => {
+{
   const li = document.createElement("li");
-  li.className = "step" + (st.teleport ? " tp" : "");
-  const title = st.teleport ? `Teleport → ${nodeName(st.teleport)}` : `Activate ${st.activate.map(nodeName).join(", ")}`;
-  const note = [st.note, st.saves ? `skips ${st.saves} moves` : ""].filter(Boolean).join(" · ");
-  li.innerHTML = `<span class="n">${i + 1}</span><div class="t">${title}</div>
+  li.className = "step"; li.innerHTML = `<span class="n">0</span><div class="t">Start</div><div class="note">Everyone on their starting node</div>`;
+  $("steps").appendChild(li); stepEls.push(li);
+}
+route.steps.forEach((st, i) => {
+  const li = document.createElement("li"), c = charColor(st.character);
+  li.className = "step"; li.style.setProperty("--c", c);
+  const to = st.teleport || st.warp;
+  const what = to ? `${st.warp ? "Warp" : "Teleport"} → ${esc(nodeName(to))}` : `Activate ${st.activate.map(id => esc(nodeName(id))).join(", ")}`;
+  const note = [st.note, st.saves ? `skips ${st.saves} moves` : ""].filter(Boolean).map(esc).join(" · ");
+  li.innerHTML = `<span class="n">${i + 1}</span><div class="t"><span class="who">${esc(charName(st.character))}</span>: ${what}</div>
     ${note ? `<div class="note">${note}</div>` : ""}
-    <div class="chips">${Object.entries(st.spheres || {}).map(([k, v]) => `<span class="chip ${k}">${v}× ${k}</span>`).join("")}</div>`;
+    <div class="chips">${Object.entries(st.spheres || {}).map(([k, v]) => `<span class="chip ${esc(k)}">${v}× ${esc(k)}</span>`).join("")}</div>`;
   $("steps").appendChild(li); stepEls.push(li);
 });
 stepEls.forEach((li, i) => li.addEventListener("click", () => go(i, true)));
-
 function totals(i) {
   const t = {};
-  ROUTE.steps.slice(0, i).forEach(st => { for (const k in st.spheres || {}) t[k] = (t[k] || 0) + st.spheres[k]; });
+  route.steps.slice(0, i).forEach(st => { for (const k in st.spheres || {}) t[k] = (t[k] || 0) + st.spheres[k]; });
   $("totals").innerHTML = Object.keys(t).length
-    ? Object.entries(t).map(([k, v]) => `<span class="chip ${k}">${v}× ${k}</span>`).join("")
+    ? Object.entries(t).map(([k, v]) => `<span class="chip ${esc(k)}">${v}× ${esc(k)}</span>`).join("")
     : `<span style="color:var(--text-dim);font-size:.85rem">None yet</span>`;
 }
 
@@ -353,17 +399,19 @@ async function go(i, user) {
   const my = ++token, animate = i === cur + 1;
   cur = i;
   stepEls.forEach((li, j) => { li.classList.toggle("current", j === i); li.classList.toggle("past", j < i); });
+  stepEls[i].scrollIntoView({ block: "nearest", behavior: "smooth" });
   totals(i);
+  if (follow) flyTo(fitBox(FOCUS[i]), SUBS[i].some(s => s.action === "teleport") ? 900 : 650);
   if (!animate) { render(FRAMES[i]); return; }
   for (const sub of SUBS[i]) {
     if (my !== token) return;
-    render(sub.state, sub.action, sub.node);
-    await sleep(sub.action === "teleport" ? 900 : sub.action === "activate" ? 450 : 320);
+    render(sub.state, sub.action, sub.node, sub.ch);
+    await sleep(sub.action === "teleport" ? 900 : sub.action === "activate" ? 420 : 300);
   }
 }
 async function playAll() {
   playing = true; await go(0);
-  while (playing && cur < FRAMES.length - 1) { await go(cur + 1); await sleep(400); }
+  while (playing && cur < FRAMES.length - 1) { await go(cur + 1); await sleep(450); }
   playing = false;
 }
 $("prev").onclick = () => go(cur - 1, true);
@@ -376,16 +424,22 @@ document.addEventListener("keydown", e => {
   else if (e.key.toLowerCase() === "r") go(0, true);
   else if (e.key.toLowerCase() === "p") playAll();
 });
+/* Scroll steps the route (works while the game keeps focus); Ctrl+scroll zooms */
 let wheelAcc = 0, wheelLock = 0;
 document.addEventListener("wheel", e => {
   e.preventDefault();
+  if (e.ctrlKey) { if (svg.contains(e.target)) { const p = toWorld(e); zoomAt(Math.exp(e.deltaY * 0.002), p.x, p.y); } return; }
   const now = performance.now(); if (now < wheelLock) return;
   const d = e.deltaMode === 1 ? e.deltaY * 40 : e.deltaY;
   if (Math.sign(d) !== Math.sign(wheelAcc)) wheelAcc = 0;
   wheelAcc += d;
   if (Math.abs(wheelAcc) >= 50) { go(cur + Math.sign(wheelAcc), true); wheelAcc = 0; wheelLock = now + 140; }
 }, { passive: false });
+
+applyVB();
+render(FRAMES[0]);
 go(0);
+})();
 </script>
 </body>
 </html>

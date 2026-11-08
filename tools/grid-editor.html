@@ -171,7 +171,7 @@
 /* ================= NODE TYPES (see grid-icons.js) ================= */
 const TYPES = window.GRID_TYPES;
 const CHARACTERS = ["", "tidus", "yuna", "auron", "kimahri", "wakka", "lulu", "rikku"];
-const CHAR_COLORS = { tidus: "#25b6ff", yuna: "#9a9ea6", auron: "#d71e1e", kimahri: "#1a3f9e", wakka: "#d7b51a", lulu: "#ff4fd8", rikku: "#3fc43f" };
+const CHAR_COLORS = Object.fromEntries(Object.entries(window.GRID_CHARACTERS).map(([k, c]) => [k, c.color]));
 
 /* ================= STATE ================= */
 const STORE = "ffx-grid-editor";

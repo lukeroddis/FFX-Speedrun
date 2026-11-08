@@ -88,6 +88,17 @@
     return `<circle r="1" fill="${t.fill}"/>${inner}<circle r="0.95" fill="none" stroke="#222" stroke-width="0.1"/>`;
   }
 
+  const CHARACTERS = {
+    tidus:   { name: "Tidus",   color: "#25b6ff" },
+    yuna:    { name: "Yuna",    color: "#9a9ea6" },
+    auron:   { name: "Auron",   color: "#d71e1e" },
+    kimahri: { name: "Kimahri", color: "#1a3f9e" },
+    wakka:   { name: "Wakka",   color: "#d7b51a" },
+    lulu:    { name: "Lulu",    color: "#ff4fd8" },
+    rikku:   { name: "Rikku",   color: "#3fc43f" },
+  };
+
   window.GRID_TYPES = TYPES;
+  window.GRID_CHARACTERS = CHARACTERS;
   window.gridIcon = gridIcon;
 })();

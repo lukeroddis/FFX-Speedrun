@@ -12,12 +12,13 @@ Speedrunning notes for **Final Fantasy X**, rebuilt as a small website styled af
 
 ```
 assets/          Shared code and styles for the site
-  grid-icons.js    Sphere Grid node types and icons
+  grid-icons.js    Sphere Grid node types, icons and character colours
+  grid-layout.js   Shared link shapes and label positions
 battles/         One data file per boss fight (coming soon)
 prototypes/      Mock-ups: a CTB-style battle page and a Sphere Grid route player
 sphere-grid/
   grid.json        The full Sphere Grid: 860 nodes, their types, values, names and links
-  routes/          One route file per character section (coming soon)
+  routes/          Route files played by the Sphere Grid page (demo.json is an example)
 tools/
   grid-editor.html The Sphere Grid editor (tracing, editing, label layout)
   grid-detect.js   Auto-detection of nodes, types and links from a reference image
@@ -44,6 +45,26 @@ Then open:
 3. Your work autosaves in your browser only. To share it, click **Export JSON**, replace `sphere-grid/grid.json` with the downloaded `grid.json`, and open a pull request.
 
 `grid.json` stores one node or link per line, so a pull request shows exactly what changed.
+
+## Writing a Sphere Grid route
+
+Routes live in `sphere-grid/routes/` and refer to nodes by their ID from `grid.json` (select a node in the editor to see its ID). Each step is one character's turn in the Sphere Grid menu:
+
+```json
+{
+  "title": "Demo route",
+  "steps": [
+    { "character": "tidus", "activate": ["n222"], "spheres": { "Ability": 1 }, "note": "Cheer" },
+    { "character": "tidus", "teleport": "n538", "spheres": { "Teleport": 1 } }
+  ]
+}
+```
+
+- `activate`: nodes to activate in order. The page works out the walking path itself, and locked nodes block the way until they're opened.
+- `teleport` / `warp`: jump straight to a node. The page shows how many moves it saves.
+- `spheres`: what the step uses (Power, Mana, Speed, Ability, Fortune, Key, Teleport, Warp). These are added up as you go.
+
+Open a route with `prototypes/sphere-grid.html?route=<file name>`. Without `?route=` it plays `demo`.
 
 ## Credits
 
