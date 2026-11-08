@@ -235,6 +235,7 @@
   </defs>
 </svg>
 
+<script src="../assets/portraits.js"></script>
 <script>
 /* ---- Data: in the real site this would live in a YAML/JSON file per battle ---- */
 const CAST = {
@@ -271,8 +272,9 @@ const initials = k => CAST[k].name.slice(0, 2);
 function tile(k, extra = "") {
   const ch = CAST[k];
   if (ch.mon) return `<div class="tile mon ${extra}">mon<small>${ch.mon}</small></div>`;
-  return `<div class="tile ${extra}" style="--c:${ch.c}">${initials(k)}</div>`;
+  return `<div class="tile ${extra}" data-who="${portraitSlug(ch.name)}" style="--c:${ch.c}"><span>${initials(k)}</span></div>`;
 }
+loadPortraits(Object.values(CAST).filter(c => !c.mon).map(c => c.name), "../assets/portraits/");
 function actionText(t) {
   const parts = Array.isArray(t.act) ? t.act : [[t.act]];
   return parts.map(([txt, n]) => txt + (n ? `<span class="badge">×${n}</span>` : "")).join(", ");

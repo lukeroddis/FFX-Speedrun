@@ -14,8 +14,11 @@ Speedrunning notes for **Final Fantasy X**, rebuilt as a small website styled af
 assets/          Shared code and styles for the site
   grid-icons.js    Sphere Grid node types, icons and character colours
   grid-layout.js   Shared link shapes and label positions
+  portraits.js     Shows character portraits on tiles when an image exists
+  portraits/       Character portrait images (see the README inside)
 battles/         One data file per boss fight (coming soon)
-prototypes/      Mock-ups: a CTB-style battle page and a Sphere Grid route player
+notes/           The run notes: index.md (shared settings, area list) and one Markdown file per area
+prototypes/      Mock-ups: the run page, a CTB-style battle page and a Sphere Grid route player
 sphere-grid/
   grid.json        The full Sphere Grid: 860 nodes, their types, values, names and links
   routes/          Route files played by the Sphere Grid page (demo.json is an example)
@@ -35,6 +38,7 @@ python -m http.server 8765
 Then open:
 
 - Sphere Grid editor: <http://localhost:8765/tools/grid-editor.html>
+- Run notes mock-up (Besaid): <http://localhost:8765/prototypes/run.html>
 - Battle mock-up: <http://localhost:8765/prototypes/sin-fin.html>
 - Sphere Grid route mock-up: <http://localhost:8765/prototypes/sphere-grid.html>
 
@@ -46,6 +50,16 @@ Then open:
 
 `grid.json` stores one node or link per line, so a pull request shows exactly what changed.
 
+## Writing the notes
+
+The notes live in `notes/`, one Markdown file per area, listed in order in `notes/index.md`. They use the same format as the Speedrun Overlay notes: numbered steps, and blocks such as `:::battle Sin Fin | 2,000 HP … :::`, `:::spheregrid`, `:::trial` and `:::encounters`. The run page adds a few extra lines:
+
+- **`party: Tidus, Wakka`** on its own line between steps: who's in the party from here on, for when the story adds or removes characters. It isn't shown in the notes; it only updates the Party panel, so runners don't think they need to do anything.
+- **`party: Tidus, Yuna, Kimahri`** inside a `:::battle` block: the party the game puts you in for that fight. The previous party comes back once the fight is over.
+- **`route: besaid-tidus`** inside a `:::spheregrid` block: the route file to draw (see below).
+
+A **`**Formation:** Tidus, Yuna, Lulu`** step also sets the party, and `Switch X for Y` and `Summon …` turns in battles update it as you step past them.
+
 ## Writing a Sphere Grid route
 
 Routes live in `sphere-grid/routes/` and refer to nodes by their ID from `grid.json` (select a node in the editor to see its ID). Each step is one character's turn in the Sphere Grid menu:
@@ -54,14 +68,15 @@ Routes live in `sphere-grid/routes/` and refer to nodes by their ID from `grid.j
 {
   "title": "Demo route",
   "steps": [
-    { "character": "tidus", "activate": ["n222"], "spheres": { "Ability": 1 }, "note": "Cheer" },
+    { "character": "tidus", "move": "n247", "activate": ["n222", "n256"], "spheres": { "Ability": 1, "Power": 1 } },
     { "character": "tidus", "teleport": "n538", "spheres": { "Teleport": 1 } }
   ]
 }
 ```
 
-- `activate`: nodes to activate in order. The page works out the walking path itself, and locked nodes block the way until they're opened.
-- `teleport` / `warp`: jump straight to a node. The page shows how many moves it saves.
+- `move`: the node to walk to. The page works out the path itself, and locked nodes block the way until they're opened. The node you stop on isn't activated unless it's also listed in `activate`.
+- `activate`: nodes to activate in order. As in the game, these can be the node you're standing on or one next to it. A node further away is walked to first.
+- `teleport` / `warp`: jump straight to a node. The page shows how many moves it saves. A step can teleport and then activate.
 - `spheres`: what the step uses (Power, Mana, Speed, Ability, Fortune, Key, Teleport, Warp). These are added up as you go.
 
 Open a route with `prototypes/sphere-grid.html?route=<file name>`. Without `?route=` it plays `demo`.

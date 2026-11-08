@@ -216,13 +216,23 @@ route.steps.forEach((step, i) => {
     s = clone(s); s.teles.push({ ch, from: s.pos[ch], to }); s.pos[ch] = to;
     subs.push({ state: s, action: "teleport", ch }); focus.push(to);
   }
-  for (const target of step.activate || []) {
+  const walkTo = target => {
     const p = path(s.pos[ch], target, s);
-    if (!p) { problems.push(`Step ${i + 1}: ${charName(ch)} can't reach ${target}`); continue; }
+    if (!p) { problems.push(`Step ${i + 1}: ${charName(ch)} can't reach ${target}`); return false; }
     for (const n of p) {
       s = clone(s); s.walk.set(ek(s.pos[ch], n), s.walk.get(ek(s.pos[ch], n)) || ch); s.pos[ch] = n;
       subs.push({ state: s, action: "move", ch }); focus.push(n);
     }
+    step.moves = (step.moves || 0) + p.length;
+    return true;
+  };
+  if (step.move) walkTo(step.move);
+  for (const target of step.activate || []) {
+    // as in the game, a node can be activated from where you stand or from next to it;
+    // anything further away is walked to first
+    const near = target === s.pos[ch] || (adj.get(s.pos[ch]) || []).includes(target);
+    if (!near && !walkTo(target)) continue;
+    focus.push(target);
     s = clone(s); if (!s.act.has(target)) s.act.set(target, ch);
     subs.push({ state: s, action: "activate", ch, node: target });
   }
@@ -392,8 +402,10 @@ route.steps.forEach((st, i) => {
   const li = document.createElement("li"), c = charColor(st.character);
   li.className = "step"; li.style.setProperty("--c", c);
   const to = st.teleport || st.warp;
-  const what = to ? `${st.warp ? "Warp" : "Teleport"} → ${esc(nodeName(to))}` : `Activate ${st.activate.map(id => esc(nodeName(id))).join(", ")}`;
-  const note = [st.note, st.saves ? `skips ${st.saves} moves` : ""].filter(Boolean).map(esc).join(" · ");
+  const acts = (st.activate || []).map(id => esc(nodeName(id))).join(", ");
+  const what = to ? `${st.warp ? "Warp" : "Teleport"} → ${esc(nodeName(to))}${acts ? `, activate ${acts}` : ""}`
+    : st.move ? `Move to ${esc(nodeName(st.move))}${acts ? `, activate ${acts}` : ""}` : `Activate ${acts}`;
+  const note = [st.note, st.moves ? `${st.moves} move${st.moves > 1 ? "s" : ""}` : "", st.saves ? `skips ${st.saves} moves` : ""].filter(Boolean).map(esc).join(" · ");
   li.innerHTML = `<span class="n">${i + 1}</span><div class="t"><span class="who">${esc(charName(st.character))}</span>: ${what}</div>
     ${note ? `<div class="note">${note}</div>` : ""}
     <div class="chips">${Object.entries(st.spheres || {}).map(([k, v]) => `<span class="chip ${esc(k)}">${v}× ${esc(k)}</span>`).join("")}</div>`;

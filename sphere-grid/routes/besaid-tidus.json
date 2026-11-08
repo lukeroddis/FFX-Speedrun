@@ -1,0 +1,6 @@
+{
+  "title": "Besaid: Tidus",
+  "steps": [
+    { "character": "tidus", "move": "n247", "activate": ["n222", "n256"], "spheres": { "Ability": 1, "Power": 1 }, "note": "Stand on the Defense node without activating it" }
+  ]
+}
