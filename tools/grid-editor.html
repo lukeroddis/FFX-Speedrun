@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sphere Grid Editor</title>
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-1: #4a4f86; --bg-2: #6a6fa8; --bg-3: #8c8fc4;
+    --text: #fff; --text-dim: #c9cbe8; --label: #e8e8ff; --gold: #ffd84a;
+    --shadow: 0 1px 0 rgba(0,0,0,.55);
+    --sel: #ffd84a; --canvas: #f4f5f7;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    color: var(--text); font-family: "Ubuntu", "Segoe UI", sans-serif; font-weight: 500;
+    text-shadow: var(--shadow);
+    background: linear-gradient(160deg, var(--bg-3), var(--bg-2) 40%, var(--bg-1));
+    display: grid; grid-template-rows: auto 1fr auto; height: 100vh; overflow: hidden;
+  }
+  header {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; padding: 8px 14px;
+    background: linear-gradient(90deg, rgba(30,30,70,.9), rgba(70,70,130,.6));
+    border-bottom: 2px solid rgba(0,0,0,.35);
+  }
+  header h1 { margin: 0 10px 0 0; font-size: 1.15rem; }
+  .group { display: flex; gap: 4px; }
+  button, .btn {
+    font: inherit; font-size: .85rem; color: var(--text); text-shadow: var(--shadow);
+    padding: 5px 10px; cursor: pointer; white-space: nowrap;
+    background: linear-gradient(180deg, #7476b8, #3b3c7a); border: 1px solid #c9cbf0; border-radius: 3px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.3);
+  }
+  button:hover, .btn:hover { filter: brightness(1.15); }
+  button.on { background: linear-gradient(180deg, #ffe58a, #d6a516); color: #2a1d00; text-shadow: none; border-color: #fff3c0; }
+  button kbd { font-family: inherit; opacity: .7; font-size: .75rem; margin-left: 3px; }
+  input[type=file] { display: none; }
+
+  main { display: grid; grid-template-columns: 1fr 290px; min-height: 0; }
+  #canvasWrap { position: relative; min-width: 0; min-height: 0; background: var(--canvas); }
+  svg#canvas { width: 100%; height: 100%; display: block; cursor: crosshair; touch-action: none; }
+  svg#canvas.select { cursor: default; }
+  svg#canvas.panning { cursor: grabbing; }
+  svg text { text-shadow: none; font-family: "Ubuntu", sans-serif; pointer-events: none; }
+  .empty-hint {
+    position: absolute; inset: 0; display: grid; place-items: center; pointer-events: none;
+    color: #6b6f8a; text-shadow: none; text-align: center; font-size: 1rem; line-height: 1.6;
+  }
+
+  .edge { fill: none; stroke: #6f7580; stroke-linecap: round; }
+  .edge.sel { stroke: var(--sel); }
+  .edge-hit { fill: none; stroke: transparent; cursor: pointer; }
+  .node { cursor: pointer; }
+  .node .ring { fill: none; stroke: var(--sel); }
+  .node.from .ring { stroke: #2f74ff; }
+  .handle { fill: #fff; stroke: #d6a516; cursor: move; }
+  .abl { fill: #8a3fd1; }
+  .preview { stroke: #2f74ff; stroke-dasharray: 4 4; fill: none; pointer-events: none; }
+
+  aside {
+    overflow-y: auto; padding: 12px; display: grid; gap: 12px; align-content: start;
+    background: linear-gradient(180deg, rgba(50,52,100,.95), rgba(35,35,78,.95));
+    border-left: 2px solid #9fa2c8;
+  }
+  .box { border: 1px solid #9fa2c8; border-radius: 5px; box-shadow: inset 0 0 0 1px #2a2a55; padding: 10px; }
+  .box h2 { margin: 0 0 8px; font-size: .72rem; letter-spacing: .1em; color: var(--label); }
+  .palette { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; }
+  .palette button { display: flex; align-items: center; gap: 6px; padding: 3px 6px; font-size: .78rem; text-align: left; }
+  .ico { width: 17px; height: 17px; flex: 0 0 auto; }
+  svg#canvas.select .lbl { cursor: move; }
+  label.f { display: grid; grid-template-columns: 70px 1fr; align-items: center; gap: 6px; font-size: .82rem; margin-bottom: 6px; }
+  label.f input, label.f select {
+    font: inherit; font-size: .85rem; padding: 3px 5px; min-width: 0; width: 100%;
+    background: #1d1d45; color: var(--text); border: 1px solid #9fa2c8; border-radius: 3px;
+  }
+  label.f input[type=checkbox] { width: auto; justify-self: start; }
+  label.f input[type=range] { padding: 0; }
+  .muted { color: var(--text-dim); font-size: .8rem; line-height: 1.5; }
+  .stats { display: flex; gap: 14px; font-size: .85rem; }
+  footer {
+    padding: 5px 14px; font-size: .8rem; color: var(--text-dim);
+    background: rgba(20,20,50,.85); border-top: 1px solid rgba(255,255,255,.15);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  @media (max-width: 760px) { main { grid-template-columns: 1fr; grid-template-rows: 60vh auto; } aside { border-left: 0; } body { overflow: auto; height: auto; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>Sphere Grid Editor</h1>
+  <div class="group" role="toolbar" aria-label="Tools">
+    <button data-tool="select">Select <kbd>V</kbd></button>
+    <button data-tool="add">Add node <kbd>N</kbd></button>
+    <button data-tool="connect">Connect <kbd>C</kbd></button>
+  </div>
+  <div class="group">
+    <button id="undo" title="Ctrl+Z">Undo</button>
+    <button id="redo" title="Ctrl+Y">Redo</button>
+    <button id="fit" title="F">Fit view</button>
+  </div>
+  <div class="group">
+    <button id="loadProject" title="Load sphere-grid/grid.json from this repository">Load project grid</button>
+    <label class="btn">Import JSON<input type="file" id="importFile" accept=".json,application/json"></label>
+    <button id="export">Export JSON</button>
+    <button id="copy">Copy JSON</button>
+    <button id="clear">New</button>
+  </div>
+</header>
+
+<main>
+  <div id="canvasWrap">
+    <svg id="canvas" aria-label="Sphere Grid canvas"><g id="world"></g></svg>
+    <div class="empty-hint" id="hint">Drop a reference image of the grid here<br>(or use “Load image” on the right), then trace nodes with <b>Add node</b>.</div>
+  </div>
+
+  <aside>
+    <div class="box">
+      <h2>NODE TYPE</h2>
+      <div class="palette" id="palette"></div>
+      <p class="muted" style="margin:8px 0 0">Picks the type for new nodes. In Select mode it also changes the selected node.</p>
+    </div>
+
+    <div class="box">
+      <h2>SELECTED</h2>
+      <div id="props"><p class="muted" style="margin:0">Nothing selected.</p></div>
+    </div>
+
+    <div class="box">
+      <h2>OPTIONS</h2>
+      <label class="f">Chain <input type="checkbox" id="chain" checked></label>
+      <p class="muted" style="margin:-2px 0 8px">In Add mode, connect each new node to the selected one, so you can trace a line of nodes in a row.</p>
+      <label class="f">Node size <input type="range" id="radius" min="3" max="40" step="0.5"></label>
+    </div>
+
+    <div class="box">
+      <h2>REFERENCE IMAGE</h2>
+      <label class="btn" style="display:inline-block;margin-bottom:8px">Load image<input type="file" id="imgFile" accept="image/*"></label>
+      <label class="f">Opacity <input type="range" id="imgOpacity" min="0" max="1" step="0.05"></label>
+      <label class="f">Show <input type="checkbox" id="imgShow"></label>
+      <p class="muted" style="margin:0 0 8px" id="imgInfo">No image loaded.</p>
+      <button id="detect" style="width:100%">Auto-detect grid from image</button>
+      <p class="muted" style="margin:6px 0 0">Finds nodes, types (using the image's legend) and links. Replaces the current grid; Undo restores it.</p>
+    </div>
+
+    <div class="box">
+      <h2>GRID</h2>
+      <div class="stats"><span>Nodes: <b id="nCount">0</b></span><span>Links: <b id="eCount">0</b></span></div>
+      <div class="stats" style="margin-top:6px"><span>Flagged: <b id="fCount">0</b></span><span>No value: <b id="vCount">0</b></span></div>
+      <div class="group" style="margin-top:8px"><button id="nextFlag">Next flagged</button><button id="nextValue">Next without value</button></div>
+      <button id="arrange" style="width:100%;margin-top:8px">Auto-arrange labels</button>
+      <p class="muted" style="margin:6px 0 0">Moves values, ability names and start tags to spots clear of links, nodes and other labels. Undo restores them.</p>
+    </div>
+
+    <div class="box muted">
+      <b>Mouse</b><br>
+      Scroll: zoom · Drag empty space (Select mode), middle-drag or Space+drag: pan<br>
+      Drag a node to move it · Click a link, then drag its handle to curve it<br>
+      <b>Keys</b><br>
+      V / N / C tools · Del delete · Esc cancel · F fit · Ctrl+Z / Ctrl+Y undo/redo · Arrows nudge the selected node
+    </div>
+  </aside>
+</main>
+
+<footer id="status">Ready.</footer>
+
+<script src="../assets/grid-icons.js"></script>
+<script src="grid-detect.js"></script>
+<script>
+/* ================= NODE TYPES (see grid-icons.js) ================= */
+const TYPES = window.GRID_TYPES;
+const CHARACTERS = ["", "tidus", "yuna", "auron", "kimahri", "wakka", "lulu", "rikku"];
+const CHAR_COLORS = { tidus: "#25b6ff", yuna: "#9a9ea6", auron: "#d71e1e", kimahri: "#1a3f9e", wakka: "#d7b51a", lulu: "#ff4fd8", rikku: "#3fc43f" };
+
+/* ================= STATE ================= */
+const STORE = "ffx-grid-editor";
+let data = { meta: { nodeRadius: 9 }, nodes: [], edges: [] };
+let tool = "add", curType = "str", sel = null;   // sel: {kind:"node", id} | {kind:"edge", key}
+let view = { tx: 40, ty: 40, k: 1 };
+let img = { src: null, w: 0, h: 0, opacity: 0.55, show: true, name: "" };
+let connectFrom = null, cursor = null, drag = null, spaceDown = false;
+const undoStack = [], redoStack = [];
+
+const $ = id => document.getElementById(id);
+const svg = $("canvas"), world = $("world");
+const ek = (a, b) => a < b ? a + "|" + b : b + "|" + a;
+let nodeIndex = new Map();   // rebuilt on every render
+const nodeById = id => nodeIndex.get(id) || data.nodes.find(x => x.id === id);
+const nodeR = n => n.type === "empty" ? data.meta.nodeRadius * 0.65 : data.meta.nodeRadius;
+const r1 = v => Math.round(v * 10) / 10;
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+function nextId() {
+  let m = 0; for (const n of data.nodes) { const v = parseInt(n.id.slice(1)); if (v > m) m = v; }
+  return "n" + (m + 1);
+}
+function save() {
+  try { localStorage.setItem(STORE, JSON.stringify(data)); } catch {}
+  try { localStorage.setItem(STORE + "-img", JSON.stringify(img)); } catch {}   // may exceed quota for big images
+}
+function load() {
+  try { const d = JSON.parse(localStorage.getItem(STORE)); if (d && d.nodes) data = d; } catch {}
+  try { const i = JSON.parse(localStorage.getItem(STORE + "-img")); if (i && i.src) img = i; } catch {}
+}
+function commit() {   // call BEFORE a change
+  undoStack.push(JSON.stringify(data)); if (undoStack.length > 200) undoStack.shift();
+  redoStack.length = 0;
+}
+function undo() { if (!undoStack.length) return; redoStack.push(JSON.stringify(data)); data = JSON.parse(undoStack.pop()); sel = null; changed("Undo"); }
+function redo() { if (!redoStack.length) return; undoStack.push(JSON.stringify(data)); data = JSON.parse(redoStack.pop()); sel = null; changed("Redo"); }
+function changed(msg) { save(); render(); panel(); if (msg) status(msg); }
+function status(msg) { $("status").textContent = msg; }
+
+/* ================= GEOMETRY ================= */
+function toWorld(e) {
+  const r = svg.getBoundingClientRect();
+  return { x: (e.clientX - r.left - view.tx) / view.k, y: (e.clientY - r.top - view.ty) / view.k };
+}
+/* Curved link = circular arc; "bend" is the signed distance of the arc's middle from the straight line */
+function edgeGeom(e) {
+  const A = nodeById(e.a), B = nodeById(e.b);
+  const dx = B.x - A.x, dy = B.y - A.y, c = Math.hypot(dx, dy) || 1;
+  const nx = -dy / c, ny = dx / c, s = e.bend || 0;
+  const mid = { x: (A.x + B.x) / 2 + nx * s, y: (A.y + B.y) / 2 + ny * s };
+  if (Math.abs(s) < 0.5) return { d: `M${A.x} ${A.y}L${B.x} ${B.y}`, mid };
+  const rad = (s * s + c * c / 4) / (2 * Math.abs(s));
+  const large = Math.abs(s) > c / 2 ? 1 : 0, sweep = s > 0 ? 0 : 1;
+  return { d: `M${A.x} ${A.y}A${r1(rad)} ${r1(rad)} 0 ${large} ${sweep} ${B.x} ${B.y}`, mid };
+}
+function bendFromPoint(e, p) {
+  const A = nodeById(e.a), B = nodeById(e.b);
+  const dx = B.x - A.x, dy = B.y - A.y, c = Math.hypot(dx, dy) || 1;
+  const s = ((p.x - (A.x + B.x) / 2) * -dy + (p.y - (A.y + B.y) / 2) * dx) / c;
+  return Math.abs(s) < 2 / view.k ? 0 : r1(s);
+}
+
+/* ================= LABELS ================= */
+/* Each node can show up to three labels; positions are stored as offsets from the node: valueAt, nameAt, startAt */
+const LABELS = ["value", "name", "start"];
+const LABEL_KEY = { value: "valueAt", name: "nameAt", start: "startAt" };
+function labelText(n, which) {
+  if (which === "value") return n.value;
+  if (which === "name") return n.name;
+  return n.start ? n.start[0].toUpperCase() + n.start.slice(1) : "";
+}
+function labelSize(n, which) {
+  const R = data.meta.nodeRadius, len = labelText(n, which).length;
+  if (which === "value") return { w: len * R * 0.45 + R * 0.2, h: R * 0.8 };
+  if (which === "name") return { w: len * R * 0.5 + R * 0.8, h: R * 1.3 };
+  return { w: len * R * 0.6 + R, h: R * 1.4 };
+}
+function defaultOffset(n, which) {
+  const R = data.meta.nodeRadius, r = nodeR(n);
+  if (which === "value") return [0, r + R * 0.65];
+  if (which === "name") return [0, -(r + R * 1.05)];
+  return [0, r + R * 2.1];
+}
+function labelBox(n, which) {
+  const [dx, dy] = n[LABEL_KEY[which]] || defaultOffset(n, which);
+  return { cx: n.x + dx, cy: n.y + dy, ...labelSize(n, which) };
+}
+
+/* ================= RENDER ================= */
+function render() {
+  nodeIndex = new Map(data.nodes.map(n => [n.id, n]));
+  world.setAttribute("transform", `translate(${view.tx} ${view.ty}) scale(${view.k})`);
+  const R = data.meta.nodeRadius, out = [];
+  if (img.src && img.show) out.push(`<image href="${img.src}" x="0" y="0" width="${img.w}" height="${img.h}" opacity="${img.opacity}" style="pointer-events:none"/>`);
+
+  for (const e of data.edges) {
+    const g = edgeGeom(e), isSel = sel?.kind === "edge" && sel.key === ek(e.a, e.b);
+    out.push(`<path class="edge${isSel ? " sel" : ""}" d="${g.d}" stroke-width="${R * 0.45}"/>`);
+    out.push(`<path class="edge-hit" data-edge="${ek(e.a, e.b)}" d="${g.d}" stroke-width="${Math.max(R * 1.2, 10 / view.k)}"/>`);
+  }
+  if (connectFrom && cursor) {
+    const A = nodeById(connectFrom);
+    if (A) out.push(`<line class="preview" x1="${A.x}" y1="${A.y}" x2="${cursor.x}" y2="${cursor.y}" stroke-width="${2 / view.k}"/>`);
+  }
+  // leader lines for ability names moved away from their node (drawn under the nodes)
+  for (const n of data.nodes) {
+    if (!n.name) continue;
+    const b = labelBox(n, "name");
+    if (Math.hypot(b.cx - n.x, b.cy - n.y) > nodeR(n) + b.h * 1.1)
+      out.push(`<line x1="${n.x}" y1="${n.y}" x2="${b.cx}" y2="${b.cy}" stroke="#8a3fd1" stroke-width="${R * 0.1}" style="pointer-events:none"/>`);
+  }
+  for (const n of data.nodes) {
+    const isSel = sel?.kind === "node" && sel.id === n.id, r = nodeR(n);
+    out.push(`<g class="node${connectFrom === n.id ? " from" : ""}" data-node="${n.id}" transform="translate(${n.x} ${n.y})">`);
+    if (isSel || connectFrom === n.id) out.push(`<circle class="ring" r="${r + R * 0.45}" stroke-width="${R * 0.3}"/>`);
+    else if (n.check) out.push(`<circle r="${r + R * 0.45}" fill="none" stroke="#ff8c00" stroke-width="${R * 0.22}" stroke-dasharray="${R * 0.5} ${R * 0.3}"/>`);
+    out.push(`<g transform="scale(${r})">${gridIcon(n.type)}</g></g>`);
+  }
+  // labels on top, each draggable in Select mode
+  for (const n of data.nodes) {
+    const t = TYPES[n.type] || TYPES.empty;
+    for (const which of LABELS) {
+      if (!labelText(n, which)) continue;
+      const b = labelBox(n, which), x0 = b.cx - b.w / 2, y0 = b.cy - b.h / 2;
+      out.push(`<g class="lbl" data-node="${n.id}" data-label="${which}">`);
+      if (which === "value") {
+        out.push(`<rect x="${x0}" y="${y0}" width="${b.w}" height="${b.h}" fill="transparent"/>`);
+        out.push(`<text x="${b.cx}" y="${b.cy}" dominant-baseline="central" text-anchor="middle" font-size="${R * 0.75}" font-weight="700" fill="${t.ink || "#333"}" stroke="#fff" stroke-width="${R * 0.2}" paint-order="stroke">${esc(n.value)}</text>`);
+      } else if (which === "name") {
+        out.push(`<rect x="${x0}" y="${y0}" width="${b.w}" height="${b.h}" rx="${R * 0.3}" fill="#8a3fd1" stroke="#fff" stroke-width="${R * 0.08}"/>`);
+        out.push(`<text x="${b.cx}" y="${b.cy}" dominant-baseline="central" text-anchor="middle" font-size="${R * 0.85}" fill="#fff">${esc(n.name)}</text>`);
+      } else {
+        out.push(`<rect x="${x0}" y="${y0}" width="${b.w}" height="${b.h}" fill="${CHAR_COLORS[n.start]}"/>`);
+        out.push(`<text x="${b.cx}" y="${b.cy}" dominant-baseline="central" text-anchor="middle" font-size="${R * 0.95}" font-weight="700" fill="#fff">${esc(labelText(n, which))}</text>`);
+      }
+      out.push(`</g>`);
+    }
+  }
+  if (sel?.kind === "edge") {
+    const e = data.edges.find(x => ek(x.a, x.b) === sel.key);
+    if (e) { const g = edgeGeom(e); out.push(`<circle class="handle" data-handle="1" cx="${g.mid.x}" cy="${g.mid.y}" r="${7 / view.k}" stroke-width="${2.5 / view.k}"/>`); }
+  }
+  world.innerHTML = out.join("");
+  $("nCount").textContent = data.nodes.length;
+  $("eCount").textContent = data.edges.length;
+  $("fCount").textContent = data.nodes.filter(n => n.check).length;
+  $("vCount").textContent = data.nodes.filter(needsValue).length;
+  $("hint").style.display = img.src || data.nodes.length ? "none" : "grid";
+  svg.classList.toggle("select", tool === "select");
+}
+
+/* ================= SIDE PANEL ================= */
+function buildPalette() {
+  $("palette").innerHTML = Object.entries(TYPES).map(([k, t]) =>
+    `<button data-type="${k}"><svg class="ico" viewBox="-1.05 -1.05 2.1 2.1">${gridIcon(k)}</svg>${t.label}</button>`).join("");
+  $("palette").onclick = e => {
+    const b = e.target.closest("[data-type]"); if (!b) return;
+    curType = b.dataset.type;
+    // In Select mode the palette retypes the selected node; in Add/Connect it only picks the type for new nodes
+    if (tool === "select" && sel?.kind === "node") { commit(); setType(nodeById(sel.id), curType); changed(); }
+    markPalette();
+  };
+}
+function markPalette() { document.querySelectorAll("[data-type]").forEach(b => b.classList.toggle("on", b.dataset.type === curType)); }
+function setType(n, type) {
+  const old = TYPES[n.type] || {}, t = TYPES[type];
+  n.type = type;
+  if (!n.value || n.value === old.val) { if (t.val) n.value = t.val; else delete n.value; }
+  if (!t.ability) delete n.name;
+}
+
+function panel() {
+  const p = $("props");
+  if (sel?.kind === "node") {
+    const n = nodeById(sel.id); if (!n) { sel = null; return panel(); }
+    const t = TYPES[n.type];
+    p.innerHTML = `
+      <label class="f">ID <input value="${n.id}" disabled></label>
+      <label class="f">Type <select id="pType">${Object.entries(TYPES).map(([k, v]) => `<option value="${k}"${k === n.type ? " selected" : ""}>${v.label}</option>`).join("")}</select></label>
+      ${t.val ? `<label class="f">Value <input id="pValue" value="${esc(n.value || "")}" placeholder="${t.val}"></label>` : ""}
+      ${t.ability ? `<label class="f">Ability <input id="pName" value="${esc(n.name || "")}" placeholder="e.g. Haste"></label>` : ""}
+      <label class="f">Intl only <input type="checkbox" id="pIntl"${n.intl ? " checked" : ""}></label>
+      <label class="f">Start of <select id="pStart">${CHARACTERS.map(c => `<option value="${c}"${(n.start || "") === c ? " selected" : ""}>${c ? c[0].toUpperCase() + c.slice(1) : "—"}</option>`).join("")}</select></label>
+      <div class="muted">x ${n.x}, y ${n.y} · ${data.edges.filter(e => e.a === n.id || e.b === n.id).length} links</div>
+      ${n.check ? `<div style="margin-top:8px;padding:6px 8px;border:1px dashed #ff8c00;border-radius:3px;font-size:.82rem">
+        Check: ${esc(n.check)}<br><button id="pChecked" style="margin-top:6px">Looks right</button></div>` : ""}
+      ${LABELS.some(w => n[LABEL_KEY[w]]) ? `<button id="pResetLabels" style="margin-top:8px">Reset label positions</button>` : ""}
+      <p class="muted" style="margin:8px 0 0">Drag a node's labels in Select mode to move them.</p>`;
+    if ($("pResetLabels")) $("pResetLabels").onclick = () => { commit(); LABELS.forEach(w => delete n[LABEL_KEY[w]]); changed("Labels reset."); };
+    if ($("pChecked")) $("pChecked").onclick = () => { commit(); delete n.check; changed("Marked as checked."); };
+    const bind = (id, fn) => { const el = $(id); if (el) el.onchange = () => { commit(); fn(el); changed(); }; };
+    bind("pType", el => { setType(n, el.value); curType = el.value; markPalette(); delete n.check; });
+    bind("pValue", el => { if (el.value.trim()) n.value = el.value.trim(); else delete n.value; });
+    bind("pName", el => { if (el.value.trim()) n.name = el.value.trim(); else delete n.name; });
+    bind("pIntl", el => { if (el.checked) n.intl = true; else delete n.intl; });
+    bind("pStart", el => { if (el.value) n.start = el.value; else delete n.start; });
+  } else if (sel?.kind === "edge") {
+    const e = data.edges.find(x => ek(x.a, x.b) === sel.key); if (!e) { sel = null; return panel(); }
+    p.innerHTML = `
+      <div class="muted" style="margin-bottom:6px">Link ${e.a} ↔ ${e.b}</div>
+      <label class="f">Curve <input id="pBend" type="number" step="1" value="${e.bend || 0}"></label>
+      <div class="group"><button id="pStraight">Straighten</button><button id="pFlip">Flip curve</button></div>
+      <p class="muted" style="margin:8px 0 0">Drag the round handle on the link to curve it.</p>`;
+    $("pBend").onchange = ev => { commit(); const v = parseFloat(ev.target.value) || 0; if (v) e.bend = v; else delete e.bend; changed(); };
+    $("pStraight").onclick = () => { commit(); delete e.bend; changed(); };
+    $("pFlip").onclick = () => { commit(); if (e.bend) e.bend = -e.bend; changed(); };
+  } else {
+    p.innerHTML = `<p class="muted" style="margin:0">Nothing selected.</p>`;
+  }
+}
+
+/* ================= EDIT OPERATIONS ================= */
+function addNode(p) {
+  const t = TYPES[curType], n = { id: nextId(), x: r1(p.x), y: r1(p.y), type: curType };
+  if (t.val) n.value = t.val;
+  data.nodes.push(n); return n;
+}
+function addEdge(a, b) {
+  if (a === b || data.edges.some(e => ek(e.a, e.b) === ek(a, b))) return false;
+  data.edges.push({ a, b }); return true;
+}
+function deleteSel() {
+  if (!sel) return;
+  commit();
+  if (sel.kind === "node") {
+    data.nodes = data.nodes.filter(n => n.id !== sel.id);
+    data.edges = data.edges.filter(e => e.a !== sel.id && e.b !== sel.id);
+  } else data.edges = data.edges.filter(e => ek(e.a, e.b) !== sel.key);
+  sel = null; changed("Deleted.");
+}
+function setTool(t) {
+  tool = t; connectFrom = null;
+  document.querySelectorAll("[data-tool]").forEach(b => b.classList.toggle("on", b.dataset.tool === t));
+  status({ select: "Select: click to select, drag to move nodes, drag empty space to pan.",
+           add: "Add node: click empty space to place a node" + ($("chain").checked ? " (linked to the selected node)." : "."),
+           connect: "Connect: click one node, then another. Keeps chaining from the last node; Esc to stop." }[t]);
+  render();
+}
+
+/* ================= POINTER ================= */
+svg.addEventListener("pointerdown", e => {
+  const p = toWorld(e);
+  const nodeEl = e.target.closest("[data-node]"), edgeEl = e.target.closest("[data-edge]"), handle = e.target.closest("[data-handle]");
+  svg.setPointerCapture(e.pointerId);
+  if (e.button === 1 || spaceDown) { drag = { kind: "pan", sx: e.clientX, sy: e.clientY, tx: view.tx, ty: view.ty }; svg.classList.add("panning"); return; }
+  if (e.button !== 0) return;
+
+  if (handle && sel?.kind === "edge") { drag = { kind: "bend", started: false }; return; }
+
+  const labelEl = e.target.closest("[data-label]");
+  if (labelEl && tool === "select") {
+    sel = { kind: "node", id: labelEl.dataset.node };
+    const n = nodeById(sel.id), b = labelBox(n, labelEl.dataset.label);
+    drag = { kind: "label", which: labelEl.dataset.label, started: false, ox: p.x - b.cx, oy: p.y - b.cy, sx: e.clientX, sy: e.clientY };
+    render(); panel(); return;
+  }
+
+  if (tool === "connect") {
+    if (nodeEl) {
+      const id = nodeEl.dataset.node;
+      if (connectFrom && connectFrom !== id) { commit(); if (addEdge(connectFrom, id)) status(`Linked ${connectFrom} ↔ ${id}`); save(); }
+      connectFrom = id; sel = { kind: "node", id }; panel();
+    } else connectFrom = null;
+    render(); return;
+  }
+  if (nodeEl) {
+    sel = { kind: "node", id: nodeEl.dataset.node };
+    const n = nodeById(sel.id);
+    drag = { kind: "move", started: false, ox: p.x - n.x, oy: p.y - n.y, sx: e.clientX, sy: e.clientY };
+    render(); panel(); return;
+  }
+  if (edgeEl) { sel = { kind: "edge", key: edgeEl.dataset.edge }; render(); panel(); return; }
+
+  if (tool === "add") {
+    commit();
+    const prev = sel?.kind === "node" ? sel.id : null, n = addNode(p);
+    if (prev && $("chain").checked) addEdge(prev, n.id);
+    sel = { kind: "node", id: n.id }; changed(`Added ${n.id} (${TYPES[n.type].label}).`);
+    return;
+  }
+  sel = null; panel(); render();
+  drag = { kind: "pan", sx: e.clientX, sy: e.clientY, tx: view.tx, ty: view.ty }; svg.classList.add("panning");
+});
+svg.addEventListener("pointermove", e => {
+  const p = toWorld(e); cursor = p;
+  if (!drag) { if (connectFrom) render(); return; }
+  if (drag.kind === "pan") { view.tx = drag.tx + e.clientX - drag.sx; view.ty = drag.ty + e.clientY - drag.sy; render(); return; }
+  if (drag.kind === "move") {
+    if (!drag.started) { if (Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 3) return; commit(); drag.started = true; }
+    const n = nodeById(sel.id); n.x = r1(p.x - drag.ox); n.y = r1(p.y - drag.oy); render(); return;
+  }
+  if (drag.kind === "label") {
+    if (!drag.started) { if (Math.hypot(e.clientX - drag.sx, e.clientY - drag.sy) < 3) return; commit(); drag.started = true; }
+    const n = nodeById(sel.id);
+    n[LABEL_KEY[drag.which]] = [r1(p.x - drag.ox - n.x), r1(p.y - drag.oy - n.y)];
+    render(); return;
+  }
+  if (drag.kind === "bend") {
+    if (!drag.started) { commit(); drag.started = true; }
+    const ed = data.edges.find(x => ek(x.a, x.b) === sel.key), b = bendFromPoint(ed, p);
+    if (b) ed.bend = b; else delete ed.bend;
+    render();
+  }
+});
+svg.addEventListener("pointerup", () => {
+  if (drag?.started) changed();
+  drag = null; svg.classList.remove("panning");
+});
+svg.addEventListener("wheel", e => {
+  e.preventDefault();
+  const r = svg.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+  const k = Math.min(30, Math.max(0.05, view.k * Math.exp(-e.deltaY * 0.0015)));
+  view.tx = mx - (mx - view.tx) * (k / view.k); view.ty = my - (my - view.ty) * (k / view.k); view.k = k;
+  render();
+}, { passive: false });
+
+function fit() {
+  let b;
+  if (data.nodes.length) {
+    const xs = data.nodes.map(n => n.x), ys = data.nodes.map(n => n.y), pad = data.meta.nodeRadius * 4;
+    b = { x: Math.min(...xs) - pad, y: Math.min(...ys) - pad, w: Math.max(...xs) - Math.min(...xs) + 2 * pad, h: Math.max(...ys) - Math.min(...ys) + 2 * pad };
+  } else if (img.src) b = { x: 0, y: 0, w: img.w, h: img.h };
+  else return;
+  const r = svg.getBoundingClientRect(), k = Math.min(r.width / b.w, r.height / b.h) * 0.95;
+  view = { k, tx: (r.width - b.w * k) / 2 - b.x * k, ty: (r.height - b.h * k) / 2 - b.y * k };
+  render();
+}
+
+/* ================= KEYS ================= */
+document.addEventListener("keydown", e => {
+  if (e.target.matches("input, select, textarea")) return;
+  const k = e.key.toLowerCase();
+  if ((e.ctrlKey || e.metaKey) && k === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); return; }
+  if ((e.ctrlKey || e.metaKey) && k === "y") { e.preventDefault(); redo(); return; }
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  if (k === " ") { spaceDown = true; e.preventDefault(); return; }
+  if (k === "v") setTool("select");
+  else if (k === "n") setTool("add");
+  else if (k === "c") setTool("connect");
+  else if (k === "f") fit();
+  else if (k === "delete" || k === "backspace") { e.preventDefault(); deleteSel(); }
+  else if (k === "escape") { connectFrom = null; sel = null; render(); panel(); }
+  else if (k.startsWith("arrow") && sel?.kind === "node") {
+    e.preventDefault(); commit();
+    const n = nodeById(sel.id), step = e.shiftKey ? 5 : 0.5;
+    if (k === "arrowleft") n.x = r1(n.x - step); if (k === "arrowright") n.x = r1(n.x + step);
+    if (k === "arrowup") n.y = r1(n.y - step);   if (k === "arrowdown") n.y = r1(n.y + step);
+    changed();
+  }
+});
+document.addEventListener("keyup", e => { if (e.key === " ") spaceDown = false; });
+
+/* ================= FILES ================= */
+function serialize() {   // one node / link per line → readable diffs in pull requests
+  const order = ["id", "x", "y", "type", "value", "name", "intl", "start", "valueAt", "nameAt", "startAt", "check"];
+  const nodeLine = n => "    " + JSON.stringify(Object.fromEntries(order.filter(k => n[k] !== undefined).map(k => [k, n[k]])));
+  return `{\n  "meta": ${JSON.stringify(data.meta)},\n  "nodes": [\n${data.nodes.map(nodeLine).join(",\n")}\n  ],\n` +
+         `  "edges": [\n${data.edges.map(e => "    " + JSON.stringify(e)).join(",\n")}\n  ]\n}\n`;
+}
+$("export").onclick = () => {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([serialize()], { type: "application/json" }));
+  a.download = "grid.json"; a.click(); URL.revokeObjectURL(a.href);
+  status("Exported grid.json. Replace sphere-grid/grid.json with it to update the project.");
+};
+$("copy").onclick = async () => {
+  try { await navigator.clipboard.writeText(serialize()); status("JSON copied to clipboard."); }
+  catch { status("Couldn't access the clipboard. Use Export instead."); }
+};
+$("importFile").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    if (!Array.isArray(d.nodes) || !Array.isArray(d.edges)) throw new Error("missing nodes/edges");
+    commit(); data = { meta: { nodeRadius: 9, ...d.meta }, nodes: d.nodes, edges: d.edges }; sel = null;
+    $("radius").value = data.meta.nodeRadius; changed(`Imported ${f.name}.`); fit();
+  } catch (err) { status("Import failed: " + err.message); }
+  e.target.value = "";
+};
+$("clear").onclick = () => {
+  if (data.nodes.length && !confirm("Start a new grid? (You can still Undo.)")) return;
+  commit(); data = { meta: { nodeRadius: data.meta.nodeRadius }, nodes: [], edges: [] }; sel = null; changed("New grid.");
+};
+function loadImage(file) {
+  const rd = new FileReader();
+  rd.onload = () => {
+    const im = new Image();
+    im.onload = () => { img = { ...img, src: rd.result, w: im.naturalWidth, h: im.naturalHeight, name: file.name, show: true };
+      $("imgShow").checked = true; imgInfo(); save(); fit(); status(`Loaded ${file.name}.`); };
+    im.src = rd.result;
+  };
+  rd.readAsDataURL(file);
+}
+function imgInfo() { $("imgInfo").textContent = img.src ? `${img.name || "image"} — ${img.w}×${img.h}px` : "No image loaded."; }
+$("imgFile").onchange = e => { if (e.target.files[0]) loadImage(e.target.files[0]); e.target.value = ""; };
+$("canvasWrap").addEventListener("dragover", e => e.preventDefault());
+$("canvasWrap").addEventListener("drop", e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f?.type.startsWith("image/")) loadImage(f); });
+$("imgOpacity").oninput = e => { img.opacity = +e.target.value; render(); save(); };
+$("imgShow").onchange = e => { img.show = e.target.checked; render(); save(); };
+$("radius").oninput = e => { data.meta.nodeRadius = +e.target.value; render(); };
+$("radius").onchange = () => save();
+$("chain").onchange = () => tool === "add" && setTool("add");
+
+/* ================= AUTO-DETECT & REVIEW ================= */
+function needsValue(n) { const t = TYPES[n.type]; return t && t.val && !n.value; }
+function focusNode(n) {
+  sel = { kind: "node", id: n.id };
+  const r = svg.getBoundingClientRect(), k = Math.max(view.k, 3);
+  view = { k, tx: r.width / 2 - n.x * k, ty: r.height / 2 - n.y * k };
+  render(); panel();
+}
+function nextWhere(pred, label) {
+  const list = data.nodes.filter(pred);
+  if (!list.length) { status(`No ${label} nodes left.`); return; }
+  const i = sel?.kind === "node" ? list.findIndex(n => n.id === sel.id) : -1;
+  const n = list[(i + 1) % list.length];
+  focusNode(n); status(`${label}: ${list.length} left. Showing ${n.id}.`);
+}
+$("nextFlag").onclick = () => nextWhere(n => n.check, "Flagged");
+
+/* Points along a link (straight or arc), used to keep labels off the lines */
+function edgePoints(e, step) {
+  const A = nodeById(e.a), B = nodeById(e.b); if (!A || !B) return [];
+  const dx = B.x - A.x, dy = B.y - A.y, c = Math.hypot(dx, dy) || 1, nx = -dy / c, ny = dx / c, s = e.bend || 0, out = [];
+  if (Math.abs(s) < 0.5) { const n = Math.ceil(c / step); for (let k = 1; k < n; k++) out.push([A.x + dx * k / n, A.y + dy * k / n]); return out; }
+  const rad = (s * s + c * c / 4) / (2 * Math.abs(s)), off = s - Math.sign(s) * rad;
+  const ox = (A.x + B.x) / 2 + nx * off, oy = (A.y + B.y) / 2 + ny * off, mx = (A.x + B.x) / 2 + nx * s, my = (A.y + B.y) / 2 + ny * s;
+  const TAU = Math.PI * 2, mod = v => ((v % TAU) + TAU) % TAU;
+  const a0 = Math.atan2(A.y - oy, A.x - ox), d1 = mod(Math.atan2(B.y - oy, B.x - ox) - a0), dm = mod(Math.atan2(my - oy, mx - ox) - a0);
+  const span = dm < d1 ? d1 : -(TAU - d1), n = Math.ceil(Math.abs(span) * rad / step);
+  for (let k = 1; k < n; k++) { const a = a0 + span * k / n; out.push([ox + Math.cos(a) * rad, oy + Math.sin(a) * rad]); }
+  return out;
+}
+
+/* Greedy label placement: for every label try spots around its node and keep the one
+   that overlaps the fewest links, nodes and already-placed labels. */
+function autoArrange() {
+  const R = data.meta.nodeRadius, CELL = 40, grid = new Map();
+  const cells = (x0, y0, x1, y1, fn) => {
+    for (let cy = Math.floor(y0 / CELL); cy <= Math.floor(y1 / CELL); cy++)
+      for (let cx = Math.floor(x0 / CELL); cx <= Math.floor(x1 / CELL); cx++) fn(cx + "," + cy);
+  };
+  const put = (x0, y0, x1, y1, item) => cells(x0, y0, x1, y1, k => (grid.get(k) || grid.set(k, []).get(k)).push(item));
+  for (const e of data.edges) for (const [x, y] of edgePoints(e, R * 0.35)) put(x, y, x, y, { k: "p", x, y });
+  for (const n of data.nodes) { const r = nodeR(n) + 1; put(n.x - r, n.y - r, n.x + r, n.y + r, { k: "n", x: n.x, y: n.y, r }); }
+
+  const cost = b => {
+    const x0 = b.cx - b.w / 2, x1 = b.cx + b.w / 2, y0 = b.cy - b.h / 2, y1 = b.cy + b.h / 2, seen = new Set();
+    let c = 0;
+    cells(x0 - 2, y0 - 2, x1 + 2, y1 + 2, k => {
+      for (const it of grid.get(k) || []) {
+        if (seen.has(it)) continue; seen.add(it);
+        if (it.k === "p") { if (it.x >= x0 - 1.5 && it.x <= x1 + 1.5 && it.y >= y0 - 1.5 && it.y <= y1 + 1.5) c += 4; }
+        else if (it.k === "n") { const qx = Math.max(x0, Math.min(it.x, x1)), qy = Math.max(y0, Math.min(it.y, y1)); if ((qx - it.x) ** 2 + (qy - it.y) ** 2 < it.r * it.r) c += 40; }
+        else if (x0 < it.x1 && x1 > it.x0 && y0 < it.y1 && y1 > it.y0) c += 60;   // another label
+      }
+    });
+    return c;
+  };
+  // Candidate spots around the node: [dx, dy, preference penalty]
+  const spots = (n, which, w, h) => {
+    const r = nodeR(n), g = R * 0.25, d = r * 0.72;
+    const below = [0, r + h / 2 + g], above = [0, -(r + h / 2 + g)], right = [r + w / 2 + g, 0], left = [-(r + w / 2 + g), 0];
+    const dbr = [d + w / 2, d + h / 2], dbl = [-(d + w / 2), d + h / 2], dar = [d + w / 2, -(d + h / 2)], dal = [-(d + w / 2), -(d + h / 2)];
+    const order = which === "name" ? [above, dar, dal, right, left, below, dbr, dbl]
+                : which === "value" ? [below, right, left, dbr, dbl, above, dar, dal]
+                : [below, dbr, dbl, right, left, above, dar, dal];
+    const out = [];
+    order.forEach(([dx, dy], i) => {
+      out.push([dx, dy, i * 0.6]);
+      const len = Math.hypot(dx, dy) || 1, more = which === "value" ? R * 0.9 : R * 1.6;   // farther-out fallback
+      out.push([dx + dx / len * more, dy + dy / len * more, 6 + i * 0.6]);
+    });
+    return out;
+  };
+
+  let moved = 0;
+  for (const which of ["name", "start", "value"]) {
+    for (const n of data.nodes) {
+      if (!labelText(n, which)) continue;
+      const { w, h } = labelSize(n, which);
+      let best = null;
+      for (const [dx, dy, pen] of spots(n, which, w, h)) {
+        const sc = pen + cost({ cx: n.x + dx, cy: n.y + dy, w, h });
+        if (!best || sc < best.sc) best = { dx, dy, sc };
+      }
+      const [ddx, ddy] = defaultOffset(n, which), key = LABEL_KEY[which];
+      const before = JSON.stringify(n[key] || null);
+      if (Math.abs(best.dx - ddx) < 0.05 && Math.abs(best.dy - ddy) < 0.05) delete n[key];
+      else n[key] = [r1(best.dx), r1(best.dy)];
+      if (JSON.stringify(n[key] || null) !== before) moved++;
+      const cx = n.x + best.dx, cy = n.y + best.dy;
+      put(cx - w / 2, cy - h / 2, cx + w / 2, cy + h / 2, { k: "b", x0: cx - w / 2, x1: cx + w / 2, y0: cy - h / 2, y1: cy + h / 2 });
+    }
+  }
+  return moved;
+}
+$("arrange").onclick = () => {
+  if (data.nodes.some(n => LABELS.some(w => n[LABEL_KEY[w]])) && !confirm("Re-arrange all labels? This also moves labels you've placed by hand. (Undo restores them.)")) return;
+  commit();
+  const t0 = performance.now(), moved = autoArrange();
+  changed(`Auto-arranged labels: ${moved} moved in ${Math.round(performance.now() - t0)} ms. Drag any that still look off.`);
+};
+
+$("nextValue").onclick = () => nextWhere(needsValue, "Without value");
+
+$("detect").onclick = () => {
+  if (!img.src) { status("Load a reference image first."); return; }
+  if (data.nodes.length && !confirm("Replace the current grid with auto-detected nodes? (Undo restores it.)")) return;
+  status("Detecting… this takes about 10 seconds.");
+  setTimeout(async () => {
+    const im = new Image(); im.src = img.src; await im.decode();
+    const cv = document.createElement("canvas"); cv.width = im.naturalWidth; cv.height = im.naturalHeight;
+    const cx = cv.getContext("2d"); cx.drawImage(im, 0, 0);
+    const res = detectGrid(cx.getImageData(0, 0, cv.width, cv.height));
+    const r = res.report;
+    if (r.warning) status(r.warning);
+    commit();
+    data = { meta: { nodeRadius: 12.5 }, nodes: res.nodes, edges: res.edges }; sel = null;
+    $("radius").value = 12.5; changed(); fit();
+    status(`Found ${r.nodes} nodes (${r.empty} empty) and ${r.edges} links in ${((r.ms.rings + r.ms.types + r.ms.links) / 1000).toFixed(1)}s. ` +
+           `${r.flagged} flagged for review. Values and ability names still need entering.` + (r.warning ? " " + r.warning : ""));
+  }, 50);
+};
+
+/* ================= INIT ================= */
+document.querySelectorAll("[data-tool]").forEach(b => b.onclick = () => setTool(b.dataset.tool));
+$("undo").onclick = undo; $("redo").onclick = redo; $("fit").onclick = fit;
+load(); buildPalette(); markPalette();
+$("radius").value = data.meta.nodeRadius; $("imgOpacity").value = img.opacity; $("imgShow").checked = img.show; imgInfo();
+setTool("add"); panel(); render();
+if (data.nodes.length || img.src) requestAnimationFrame(fit);
+
+/* The repository's grid lives at ../sphere-grid/grid.json. Load it on first use
+   (nothing saved in this browser yet), or on request via the "Load project grid" button. */
+const PROJECT_GRID = "../sphere-grid/grid.json";
+async function loadProjectGrid(ask) {
+  if (ask && data.nodes.length && !confirm("Replace the grid in the editor with the project's grid.json? (Undo restores it.)")) return;
+  try {
+    const d = await (await fetch(PROJECT_GRID, { cache: "no-store" })).json();
+    commit(); data = { meta: { nodeRadius: 9, ...d.meta }, nodes: d.nodes, edges: d.edges }; sel = null;
+    $("radius").value = data.meta.nodeRadius; changed(`Loaded the project grid (${d.nodes.length} nodes).`); fit();
+  } catch {
+    status("Couldn't load the project grid. Open the editor through a local server (see README), or use Import JSON.");
+  }
+}
+$("loadProject").onclick = () => loadProjectGrid(true);
+if (!data.nodes.length) loadProjectGrid(false);
+</script>
+</body>
+</html>
