@@ -50,6 +50,8 @@
 
   /* greyscale base, colour on top */
   #base { filter: grayscale(1); opacity: .42; }
+  #track { filter: grayscale(1); }
+  #track .ico { opacity: .42; }
   .edge { fill: none; stroke: var(--line); stroke-linecap: round; }
   .walk { fill: none; stroke-linecap: round; }
   .pop > g { transform-box: fill-box; transform-origin: center; animation: pop .45s ease-out; }
@@ -110,7 +112,7 @@
             <path d="M0 0 L10 5 L0 10 z" fill="context-stroke"/>
           </marker>
         </defs>
-        <g id="base"></g><g id="walk"></g><g id="teles"></g><g id="active"></g><g id="labels"></g><g id="fx"></g><g id="tags"></g>
+        <g id="base"></g><g id="walk"></g><g id="track"></g><g id="teles"></g><g id="active"></g><g id="here"></g><g id="labels"></g><g id="fx"></g><g id="tags"></g>
       </svg>
       <div class="view-btns">
         <button id="follow" class="on" title="Camera follows each step">Follow</button>
@@ -238,9 +240,13 @@ const svg = $("grid");
   $("base").innerHTML = out.join("");
 }
 const labelEls = new Map();   // node id → [label elements]
+/* Only nodes this route activates or teleports to get labels, so the grey grid stays clean.
+   They show faintly up front (what's coming) and light up once activated. */
+const routeNodes = new Set(route.steps.flatMap(st => [...(st.activate || []), st.teleport, st.warp].filter(Boolean)));
 {
   const out = [];
   for (const n of grid.nodes) {
+    if (!routeNodes.has(n.id)) continue;
     const t = TYPES[n.type];
     if (n.value) {
       const b = L.labelBox(n, "value", R);
@@ -282,12 +288,24 @@ function render(s, action, node, ch) {
     const e = edgeByKey.get(k); if (!e) return "";
     return `<path class="walk" d="${L.edgePath(N.get(e.a), N.get(e.b), e.bend)}" stroke="${charColor(c)}" stroke-width="${R * 0.55}"/>`;
   }).join("");
-  // activated nodes in full colour, ringed in the character's colour
-  $("active").innerHTML = [...s.act].map(([id, c]) => {
-    const n = N.get(id), r = L.nodeRadius(n, R);
+  // nodes the coloured track passes through (but not activated) are redrawn on top of it, still greyed out
+  const onTrack = new Set();
+  for (const k of s.walk.keys()) for (const id of k.split("|")) if (!s.act.has(id)) onTrack.add(id);
+  $("track").innerHTML = [...onTrack].map(id => {
+    const n = N.get(id);   // solid backing disc hides the track; the faded icon matches the rest of the grey grid
+    return `<g transform="translate(${n.x} ${n.y}) scale(${L.nodeRadius(n, R)})"><circle r="1" fill="var(--grid-bg)"/><g class="ico">${gridIcon(n.type)}</g></g>`;
+  }).join("");
+  // activated nodes in full colour
+  $("active").innerHTML = [...s.act].map(([id]) => {
+    const n = N.get(id);
     return `<g class="${id === node && action === "activate" ? "pop" : ""}" transform="translate(${n.x} ${n.y})"><g>
-      <circle r="${r + R * 0.3}" fill="none" stroke="${charColor(c)}" stroke-width="${R * 0.24}"/>
-      <g transform="scale(${r})">${gridIcon(n.type)}</g></g></g>`;
+      <g transform="scale(${L.nodeRadius(n, R)})">${gridIcon(n.type)}</g></g></g>`;
+  }).join("");
+  // a ring in each character's colour marks where they stand (rings nest when characters share a node)
+  const ringCount = {};
+  $("here").innerHTML = Object.keys(tags).map(c => {
+    const id = s.pos[c], n = N.get(id), k = ringCount[id] = (ringCount[id] ?? -1) + 1;
+    return `<circle cx="${n.x}" cy="${n.y}" r="${L.nodeRadius(n, R) + R * (0.32 + k * 0.3)}" fill="none" stroke="${charColor(c)}" stroke-width="${R * 0.24}"/>`;
   }).join("");
   // labels light up for activated nodes
   const now = new Set(s.act.keys());
