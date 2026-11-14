@@ -1,0 +1,42 @@
+# Every 10 minutes: ask Twitch who's streaming FFX speedruns, and publish the list as live.json on the
+# "live-data" branch. The site reads it from there, so the main branch's history isn't filled with updates.
+# Needs two repository secrets, TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET (see README: "Twitch live check").
+name: Twitch live check
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: twitch-live
+  cancel-in-progress: true
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ask Twitch who's live
+        run: node .github/scripts/twitch-live.mjs
+        env:
+          TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
+          TWITCH_CLIENT_SECRET: ${{ secrets.TWITCH_CLIENT_SECRET }}
+
+      - name: Publish live.json to the live-data branch
+        working-directory: live-out
+        run: |
+          git init -q -b live-data
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add live.json
+          git commit -q -m "Live streams at $(date -u +%Y-%m-%dT%H:%MZ)"
+          # one commit, replaced each time, so the branch never grows
+          git push -q -f "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" live-data
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

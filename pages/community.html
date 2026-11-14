@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Community – Final Fantasy X Speedrun</title>
+<meta name="description" content="The Final Fantasy X speedrun community: Discord, streams and resources.">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/hub.css">
+<script src="../assets/notes-config.js"></script>
+<script src="../assets/hub.js"></script>
+</head>
+<body>
+<div class="page-head"><div class="wrap"><h1>Community</h1><p>Where FFX runners hang out, ask questions and share practice saves.</p></div></div>
+<main class="wrap">
+<div class="grid">
+  <div class="card"><h3>Discord</h3><p>The heart of the community: questions, route discussion, practice saves and race organisation. Everyone's welcome, from first-timers to record holders.</p>
+    <div class="foot"><a class="btn small primary" id="discord" href="#">Join the Discord</a></div></div>
+  <div class="card"><h3>speedrun.com</h3><p>The official leaderboards, category rules and run submissions.</p>
+    <div class="foot"><a class="btn small plain" id="src" href="#">speedrun.com/ffx ↗</a></div></div>
+  <div class="card"><h3>Contribute</h3><p>Everything on this site is in a public GitHub repository: notes, routes, tricks and leaderboards. Spot a mistake or have a better strat? Open an issue or a pull request.</p>
+    <div class="foot"><a class="btn small plain" id="gh" href="#">GitHub ↗</a></div></div>
+</div>
+<h2 class="section">Live now</h2>
+<p class="muted" style="margin-top:-6px">FFX speedruns on Twitch right now, checked every 10 minutes. Click a stream to watch it here.</p>
+<div id="live"><p class="muted">Checking…</p></div>
+</main>
+<script>
+(async () => {
+  Hub.nav("community");
+  Hub.footer();
+  const $ = id => document.getElementById(id), esc = Hub.esc;
+  const links = await Hub.links();
+  if (links.discord) $("discord").href = links.discord;
+  if (links.speedrun) $("src").href = links.speedrun;
+  if (links.github) $("gh").href = links.github;
+  $("live").innerHTML = Hub.liveHTML(await Hub.live());
+})();
+</script>
+</body>
+</html>

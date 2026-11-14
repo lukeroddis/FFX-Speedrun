@@ -9,7 +9,7 @@
 
    Pages pick the category and language from the address: ?cat=any&lang=en (the defaults). */
 (function () {
-  const ROOT = "../";   // every page lives one folder down (prototypes/, tools/)
+  const ROOT = new URL("..", document.currentScript.src).href;   // the site root, wherever the page is
   const DEFAULT_CATEGORY = "any", DEFAULT_LANGUAGE = "en";
 
   /* The settings files are a small YAML subset: "key: value", indented maps, [a, b] lists and # comments */
@@ -55,8 +55,13 @@
       areas: Array.isArray(y.areas) ? y.areas : [],
     };
   }
+  /* { id: { name, about, boards, status } } from notes/categories.yml, in order */
   async function loadCategories() {
-    try { return parseYaml(await fetchText(paths.categories())); } catch { return { [DEFAULT_CATEGORY]: DEFAULT_CATEGORY }; }
+    let y;
+    try { y = parseYaml(await fetchText(paths.categories())); } catch { y = { [DEFAULT_CATEGORY]: DEFAULT_CATEGORY }; }
+    return Object.fromEntries(Object.entries(y).map(([id, v]) => [id, typeof v === "object"
+      ? { name: v.name || id, about: v.about || "", boards: Array.isArray(v.boards) ? v.boards : [], status: v.status || "" }
+      : { name: v || id, about: "", boards: [], status: "" }]));
   }
   const loadGrid = cfg => fetchJson(paths.grid(cfg.grid));
   /* a route loader for RouteEngine.resolve, cached */

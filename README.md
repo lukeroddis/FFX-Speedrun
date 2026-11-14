@@ -1,22 +1,38 @@
-# FFX Speedrun Notes
+# Final Fantasy X Speedrun
 
-Speedrunning notes for **Final Fantasy X**, rebuilt as a small website styled after the game's own menus, to be hosted on GitHub Pages.
+A home for the **Final Fantasy X** speedrunning community, styled after the game's own menus and hosted on GitHub Pages:
 
-- **Boss battles** shown as Conditional Turn-Based (CTB) turn orders, the same way the game shows whose turn is next.
-- **Sphere Grid routes** drawn on a recreated, interactive Sphere Grid, with animations that step through each character's moves and teleports.
-- **Everything is data**, so updating a strategy or route means editing a small text file, not redrawing an image.
+- **Run notes** for each category and language, stepped through with the mouse wheel without leaving the game. One set of notes covers every version of a category, with toggles for the parts that differ.
+- **Sphere Grid routes** drawn on a recreated, interactive Sphere Grid, with animations that step through each character's moves and teleports, and a **route builder** to make them.
+- **Tricks & Skips:** a video library of the skips the routes use.
+- **Leaderboards:** the current top runs, read from speedrun.com once a day.
+- **Community:** the Discord, speedrun.com and who's live on Twitch right now.
+- **Everything is data**, so updating a strategy, route, trick or link means editing a small text file, not redrawing an image or writing HTML.
 
-> Status: early work in progress. The pages in `prototypes/` are mock-ups for the look and feel.
+> Status: work in progress.
 
 The site is published with GitHub Pages from the `main` branch, at <https://lukeroddis.github.io/FFX-Speedrun/>.
 
 ## Folder layout
 
 ```
-index.html          The landing page, linking to everything below
+index.html          The home page
 .nojekyll           Tells GitHub Pages to serve files as they are (so the notes' .md files load raw)
+pages/              The hub's pages
+  notes.html          The run notes (?cat=any&lang=en)
+  categories.html     Every category and its languages
+  tricks.html         The Tricks & Skips library
+  leaderboards.html   Top runs from speedrun.com
+  community.html      Discord, speedrun.com, streams, contributing
+  tools.html          The route builder and grid editor
+hub/                The hub's data
+  links.yml           Discord, speedrun.com and GitHub links
+  leaderboards.yml    Which speedrun.com boards to show, in order
+  tricks.yml          The Tricks & Skips videos
+  twitch.yml          What the Twitch live check looks for
+.github/            The Twitch live check: a scheduled GitHub Action and its script
 notes/
-  categories.yml      The categories on the site
+  categories.yml      The categories on the site: name, description, leaderboards, "coming soon"
   glossary.json       In-game names in every game language, shared by all categories
   any/                FFX Any%
     category.yml        Shared by every language: grid, languages, route toggles, targets, area order
@@ -25,13 +41,17 @@ notes/
 sphere-grid/
   standard.json       The Standard Sphere Grid: 860 nodes, their types, values, names and links
 assets/             Shared code and styles for the site
+  hub.js, hub.css     The site's navigation bar, theme (light, dark or automatic), footer and hub data
   notes-config.js     Where everything lives: categories, languages, grids, routes
   grid-icons.js       Sphere Grid node types, icons and character colours
   grid-layout.js      Shared link shapes and label positions
   route-engine.js     Plays Sphere Grid routes: moves, Sphere Levels, unlocks, teleports, spheres and rule checks
   portraits.js        Shows character portraits on tiles when an image exists
   portraits/          Character portrait images (see the README inside)
-prototypes/         The run page, a CTB-style battle mock-up and the Sphere Grid route player
+prototypes/         Pages kept for trying changes in isolation (not linked from the hub):
+  sphere-grid.html    the Sphere Grid route player (also opened from the notes' grids)
+  sin-fin.html        the original CTB-style battle mock-up
+  demo.json           an example route the player shows when no route is given
 tools/
   route-builder.html  Build Sphere Grid routes by clicking, and export them as route files
   grid-editor.html The Sphere Grid editor (tracing, editing, label layout)
@@ -46,13 +66,55 @@ The pages load data files, so open them through a small local web server rather 
 python -m http.server 8765
 ```
 
-Then open <http://localhost:8765/> for the landing page, or go straight to:
+Then open <http://localhost:8765/> for the home page, or go straight to:
 
+- Run notes: <http://localhost:8765/pages/notes.html> (the old `prototypes/run.html` address forwards here)
 - Sphere Grid route builder: <http://localhost:8765/tools/route-builder.html>
 - Sphere Grid editor: <http://localhost:8765/tools/grid-editor.html>
-- Run notes: <http://localhost:8765/prototypes/run.html>
+
+Prototypes, for experimenting on their own (not linked from the hub):
+
+- Sphere Grid route player: <http://localhost:8765/prototypes/sphere-grid.html> (plays `demo.json`; add `?route=besaid-tidus` for a real route)
 - Battle mock-up: <http://localhost:8765/prototypes/sin-fin.html>
-- Sphere Grid route mock-up: <http://localhost:8765/prototypes/sphere-grid.html>
+
+## The hub's content
+
+Everything on the hub pages comes from small files, so a pull request is all it takes to change them:
+
+- **A trick or skip:** add an entry to `hub/tricks.yml`, with its name, area, categories and YouTube link (and optionally a sentence on how it works). It appears on the Tricks & Skips page, and the newest ones on the home page.
+- **A leaderboard:** add a board to `hub/leaderboards.yml`, with its speedrun.com category ID and "Category" variable, from <https://www.speedrun.com/api/v1/games/ffx?embed=categories.variables>. Each visitor's browser reads the top runs from speedrun.com and keeps them for a day.
+- **A category:** add it to `notes/categories.yml` with a name, a short description and its leaderboards. Mark it `status: coming-soon` until it has notes.
+- **A link:** change `hub/links.yml`.
+- **Streams:** `hub/twitch.yml` sets which Twitch categories to look in, the title words that mark a speedrun, and runners to always show (see below).
+
+## Twitch live check
+
+The Community page, and the home page when someone's live, show who's streaming FFX speedruns right now.
+
+**How it works:** a GitHub Action (`.github/workflows/twitch-live.yml`) runs every 10 minutes:
+
+1. It asks Twitch for live streams in the categories in `hub/twitch.yml`.
+2. It keeps the speedruns: streams with the Speedrun tag, a speedrun word in the title (Any%, NSG, race…), or a runner from the list.
+3. It publishes the result as `live.json` on a separate `live-data` branch. That branch is a single commit, replaced each time, so `main`'s history stays clean.
+
+The site reads that file.
+
+**One-off setup**, once the repository is on GitHub:
+
+1. Sign in at <https://dev.twitch.tv/console> with any Twitch account and choose **Register Your Application**:
+   - **Name:** anything, e.g. *FFX Speedrun Live Check*.
+   - **OAuth Redirect URL:** `http://localhost`.
+   - **Category:** *Website Integration*.
+   - **Client Type:** *Confidential*.
+2. Open the app, copy its **Client ID**, and click **New Secret** to get a **Client Secret**.
+3. In the GitHub repository, go to **Settings → Secrets and variables → Actions** and add two repository secrets: `TWITCH_CLIENT_ID` and `TWITCH_CLIENT_SECRET`.
+4. Go to **Actions → Twitch live check → Run workflow** to run it once straight away. After that it runs every 10 minutes by itself.
+
+**Things to know:**
+
+- **Schedule:** GitHub can delay scheduled runs by a few minutes when it's busy, so "every 10 minutes" is approximate. The page says when the list was last checked if it's more than 30 minutes old.
+- **Pausing:** in a public repository, GitHub pauses scheduled workflows after 60 days without any commits. A commit, or **Enable workflow** on the Actions tab, starts it again.
+- **Testing the pages:** `?live=<file>` makes them read a local sample file instead, e.g. `pages/community.html?live=hub/my-sample.json`.
 
 ## Categories and languages
 
@@ -225,7 +287,7 @@ Routes live in `notes/<category>/sphere-grid/` and refer to nodes by their ID in
 - **Sphere Levels:** counted per character. Each move onto a new link costs 1. Moving back along links the character has already walked costs 1 per 4, rounded up. Teleports, unlocks and activations cost none.
 - **Rule checks:** anything the game wouldn't allow shows as a ⚠ warning: a node out of reach, an already-activated node, a teleport its sphere can't make.
 
-Open a route with `prototypes/sphere-grid.html?cat=any&route=<file name>`. Without `?route=` it plays `demo`.
+Open a route with `prototypes/sphere-grid.html?cat=any&route=<file name>`. Without `?route=` it plays `prototypes/demo.json`, an example route.
 
 ## Credits
 

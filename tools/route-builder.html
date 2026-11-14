@@ -219,7 +219,8 @@ const E = RouteEngine.create(grid), R = grid.meta.nodeRadius, { N } = E;
 const loadRoute = NotesConfig.routeLoader(CATEGORY);
 { // category picker: changing it reloads the builder for that category
   const cats = await NotesConfig.loadCategories();
-  $("cat").innerHTML = Object.entries(cats).map(([id, label]) => `<option value="${esc(id)}" ${id === CATEGORY ? "selected" : ""}>${esc(label)}</option>`).join("");
+  $("cat").innerHTML = Object.entries(cats).filter(([, c]) => c.status !== "coming-soon")
+    .map(([id, c]) => `<option value="${esc(id)}" ${id === CATEGORY ? "selected" : ""}>${esc(c.name)}</option>`).join("");
   $("cat").onchange = () => { const qs = new URLSearchParams(location.search); qs.set("cat", $("cat").value); location.search = qs.toString(); };
   document.querySelectorAll(".routesDir").forEach(e => { e.textContent = `notes/${CATEGORY}/sphere-grid/`; });
 }
@@ -580,7 +581,7 @@ $("open").onclick = async () => {
   if (!name) return;
   try { load(await loadRoute(name.trim()), name.trim()); } catch (e) { toast(e.message); }
 };
-$("known").innerHTML = ["besaid-tidus", "demo"].map(n => `<option value="${n}">`).join("");
+$("known").innerHTML = ["besaid-tidus", "kilika-tidus"].map(n => `<option value="${n}">`).join("");
 
 /* ================= START ================= */
 fillInfo();

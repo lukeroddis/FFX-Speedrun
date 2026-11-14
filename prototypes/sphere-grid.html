@@ -158,18 +158,21 @@ const TYPES = window.GRID_TYPES, CHARS = window.GRID_CHARACTERS, L = window.Grid
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 /* ================= LOAD ================= */
-const routeName = new URLSearchParams(location.search).get("route") || "demo";
+/* ?route=<name> plays a route from notes/<category>/sphere-grid/. Without it, the page plays prototypes/demo.json,
+   an example kept here for experimenting with the player on its own. */
+const routeName = new URLSearchParams(location.search).get("route") || "";
 let grid, route, ENGINE, START;
 /* ?cat=any&route=besaid-tidus: routes live in notes/<category>/sphere-grid/, and the category says which grid it uses */
 const { cat } = NotesConfig.params();
-const loadRoute = NotesConfig.routeLoader(cat);
+const catRoutes = NotesConfig.routeLoader(cat);
+const loadRoute = name => name ? catRoutes(name) : NotesConfig.fetchJson("demo.json");
 try {
   grid = await NotesConfig.loadGrid(await NotesConfig.loadCategory(cat));
   ENGINE = RouteEngine.create(grid);
   ({ route, start: START } = await RouteEngine.resolve(ENGINE, routeName, loadRoute));   // "after" routes are played first
 } catch {
   $("routeTitle").textContent = "";
-  document.querySelector(".layout").innerHTML = `<div class="box error">Couldn't load the grid or route “${esc(routeName)}”.<br>Open this page through a local server (see README).</div>`;
+  document.querySelector(".layout").innerHTML = `<div class="box error">Couldn't load the grid or route “${esc(routeName || "demo.json")}”.<br>Open this page through a local server (see README).</div>`;
   return;
 }
 $("routeTitle").textContent = route.title + (route.note ? ` · ${route.note}` : "");

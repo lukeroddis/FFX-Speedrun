@@ -1,2 +1,14 @@
-# The categories on the site. Each one is a folder in notes/ with its own category.yml.
-any: FFX Any%
+# The categories on the site, in this order. Each one with notes is a folder in notes/ with its own category.yml.
+#   name     shown on the site
+#   about    one or two sentences for its card
+#   boards   leaderboards from hub/leaderboards.yml that belong to it
+#   status   "coming-soon" for a category without notes yet
+any:
+  name: Any%
+  about: Beat the game as fast as possible. One set of notes covers PS2, HD Console, PC and Cutscene Remover runs, with the differences as toggles.
+  boards: [ps2-any, pc-any, csr-any]
+nsg:
+  name: No Sphere Grid
+  about: Beat the game without using the Sphere Grid.
+  boards: [pc-nsg, csr-nsg]
+  status: coming-soon

@@ -1,0 +1,14 @@
+# The Twitch live check (.github/workflows/twitch-live.yml) runs every 10 minutes and lists who's
+# streaming FFX speedruns. The result is published to the "live-data" branch as live.json, which the
+# Community and Home pages read.
+
+# Twitch categories to look in, by their exact Twitch names
+games: [Final Fantasy X, Final Fantasy X/X-2 HD Remaster]
+
+# A stream counts as a speedrun when its title contains one of these (any capitals), or it has the
+# Speedrun tag on Twitch
+keywords: [speedrun, any%, nsg, no sphere grid, csr, cutscene remover, race, %]
+
+# Runners to always show when they're streaming one of the games above, whatever the title says
+# (Twitch login names, e.g. [runner1, runner2])
+runners: []

@@ -1,0 +1,31 @@
+# The speedrun.com boards shown on the site, in this order. The site reads them from speedrun.com's API
+# and keeps them for a day in each visitor's browser, so the times are never more than a day old.
+#
+# To add a board: find its category ID and its "Category" variable on speedrun.com's API
+# (https://www.speedrun.com/api/v1/games/ffx?embed=categories.variables) and add an entry like these.
+game: w6j395dj
+boards:
+  ps2-any:
+    name: PS2 Any%
+    category: 5dwjj7ek
+    vars: e8m70e86=jq65457l
+  pc-any:
+    name: PC Any%
+    category: zdnqrzqd
+    vars: ylqx078r=0q5vovnl
+  pc-nsg:
+    name: PC No Sphere Grid
+    category: zdnqrzqd
+    vars: ylqx078r=810wgvoq
+  csr-any:
+    name: Cutscene Remover Any%
+    category: 7dg14oxd
+    vars: p85d1kvl=21dpoyp1
+  csr-nsg:
+    name: Cutscene Remover No Sphere Grid
+    category: 7dg14oxd
+    vars: p85d1kvl=5q8nr0yq
+  csr-truerng:
+    name: Cutscene Remover True RNG%
+    category: 7dg14oxd
+    vars: p85d1kvl=lr3edv2l

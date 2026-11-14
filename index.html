@@ -4,84 +4,118 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Final Fantasy X Speedrun</title>
-<meta name="description" content="Final Fantasy X Speedrun notes">
+<meta name="description" content="A hub for the Final Fantasy X speedrun community: run notes, Sphere Grid routes, tricks and skips, leaderboards and the Discord.">
 <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/hub.css">
+<script src="assets/notes-config.js"></script>
+<script src="assets/hub.js"></script>
 <style>
-  :root {
-    --bg-1: #4a4f86; --bg-2: #6a6fa8; --bg-3: #8c8fc4;
-    --text: #fff; --text-dim: #c9cbe8; --label: #e8e8ff; --gold: #ffd84a;
-    --shadow: 0 2px 0 rgba(0,0,0,.55), 0 0 4px rgba(0,0,0,.35);
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; }
-  body {
-    min-height: 100vh; color: var(--text);
-    font-family: "Ubuntu", "Segoe UI", sans-serif; font-weight: 500; text-shadow: var(--shadow);
-    background:
-      radial-gradient(ellipse at 15% 20%, rgba(255,255,255,.10), transparent 45%),
-      radial-gradient(ellipse at 85% 75%, rgba(20,20,60,.35), transparent 55%),
-      repeating-linear-gradient(115deg, rgba(255,255,255,.025) 0 2px, transparent 2px 9px),
-      linear-gradient(160deg, var(--bg-3), var(--bg-2) 40%, var(--bg-1));
-    background-attachment: fixed;
-    padding: 28px 16px 40px;
-  }
-  .wrap { max-width: 760px; margin: 0 auto; }
-  .label { font-size: .78rem; font-weight: 700; letter-spacing: .08em; color: var(--label); margin: 0 0 2px 2px; }
-  .panel {
-    background: linear-gradient(90deg, rgba(30,30,70,.85), rgba(70,70,130,.55) 60%, rgba(70,70,130,.15));
-    border-top: 2px solid rgba(255,255,255,.25); border-bottom: 2px solid rgba(0,0,0,.35);
-    padding: 12px 18px 12px 40px;
-  }
-  header.panel h1 { margin: 0; font-size: 1.7rem; }
-  header.panel p { margin: 4px 0 0; color: var(--text-dim); font-size: .98rem; }
-
-  /* the game's main menu: a boxed list with the hand cursor on the hovered entry */
-  .menu {
-    margin: 22px 0; padding: 10px 0;
-    background: linear-gradient(180deg, rgba(60,62,110,.92), rgba(40,40,85,.92));
-    border: 2px solid #9fa2c8; border-radius: 6px; box-shadow: inset 0 0 0 2px #2a2a55, 0 4px 14px rgba(0,0,0,.3);
-  }
-  .menu a {
-    position: relative; display: block; padding: 10px 18px 10px 54px; color: var(--text); text-decoration: none;
-  }
-  .menu a b { display: block; font-size: 1.25rem; }
-  .menu a > span { display: block; margin-top: 2px; color: var(--text-dim); font-size: .9rem; line-height: 1.4; }
-  .menu a:hover, .menu a:focus-visible { background: linear-gradient(90deg, rgba(255,255,255,.2), rgba(255,255,255,.03)); outline: none; }
-  .menu a:hover::before, .menu a:focus-visible::before {
-    content: ""; position: absolute; left: 14px; top: 14px; width: 30px; height: 22px;
-    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 22'%3E%3Ccircle cx='8' cy='11' r='7' fill='%23f2a516' stroke='%237a4a00' stroke-width='1.2'/%3E%3Cpath d='M6 4 L29 11 L6 18 Z' fill='%23fff' stroke='%2355597a' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center / contain;
-    filter: drop-shadow(0 2px 2px rgba(0,0,0,.5)); animation: bob 1s ease-in-out infinite;
-  }
-  @keyframes bob { 50% { transform: translateX(-4px); } }
-  .menu .sep { margin: 6px 18px; border-top: 1px solid rgba(255,255,255,.15); }
-  .menu .tag { display: inline-block; margin-left: 8px; padding: 0 6px; border-radius: 3px; font-size: .68rem; font-weight: 700; letter-spacing: .06em;
-               vertical-align: 3px; color: #1b1b3b; text-shadow: none; background: #c9cbf0; }
-
-  footer { color: var(--text-dim); font-size: .82rem; line-height: 1.6; }
-  footer a { color: #fff; }
-  footer p { margin: 0 0 8px; }
+  .records { padding: 0; overflow: hidden; }
+  .records table { width: 100%; border-collapse: collapse; font-size: .93rem; }
+  .records td { padding: 9px 16px; border-top: 1px solid var(--border); }
+  .records tr:first-child td { border-top: 0; }
+  .records td.cat { font-weight: 700; }
+  .records td.time { text-align: right; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .records .note { padding: 10px 16px; border-top: 1px solid var(--border); font-size: .82rem; color: var(--muted); }
+  .two { display: grid; gap: 16px; grid-template-columns: 1.15fr 1fr; align-items: start; }
+  @media (max-width: 820px) { .two { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header class="panel">
-    <h1>FFX Speedrun Notes</h1>
-    <p>A website for the Final Fantasy X Speedrun community. Work in progress.</p>
-  </header>
-
-  <nav class="menu" aria-label="Pages">
-    <a href="prototypes/run.html"><b>Run Notes</b><span>The Any% run, step by step. Scroll the mouse wheel over the page to step through it without leaving the game. Route, game text and how much detail to show are set in the right-hand panel.</span></a>
-    <a href="prototypes/sphere-grid.html"><b>Sphere Grid</b><span>Sphere Grid routes played out move by move, teleports included.</span></a>
-    <a href="prototypes/sin-fin.html"><b>Battle: Sin Fin<span class="tag">MOCK-UP</span></b><span>An early mock-up of a boss battle as a turn-order list.</span></a>
-    <div class="sep"></div>
-    <a href="tools/route-builder.html"><b>Sphere Grid Route Builder</b><span>Build a Sphere Grid route by clicking: moves, activations, unlocks and teleports for any character, with Sphere Levels and spheres counted. Export it for the notes, or use it for your own runs.</span></a>
-    <a href="tools/grid-editor.html"><b>Sphere Grid Editor</b><span>For contributors: edit the grid data that the Sphere Grid pages draw.</span></a>
-    <a href="https://github.com/lukeroddis/FFX-Speedrun"><b>Contribute on GitHub</b><span>The notes are Markdown files. Spot a mistake or have a better strat? Open an issue or a pull request.</span></a>
-  </nav>
-
-  <footer>
-    <p>Final Fantasy X and the Sphere Grid are © Square Enix. This is an unofficial fan project, not affiliated with or endorsed by Square Enix.</p>
-  </footer>
+<div class="page-head">
+  <div class="wrap">
+    <h1>Final Fantasy X Speedrun</h1>
+    <p>A home for the FFX speedrunning community: step-by-step run notes, Sphere Grid routes, the tricks and skips, and the current records.</p>
+    <div class="actions">
+      <a class="btn primary" href="pages/notes.html?cat=any">Read the Any% notes</a>
+      <a class="btn ghost" id="discordBtn" href="pages/community.html">Join the Discord</a>
+      <a class="btn ghost" href="pages/leaderboards.html">Leaderboards</a>
+    </div>
+  </div>
 </div>
+
+<main class="wrap">
+  <h2 class="section">Start here</h2>
+  <div class="grid">
+    <a class="card" href="pages/notes.html?cat=any">
+      <h3>New to the run?</h3>
+      <p>Follow the Any% notes step by step. You should be able to finish your first run if you follow them exactly. Scroll the mouse wheel over the page to move on without leaving the game.</p>
+      <div class="foot"><span class="tag">Any%</span></div>
+    </a>
+    <a class="card" href="pages/tricks.html">
+      <h3>Learn the skips</h3>
+      <p>Videos of the tricks and skips the routes use, with what each one does.</p>
+      <div class="foot"><span class="tag" id="trickCount">Tricks & Skips</span></div>
+    </a>
+    <a class="card" href="pages/community.html">
+      <h3>Ask the community</h3>
+      <p>Questions, practice saves and route discussion happen in the Discord. Come and say hello.</p>
+      <div class="foot"><span class="tag">Discord</span></div>
+    </a>
+    <a class="card" href="tools/route-builder.html">
+      <h3>Plan a Sphere Grid route</h3>
+      <p>Click out moves, activations, unlocks and teleports for any character, with Sphere Levels and spheres counted for you.</p>
+      <div class="foot"><span class="tag">Route Builder</span></div>
+    </a>
+  </div>
+
+  <section id="liveSec" hidden>
+    <h2 class="section"><span><span class="tag live">LIVE</span> Streaming now</span> <a href="pages/community.html">All streams →</a></h2>
+    <div id="live"></div>
+  </section>
+
+  <h2 class="section">Categories <a href="pages/categories.html">All categories →</a></h2>
+  <div class="grid" id="cats"><p class="muted">Loading…</p></div>
+
+  <div class="two">
+    <section>
+      <h2 class="section">World records <a href="pages/leaderboards.html">Leaderboards →</a></h2>
+      <div class="card records" id="records"><p class="muted" style="padding:14px 16px;margin:0">Loading from speedrun.com…</p></div>
+    </section>
+    <section>
+      <h2 class="section">Tricks & skips <a href="pages/tricks.html">All →</a></h2>
+      <div class="grid" id="tricks" style="grid-template-columns:1fr"></div>
+    </section>
+  </div>
+</main>
+
+<script>
+(async () => {
+  Hub.nav("home");
+  Hub.footer();
+  const $ = id => document.getElementById(id), esc = Hub.esc;
+  const links = await Hub.links();
+  if (links.discord) $("discordBtn").href = links.discord;
+
+  // who's live: only shown when someone is
+  Hub.live().then(d => { if (d?.streams?.length) { $("live").innerHTML = Hub.liveHTML(d, 3); $("liveSec").hidden = false; } });
+
+  // categories, built from notes/categories.yml and each category's languages
+  let langNames = {};
+  try { langNames = (await NotesConfig.fetchJson(NotesConfig.paths.glossary())).languages || {}; } catch {}
+  const cats = await Hub.categories();
+  $("cats").innerHTML = cats.map(c => c.status === "coming-soon"
+    ? `<div class="card"><h3>${esc(c.name)}</h3><p>${esc(c.about)}</p><div class="foot"><span class="tag soon">Notes coming soon</span></div></div>`
+    : `<a class="card" href="${Hub.notesUrl(c.id)}"><h3>${esc(c.name)}</h3><p>${esc(c.about)}</p>
+        <div class="foot">${c.languages.map(l => `<span class="tag">${esc(langNames[l] || l)}</span>`).join("")}</div></a>`).join("");
+
+  // world records: first place on each board
+  const boards = await Hub.boards().catch(() => []);
+  const rows = await Promise.all(boards.map(async b => ({ b, d: await Hub.board(b).catch(() => null) })));
+  $("records").innerHTML = rows.length ? `<table>${rows.map(({ b, d }) => {
+      const r = d?.runs?.[0];
+      return `<tr><td class="cat"><a href="${esc(d?.link || links.speedrun || "#")}">${esc(b.name)}</a></td>
+        <td>${r ? r.players.map(p => p.link ? `<a href="${esc(p.link)}">${esc(p.name)}</a>` : esc(p.name)).join(", ") : `<span class="muted">Couldn't load</span>`}</td>
+        <td class="time">${r ? (r.video ? `<a href="${esc(r.video)}" title="Watch the run">${Hub.time(r.time)}</a>` : Hub.time(r.time)) : ""}</td></tr>`;
+    }).join("")}</table><div class="note">From speedrun.com, refreshed once a day.</div>`
+    : `<p class="muted" style="padding:14px 16px;margin:0">No leaderboards set up.</p>`;
+
+  // the first few tricks
+  const tricks = await Hub.tricks();
+  $("trickCount").textContent = `${tricks.length} video${tricks.length === 1 ? "" : "s"}`;
+  $("tricks").innerHTML = tricks.slice(0, 2).map(t => `<div class="card">${Hub.videoHTML(t.video, t.name)}
+    <h3>${esc(t.name)}</h3><p>${esc(t.area || "")}</p></div>`).join("") || `<p class="muted">No tricks yet.</p>`;
+})();
+</script>
 </body>
 </html>

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Leaderboards – Final Fantasy X Speedrun</title>
+<meta name="description" content="The current top Final Fantasy X speedruns, from speedrun.com.">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/hub.css">
+<script src="../assets/notes-config.js"></script>
+<script src="../assets/hub.js"></script>
+</head>
+<body>
+<div class="page-head"><div class="wrap"><h1>Leaderboards</h1><p>The top runs in the most popular categories, from speedrun.com. Refreshed once a day.</p></div></div>
+<main class="wrap">
+<div class="grid" id="boards" style="grid-template-columns:repeat(auto-fill,minmax(340px,1fr))"><p class="muted">Loading from speedrun.com…</p></div>
+<p class="muted" style="margin-top:18px;font-size:.88rem">Every category and its rules are on <a id="src" href="https://www.speedrun.com/ffx">speedrun.com/ffx</a>. Which boards show here is set in hub/leaderboards.yml.</p>
+</main>
+<script>
+(async () => {
+  Hub.nav("boards");
+  Hub.footer();
+  const $ = id => document.getElementById(id), esc = Hub.esc;
+  const links = await Hub.links();
+  if (links.speedrun) $("src").href = links.speedrun;
+  const boards = await Hub.boards().catch(() => []);
+  const data = await Promise.all(boards.map(b => Hub.board(b).catch(() => null)));
+  $("boards").innerHTML = boards.map((b, i) => Hub.boardHTML(b, data[i])).join("") || `<p class="muted">No leaderboards set up.</p>`;
+})();
+</script>
+</body>
+</html>
