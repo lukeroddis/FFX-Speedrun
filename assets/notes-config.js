@@ -40,8 +40,10 @@
     notes: (cat, lang, file) => `${ROOT}notes/${cat}/${lang}/${file}`,
     grid: name => `${ROOT}sphere-grid/${encodeURIComponent(name || "standard")}.json`,
   };
-  const fetchText = url => fetch(url).then(r => { if (!r.ok) throw new Error(`${url} wasn't found`); return r.text(); });
-  const fetchJson = url => fetch(url).then(r => { if (!r.ok) throw new Error(`${url} wasn't found`); return r.json(); });
+  /* "no-cache": the browser always asks the server whether a file changed (a quick "not modified" when it
+     hasn't), so an edited notes or settings file shows up on the next refresh instead of an old copy */
+  const fetchText = url => fetch(url, { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error(`${url} wasn't found`); return r.text(); });
+  const fetchJson = url => fetch(url, { cache: "no-cache" }).then(r => { if (!r.ok) throw new Error(`${url} wasn't found`); return r.json(); });
 
   /* a category's shared settings, with defaults filled in */
   async function loadCategory(cat) {
