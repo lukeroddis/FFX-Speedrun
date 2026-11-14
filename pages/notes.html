@@ -209,12 +209,15 @@
             color: #3a2400; text-shadow: none; background: linear-gradient(180deg, #fff2a8, var(--gold) 60%, #d49a10); border-radius: 3px; vertical-align: 1px; }
 
   /* encounters */
-  .enc { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-  .enc > li { display: grid; grid-template-columns: minmax(90px, auto) 1fr; gap: 4px 12px; align-items: start; }
-  .enc .foe { justify-self: start; padding: 1px 9px; border-radius: 3px; font-weight: 700; font-size: .92rem;
+  /* one row per enemy: its red box, then what each character does, drawn like battle turns */
+  .enc { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+  .enc > li { display: grid; grid-template-columns: 120px 1fr; gap: 6px 12px; align-items: start; }
+  .enc .foe { justify-self: stretch; margin-top: 6px; padding: 4px 9px; border-radius: 3px; font-weight: 700; font-size: .92rem; line-height: 1.25;
               background: linear-gradient(180deg, #b0182a, #6a0610); border: 1px solid #ff9ab8; }
-  .enc .what ul { margin: 0; padding-left: 18px; }
-  .enc .what > :first-child { margin-top: 0; }
+  .enc .foe.other { background: linear-gradient(180deg, #4a4d7a, #2c2e55); border-color: #9fa2c8; }   /* "Anything else" */
+  .enc .turns ul { margin: 2px 0 0; padding-left: 18px; }
+  .enc .turn.plain .act { padding-left: 2px; }
+  @media (max-width: 560px) { .enc > li { grid-template-columns: 1fr; } .enc .foe { justify-self: start; margin-top: 0; } }
 
   /* trial */
   ol.trial { margin: 0; padding: 0; list-style: none; counter-reset: t; display: grid; gap: 2px; }
@@ -644,10 +647,23 @@ function blockHTML(b) {
     return `<li class="block kind-trial">${head}<div class="bbody">${intro}<ol class="trial">${tree.children.map(t => `<li class="stop">${fmt(t.text)}${plainList(t.children)}</li>`).join("")}</ol>${drops}</div></li>`;
   }
   if (b.type === "encounters") {
+    /* Each enemy gets a red box, then its lines drawn like battle turns:
+         - Dingo:              - Dingo: Tidus: Attack       (short form)
+           - Tidus: Attack     - Dingo: Tidus Attack        (older notes: the colon after the name is added)
+       A line without a character ("Otherwise run away") shows as plain text. The block is one stop: its lines
+       aren't stepped through one by one, as which encounter you get is random. */
+    const isTurnLine = text => ACTOR.test(text) || /^Switch \w+ for \w+$/.test(text) || VLABEL.test(text) || /^\*(.+?):?\*:?$/.test(text);
+    const row = t => (isTurnLine(t.text) ? turnHTML(t, "Enemy") : `<li class="turn plain"><div class="act">${fmt(t.text)}${plainList(t.children)}</div></li>`)
+      .replace(/class="turn stop"/g, 'class="turn"').replace(/<div class="tile" style="--c:#555">··<\/div>/g, "");
+    const lead = new RegExp(`^(${Object.keys(meta.names).filter(n => n !== "Enemy").join("|")}):?\\s+(.+)$`);
     inner = `<ul class="enc">${tree.children.map(t => {
+      if (isTurnLine(t.text)) return `<li><span></span><ol class="turns">${row(t)}</ol></li>`;   // a line for every encounter
       const m = t.text.match(/^([^:]+):\s*(.*)$/);
-      if (!m) return `<li><span></span><div class="what">${fmt(t.text)}${plainList(t.children)}</div></li>`;
-      return `<li><span class="foe">${esc(m[1])}</span><div class="what">${m[2] ? fmt(m[2]) : ""}${plainList(t.children)}</div></li>`;
+      if (!m) return `<li><span></span><ol class="turns">${row(t)}</ol></li>`;
+      const foe = m[1].trim(), kids = [...t.children];
+      if (m[2]) { const l = m[2].match(lead); kids.unshift({ text: l ? `${l[1]}: ${l[2]}` : m[2], children: [] }); }
+      const other = /^(else|otherwise|anything else|any other|others?)$/i.test(foe);
+      return `<li><span class="foe${other ? " other" : ""}">${esc(other ? "Anything else" : foe)}</span><ol class="turns">${kids.map(row).join("")}</ol></li>`;
     }).join("")}</ul>`;
   } else if (b.type === "spheregrid") {
     // "route: name" or, for a variant not chosen yet, "route: name | label"; one grid each

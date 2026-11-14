@@ -177,6 +177,19 @@ The notes live in `notes/<category>/<language>/`, one Markdown file per area (se
 - **`party: Tidus, Yuna, Kimahri`** inside a `:::battle` block: the party the game puts you in for that fight. The previous party comes back once the fight is over.
 - **`route: besaid-tidus`** inside a `:::spheregrid` block: the route file to draw (see below).
 
+**Encounters** are written enemy by enemy, like battle turns. Each enemy gets a red box, and lines that start with a character's name get their portrait:
+
+```markdown
+:::encounters
+- Dingo:
+  - Tidus: Attack
+- Condor: Wakka: Attack
+- Otherwise: Flee
+:::
+```
+
+The short form `- Dingo: Tidus Attack` works too. A line without a character (`- Otherwise run away`) shows as plain text, and `Else` / `Otherwise` get a grey *Anything else* box. The whole block is one step when stepping through the notes.
+
 A **`**Formation:** Tidus, Yuna, Lulu`** anywhere in a step also sets the party, and `Switch X for Y` and `Summon …` turns in battles update it as you step past them.
 
 ### Route toggles
