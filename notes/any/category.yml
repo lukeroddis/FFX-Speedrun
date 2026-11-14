@@ -10,6 +10,7 @@ languages: [en]
 
 # Route toggles: each one gets a toggle on the run page, and ":::if key=option" picks the notes for one option.
 variants:
+  version: [ps2, console, pc, csr]
   blitz: [win, loss]
   spheres: [return4, return2, return0]
 

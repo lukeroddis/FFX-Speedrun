@@ -2,6 +2,12 @@
 title: FFX Any%
 # The wording of the route toggles. Which toggles and options exist is set in ../category.yml.
 variants:
+  version:
+    name: Version
+    ps2: PS2
+    console: HD Console
+    pc: PC
+    csr: Cutscene Remover
   blitz:
     name: Blitzball
     win: Win

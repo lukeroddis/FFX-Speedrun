@@ -15,6 +15,7 @@ Start a new skip by copying one of these files. The part between the `---` lines
 | `summary` | One sentence on what it does. Shown on the card, and by search engines. |
 | `video`, `by`, `by_url` | The video, who made it, and a link to them, for a skip that's the same on every version |
 | `versions` | Instead, one set of `video`, `by` and `by_url` per version (`hd`, `ps2`), when the versions differ. The page shows a tab for each. |
+| `versions: [pc]` | For a skip that only exists on some versions (e.g. PC), with one `video` for all of them. The page says "PC only". |
 
 Below the details, write the guide in Markdown:
 

@@ -442,9 +442,9 @@ const nameColor = n => SHADE[meta.names[n]] || meta.names[n] || "#fff";
 const TERM_INFO = {
   "SD": ["sd", "Skip Dialogue: press Confirm as soon as the text finishes appearing"],
   "CS": ["cs", "Cutscene: rendered in-game, can't be skipped. Take a break"],
-  "Skippable CS": ["cs", "Cutscene you can skip on PC"],
+  "Skippable CS": ["cs", "Cutscene you can skip on PC (not on PS2 or HD Console)"],
   "FMV": ["fmv", "Full Motion Video: pre-rendered, can't be skipped"],
-  "Skippable FMV": ["fmv", "Full Motion Video you can skip on PC (not on PS2)"],
+  "Skippable FMV": ["fmv", "Full Motion Video you can skip on PC (not on PS2 or HD Console)"],
   "Touch the Save Sphere": ["save", "Touch the Save Sphere to fully heal, then cancel out"],
 };
 const terms = meta.terms.filter(t => TERM_INFO[t]);
@@ -457,24 +457,38 @@ const SKIPS = (await Hub.skips()) || [];
 const skipByName = new Map(SKIPS.flatMap(s => [s.name, ...(s.aliases || [])].map(n => [n.toLowerCase(), s])));
 const reEscape = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const skipRe = skipByName.size ? new RegExp(`(?<![\\w])(${[...skipByName.keys()].sort((a, b) => b.length - a.length).map(n => reEscape(esc(n))).join("|")})(?![\\w])`, "gi") : null;
-const linkSkips = html => skipRe ? html.replace(skipRe, m => {
+const skipLink = m => {
   const s = skipByName.get(m.toLowerCase());
   return `<a class="skiplink" href="${esc(s.link)}" target="_blank" rel="noopener" title="How to do the ${esc(s.name)} (opens in a new tab)">${m}<span aria-hidden="true"> ▶</span></a>`;
-}) : html;
+};
+/* "Skippable FMV" / "Skippable CS": only PC can skip them. On PS2 and HD Console (the Version toggle)
+   they show as a plain FMV / CS, with a note saying so. */
+const NO_SKIPPING = ["ps2", "console"];
+function termHTML(w) {
+  const unskippable = /^Skippable /.test(w) && NO_SKIPPING.includes(vars.version);
+  const shown = unskippable ? w.replace(/^Skippable /, "") : w;
+  const title = unskippable ? `${TERM_INFO[shown][1]}. Only skippable on PC.` : TERM_INFO[w][1];
+  return `<abbr class="term ${TERM_INFO[w][0]}" title="${esc(title)}">${shown}</abbr>`;
+}
 function fmt(s) {
-  return linkSkips(esc(s))
+  // Links, terms and names are set aside as placeholders while the text is styled, so nothing inside them
+  // (a skip link's name, a term's hover text with "can't" in it) is styled a second time
+  const kept = [];
+  const keep = html => { kept.push(html); return `\u0001${kept.length - 1}\u0002`; };
+  let html = esc(s);
+  if (skipRe) html = html.replace(skipRe, m => keep(skipLink(m)));
+  return html
     .replace(wordRe, (all, w, plural) => {
       const g = GLOSS.get(w);
       if (g) return gameLang !== NOTES_LANG && g[gameLang]
-        ? `<span class="gt" lang="${esc(gameLang)}" title="${esc(w + plural)}"><b>${esc(g[gameLang])}</b><small>${w}${plural}</small></span>`
+        ? keep(`<span class="gt" lang="${esc(gameLang)}" title="${esc(w + plural)}"><b>${esc(g[gameLang])}</b><small>${w}${plural}</small></span>`)
         : all;
       if (plural) return all;
-      return TERM_INFO[w]
-        ? `<abbr class="term ${TERM_INFO[w][0]}" title="${esc(TERM_INFO[w][1])}">${w}</abbr>`
-        : `<span class="nm" style="--c:${nameColor(w)}">${w}</span>`;
+      return keep(TERM_INFO[w] ? termHTML(w) : `<span class="nm" style="--c:${nameColor(w)}">${w}</span>`);
     })
     .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\*(.+?)\*/g, "<i>$1</i>").replace(/`(.+?)`/g, "<code>$1</code>")
-    .replace(/'(.+?)'/g, "‘$1’");
+    .replace(/'(.+?)'/g, "‘$1’")
+    .replace(/\u0001(\d+)\u0002/g, (_, i) => kept[i]);
 }
 const initials = n => n.slice(0, 2);
 const tile = (n, cls = "") => n === "Enemy" ? `<div class="tile mon ${cls}">mon</div>`

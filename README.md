@@ -234,6 +234,8 @@ targets:
     blitz=loss: 9
 ```
 
+The **Version** toggle (PS2 · HD Console · PC · Cutscene Remover, which is PC-only) works the same way, with `:::if version=pc,csr` around PC-only steps, such as the FMV Storage Skip. It also changes how the notes read on their own: FMVs and cutscenes can only be skipped on PC, so on PS2 or HD Console a **Skippable FMV** or **Skippable CS** in the notes shows as a plain **FMV** or **CS**, with a note saying so.
+
 Adding another variant needs no code: add it to `variants:` in `category.yml`, give it wording in each `index.md`, and use it in `:::if`.
 
 ### Lighter views

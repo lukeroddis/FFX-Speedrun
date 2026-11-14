@@ -13,7 +13,7 @@ import { parseYaml } from "./twitch-live.mjs";
 const OUT = "_site";
 const SKIP_DIR = "hub/skips";
 const LEAVE_OUT = new Set([".git", ".github", OUT, "reference", ".claude", "node_modules"]);
-const VERSION_LABEL = { hd: "HD Remaster", ps2: "PS2" };
+const VERSION_LABEL = { hd: "HD Remaster", ps2: "PS2", console: "HD Console", pc: "PC", csr: "Cutscene Remover" };
 
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const exists = p => stat(p).then(() => true, () => false);
@@ -75,6 +75,9 @@ function frontMatter(text) {
 }
 /* the versions with a video: [{ key, label, video, by, by_url }]; a skip with one video for every version has key "" */
 function versionsOf(meta) {
+  // "versions: [pc]": a skip for some versions only, with one video (or none) for all of them
+  if (Array.isArray(meta.versions))
+    return [{ key: meta.versions.join(" "), label: meta.versions.map(k => VERSION_LABEL[k] || k).join(" and "), video: meta.video || "", by: meta.by || "", by_url: meta.by_url || "" }];
   if (meta.versions && typeof meta.versions === "object")
     return Object.entries(meta.versions).map(([key, v]) => ({ key, label: VERSION_LABEL[key] || key, video: v.video || "", by: v.by || "", by_url: v.by_url || "" }));
   return [{ key: "", label: "", video: meta.video || "", by: meta.by || "", by_url: meta.by_url || "" }];
@@ -232,7 +235,8 @@ async function main() {
       const langs = list(cfg.languages).length ? list(cfg.languages) : ["en"];
       notesAreas[id] = new Set();
       for (const area of list(cfg.areas))
-        if (await exists(`notes/${id}/${langs[0]}/${area}.md`)) notesAreas[id].add(area.replace(/^\d+-/, ""));
+        // either form may be used: "guadosalam", or "01-zanarkand" where two areas share a name
+        if (await exists(`notes/${id}/${langs[0]}/${area}.md`)) { notesAreas[id].add(area); notesAreas[id].add(area.replace(/^\d+-/, "")); }
     } catch {}
   }
 
