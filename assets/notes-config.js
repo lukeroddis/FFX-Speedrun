@@ -3,6 +3,7 @@
    notes/categories.yml              the categories on the site
    notes/glossary/terms.yml          the game's languages, and every in-game name's type and icon (shared by all categories)
    notes/glossary/<language>.yml     those names in one game language
+   notes/maps/<name>.txt             area maps (no language: any category's notes can show them)
    notes/<category>/category.yml     settings shared by every language: grid, languages, toggles, targets, area order
    notes/<category>/sphere-grid/     Sphere Grid route files (no language: shared by every language)
    notes/<category>/<language>/      the notes: index.md (wording) and one Markdown file per area
@@ -37,6 +38,7 @@
     categories: () => `${ROOT}notes/categories.yml`,
     glossaryTerms: () => `${ROOT}notes/glossary/terms.yml`,
     glossary: lang => `${ROOT}notes/glossary/${encodeURIComponent(lang)}.yml`,
+    map: name => `${ROOT}notes/maps/${encodeURIComponent(name)}.txt`,
     category: cat => `${ROOT}notes/${cat}/category.yml`,
     route: (cat, name) => `${ROOT}notes/${cat}/sphere-grid/${encodeURIComponent(name)}.json`,
     notes: (cat, lang, file) => `${ROOT}notes/${cat}/${lang}/${file}`,

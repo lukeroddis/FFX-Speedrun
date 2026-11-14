@@ -4,7 +4,7 @@
 # languages: the game's languages. Each one has a <id>.yml file here and appears in the
 #            notes page's Game text toggle.
 # terms:     one entry per in-game name, by id. The language files use these ids.
-#   type: item (more types, such as ability, can be added later)
+#   type: item or equipment (more types, such as ability, can be added later)
 #   icon: the icon the game's Item menu shows beside it:
 #         sphere-red, sphere-purple, sphere-black, weapon, potion-blue, potion-orange, potion-purple
 
@@ -72,3 +72,8 @@ terms:
   mega-phoenix:
     type: item
     icon: potion-orange
+
+  # equipment picked up on the way
+  scout:
+    type: equipment
+    icon: weapon

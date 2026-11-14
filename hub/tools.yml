@@ -12,6 +12,10 @@ grid-editor:
   name: Sphere Grid Editor
   link: tools/grid-editor.html
   about: For contributors: edit the Sphere Grid data itself, the nodes and links that every grid on the site draws.
+map-editor:
+  name: Map Editor
+  link: tools/map-editor.html
+  about: Trace an area map for the notes over a screenshot of the in-game map, with the trails, the route and the chests that matter. Copy the result into the notes.
 speedrun-mod:
   name: FFX Speedrun Mod
   link: https://github.com/HannibalSnekter/FFXSpeedrunMod/releases

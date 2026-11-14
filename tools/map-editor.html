@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Map Editor – FFX Notes</title>
+<meta name="description" content="Trace an area map for the FFX speedrun notes: trails, the route and the chests that matter.">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/ingame.css">
+<style>
+  :root {
+    --bg-1: #4a4f86; --bg-2: #6a6fa8; --bg-3: #8c8fc4;
+    --text: #fff; --text-dim: #c9cbe8; --gold: #ffd84a;
+    --shadow: 0 2px 0 rgba(0,0,0,.55), 0 0 4px rgba(0,0,0,.35);
+    --box: linear-gradient(180deg, rgba(60,62,110,.94), rgba(40,40,85,.94));
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; }
+  body {
+    color: var(--text); font-family: "Ubuntu", "Segoe UI", sans-serif; font-weight: 500; text-shadow: var(--shadow);
+    background:
+      radial-gradient(ellipse at 15% 20%, rgba(255,255,255,.10), transparent 45%),
+      repeating-linear-gradient(115deg, rgba(255,255,255,.025) 0 2px, transparent 2px 9px),
+      linear-gradient(160deg, var(--bg-3), var(--bg-2) 40%, var(--bg-1));
+    background-attachment: fixed; min-height: 100vh;
+    display: flex; flex-direction: column; padding: 12px 14px; gap: 10px;
+  }
+  .panel {
+    background: linear-gradient(90deg, rgba(30,30,70,.85), rgba(70,70,130,.55) 60%, rgba(70,70,130,.15));
+    border-top: 2px solid rgba(255,255,255,.25); border-bottom: 2px solid rgba(0,0,0,.35);
+    padding: 8px 16px 8px 32px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
+  }
+  .panel h1 { margin: 0; font-size: 1.3rem; }
+  .panel a { color: var(--text-dim); font-size: .85rem; }
+  button, .btn {
+    font: inherit; font-size: .85rem; color: var(--text); text-shadow: var(--shadow); padding: 4px 10px; cursor: pointer;
+    background: linear-gradient(180deg, #7476b8, #3b3c7a); border: 1px solid #c9cbf0; border-radius: 3px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.3); white-space: nowrap;
+  }
+  button:hover, .btn:hover { filter: brightness(1.15); }
+  button.on { background: linear-gradient(180deg, #ffe58a, #d6a516); color: #2a1d00; text-shadow: none; }
+  input[type=text], textarea {
+    font: inherit; font-size: .88rem; color: #fff; background: #1d1d45; border: 1px solid #9fa2c8; border-radius: 3px; padding: 4px 7px;
+  }
+  .layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 12px; align-items: start; }
+  @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+  .frame { border: 2px solid #9fa2c8; border-radius: 6px; padding: 8px; background: var(--box);
+           box-shadow: inset 0 0 0 2px #2a2a55, 0 4px 14px rgba(0,0,0,.35); }
+  /* the drawing area: the reference screenshot, the map as the notes draw it, and the clickable handles */
+  .stage { position: relative; margin: 0 auto; max-width: 720px; }
+  .stage .nmap { max-width: none; cursor: default; }
+  .stage img.ref { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; z-index: 2; pointer-events: none; border-radius: 4px; }
+  .stage svg.handles { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 3; cursor: crosshair; touch-action: none; overflow: visible; }
+  .handles circle { stroke: #000; stroke-width: .25; cursor: grab; }
+  .handles .h-trail { fill: #9fb0ff; } .handles .h-route { fill: #ffd84a; } .handles .h-chest { fill: #fff; } .handles .h-label { fill: #c9cbe8; }
+  .handles .current { stroke: #fff; stroke-width: .5; }
+  .side { display: flex; flex-direction: column; gap: 10px; }
+  .box { border: 2px solid #9fa2c8; border-radius: 6px; padding: 10px 12px; background: var(--box); box-shadow: inset 0 0 0 2px #2a2a55; }
+  .box h2 { margin: 0 0 8px; font-size: .78rem; letter-spacing: .08em; color: var(--text-dim); }
+  .row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px; }
+  .help { font-size: .8rem; color: var(--text-dim); line-height: 1.45; margin: 6px 0 0; }
+  .help kbd { font-family: inherit; padding: 0 4px; border: 1px solid #9fa2c8; border-radius: 3px; background: #1d1d45; }
+  textarea { width: 100%; min-height: 220px; font-family: Consolas, "Cascadia Mono", monospace; font-size: .8rem; text-shadow: none; resize: vertical; }
+  input[type=range] { flex: 1; }
+  label.file { display: inline-block; }
+  label.file input { display: none; }
+  .toast { font-size: .8rem; color: var(--gold); min-height: 1em; }
+  textarea#block { min-height: 0; height: 4.6em; }
+  .sub { font-size: .78rem; color: var(--text-dim); margin: 10px 0 4px; }
+  /* names on the map can be dragged off the paths they'd cover */
+  .stage .mlabel { pointer-events: auto; cursor: move; z-index: 4; }
+  .stage .mlabel:hover { filter: brightness(1.25); }
+</style>
+</head>
+<body>
+<div class="panel">
+  <h1>Map Editor</h1>
+  <a href="../pages/tools.html">← Tools</a>
+  <a href="https://github.com/lukeroddis/FFX-Speedrun#maps" title="How maps work in the notes">How maps work</a>
+</div>
+
+<div class="layout">
+  <div class="frame"><div class="stage" id="stage"></div></div>
+
+  <div class="side">
+    <div class="box">
+      <h2>1 · REFERENCE SCREENSHOT</h2>
+      <div class="row">
+        <label class="file btn">Choose image…<input type="file" id="file" accept="image/*"></label>
+        <button id="hideRef">Hide</button>
+      </div>
+      <div class="row"><span style="font-size:.8rem">Opacity</span><input type="range" id="opacity" min="0" max="1" step=".05" value=".55"></div>
+      <p class="help">A screenshot of the in-game map to trace over. It stays on your computer and never goes into the notes; the map's shape is taken from it.</p>
+    </div>
+
+    <div class="box">
+      <h2>2 · DRAW</h2>
+      <div class="row" id="modes">
+        <button data-mode="trail">Trail</button>
+        <button data-mode="route" class="on">Route</button>
+        <button data-mode="chest">Chest</button>
+        <button data-mode="label">Label</button>
+      </div>
+      <div class="row">
+        <button id="newLine" title="Finish this line and start a new one (Enter)">New line</button>
+        <button id="undo" title="Ctrl+Z">Undo</button>
+        <button id="clear">Clear all</button>
+      </div>
+      <p class="help">
+        <b>Trail</b>: click along the paths you can walk, one line per path. <b>Route</b>: click along the way to go, in order.
+        Press <kbd>Enter</kbd> or <b>New line</b> to start another line.<br>
+        <b>Chest</b> / <b>Label</b>: click a spot, then type its name. Chest names are found in the glossary, so they get their icon.<br>
+        Drag a point of the chosen kind to move it. Right-click any point to remove it.<br>
+        <b>Names</b>: drag a chest's or label's name off the paths it covers; a thin line joins it to its spot. Double-click a name to put it back.
+      </p>
+    </div>
+
+    <div class="box">
+      <h2>3 · SAVE THE MAP FILE</h2>
+      <div class="row">
+        <input type="text" id="name" placeholder="File name, e.g. kilika-woods" style="flex:1">
+        <button id="openName" title="Open notes/maps/<name>.txt from this site">Open</button>
+        <label class="file btn" title="Open a map file from your computer">Open file…<input type="file" id="openFile" accept=".txt,text/plain"></label>
+      </div>
+      <div class="row"><input type="text" id="by" placeholder="Based on someone else's map? Their name" style="flex:1"></div>
+      <textarea id="out" spellcheck="false"></textarea>
+      <div class="row" style="margin-top:6px">
+        <button id="download">Download file</button><button id="copy">Copy</button><span class="toast" id="toast"></span>
+      </div>
+      <p class="help">Save it as <b id="path">notes/maps/&lt;name&gt;.txt</b>. Maps have no language, so every category's notes can use the same one.</p>
+
+      <p class="sub">Then put this where the map belongs in an area's notes:</p>
+      <div class="row"><input type="text" id="title" placeholder="Title shown above the map, e.g. Kilika Woods" style="flex:1"></div>
+      <textarea id="block" spellcheck="false" readonly></textarea>
+      <div class="row" style="margin-top:6px"><button id="copyBlock">Copy</button></div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/notes-config.js"></script>
+<script src="../assets/notes-map.js"></script>
+<script>
+(async function () {
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+};
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+/* Chest names in the glossary get their item icon, as in the notes (English names) */
+const ICON = new Map();
+try {
+  const g = await NotesConfig.loadGlossary();
+  for (const [id, forms] of Object.entries(await NotesConfig.loadGlossaryNames("en")))
+    if (g.terms[id]?.icon) for (const f of forms) ICON.set(f.toLowerCase(), g.terms[id].icon);
+} catch {}
+const label = (name, kind) => {
+  if (kind !== "chest") return esc(name);
+  const icon = ICON.get(name.toLowerCase()) || ICON.get(name.toLowerCase().replace(/s$/, ""));
+  return `<span class="gt"${icon ? ` data-icon="${icon}"` : ""}><span><b>${esc(name)}</b></span></span>`;
+};
+
+/* ---- state ---- */
+const blank = () => ({ ratio: 1, trails: [], routes: [], chests: [], labels: [], by: "" });
+let map = blank(), title = "", mode = "route", current = null;   // current: the line being drawn { list, i }
+let refURL = "", refShown = true;
+const history = [];
+const snapshot = () => { history.push(JSON.stringify({ map, title })); if (history.length > 200) history.shift(); };
+
+/* a map file's text, or a whole ":::map" block pasted from older notes */
+function load(text) {
+  const lines = text.replace(/\r/g, "").split("\n");
+  const head = lines.find(l => /^:::map\b/.test(l.trim()));
+  if (head) title = head.trim().replace(/^:::map\s*/, "");
+  map = NotesMap.parse(lines.filter(l => !/^:::/.test(l.trim())));
+  current = null;
+}
+const fileName = () => $("name").value.trim().toLowerCase().replace(/\.txt$/, "").replace(/[^\w-]+/g, "-");
+try {
+  const saved = JSON.parse(store.get("ffx-map-editor-2", "null"));
+  if (saved) { load(saved.text || ""); title = saved.title || title; $("name").value = saved.name || ""; }
+} catch {}
+
+/* ---- drawing ---- */
+const stage = $("stage");
+function draw({ keepText = false } = {}) {
+  map.by = $("by").value.trim();
+  const text = NotesMap.serialize(map);
+  if (!keepText) $("out").value = text;
+  const name = fileName();
+  $("path").textContent = `notes/maps/${name || "<name>"}.txt`;
+  $("block").value = `:::map${title ? " " + title : ""}\nfile: ${name || "<name>"}\n:::`;
+  store.set("ffx-map-editor-2", JSON.stringify({ text, title, name: $("name").value }));
+  const H = 100 * map.ratio;
+  const P = ([x, y]) => [x, y * map.ratio];
+  const dot = (cls, at, ref) => { const [x, y] = P(at); return `<circle class="${cls}" cx="${x}" cy="${y}" r="1.3" data-ref="${ref}"/>`; };
+  let h = "";
+  for (const list of ["trails", "routes"]) map[list].forEach((line, i) => {
+    const cur = current && current.list === list && current.i === i;
+    line.forEach((pt, j) => { h += dot(`h-${list.slice(0, -1)}${cur ? " current" : ""}`, pt, `${list}:${i}:${j}`); });
+  });
+  map.chests.forEach((c, i) => { h += dot("h-chest", c.at, `chests:${i}`); });
+  map.labels.forEach((l, i) => { h += dot("h-label", l.at, `labels:${i}`); });
+  stage.innerHTML = NotesMap.render({ ...map, trails: map.trails.filter(p => p.length > 1), routes: map.routes.filter(p => p.length > 1) }, { label })
+    + (refURL && refShown ? `<img class="ref" src="${refURL}" alt="" style="opacity:${$("opacity").value}">` : "")
+    + `<svg class="handles" viewBox="0 0 100 ${H}">${h}</svg>`;
+}
+
+/* ---- clicks ---- */
+const at = e => {
+  const r = stage.querySelector("svg.handles").getBoundingClientRect();
+  const c = v => Math.max(0, Math.min(100, Math.round(v * 10) / 10));
+  return [c((e.clientX - r.left) / r.width * 100), c((e.clientY - r.top) / r.height * 100)];
+};
+let drag = null;
+stage.addEventListener("pointerdown", e => {
+  if (e.button !== 0) return;
+  // a chest's or label's name: drag it where it doesn't cover the map; it stays joined to its spot
+  const lab = e.target.closest(".mlabel[data-ref]");
+  if (lab) {
+    e.preventDefault(); snapshot();
+    const [list, i] = lab.dataset.ref.split(":");
+    const r = lab.getBoundingClientRect(), s = stage.querySelector("svg.handles").getBoundingClientRect();
+    const centre = [((r.left + r.right) / 2 - s.left) / s.width * 100, ((r.top + r.bottom) / 2 - s.top) / s.height * 100];
+    const p = at(e);
+    drag = { name: [list, +i], grab: [centre[0] - p[0], centre[1] - p[1]] };
+    return;
+  }
+  if (!e.target.closest("svg.handles")) return;
+  const ref = e.target.dataset?.ref;
+  if (ref && ref.startsWith(mode + "s:")) {   // move an existing point (of what's being drawn: a chest can go on a trail)
+    snapshot();
+    drag = ref.split(":").map((v, i) => i ? +v : v);
+    e.target.setPointerCapture?.(e.pointerId);
+    return;
+  }
+  const p = at(e);
+  if (mode === "trail" || mode === "route") {
+    snapshot();
+    const list = mode + "s";
+    if (!current || current.list !== list) { map[list].push([]); current = { list, i: map[list].length - 1 }; }
+    map[list][current.i].push(p);
+  } else {
+    const name = prompt(mode === "chest" ? "What's in the chest? (as the game names it, e.g. Luck Sphere)" : "Label text");
+    if (!name || !name.trim()) return;
+    snapshot();
+    map[mode + "s"].push({ at: p, name: name.trim(), side: "" });
+  }
+  draw();
+});
+stage.addEventListener("pointermove", e => {
+  if (!drag) return;
+  const p = at(e);
+  if (drag.name) {
+    const [list, i] = drag.name, o = map[list][i];
+    const r1 = v => Math.round(v * 10) / 10;
+    o.off = [r1(p[0] + drag.grab[0] - o.at[0]), r1(p[1] + drag.grab[1] - o.at[1])]; o.side = "";
+    draw(); return;
+  }
+  const [list, i, j] = drag;
+  if (list === "chests" || list === "labels") map[list][i].at = p; else map[list][i][j] = p;
+  draw();
+});
+addEventListener("pointerup", () => { drag = null; });
+stage.addEventListener("dblclick", e => {
+  const lab = e.target.closest(".mlabel[data-ref]"); if (!lab) return;
+  const [list, i] = lab.dataset.ref.split(":");
+  snapshot(); map[list][+i].off = null; map[list][+i].side = ""; draw();
+});
+stage.addEventListener("contextmenu", e => {
+  const ref = e.target.dataset?.ref; if (!ref) return;
+  e.preventDefault(); snapshot();
+  const [list, i, j] = ref.split(":").map((v, k) => k ? +v : v);
+  if (list === "chests" || list === "labels") map[list].splice(i, 1);
+  else { map[list][i].splice(j, 1); if (!map[list][i].length) { map[list].splice(i, 1); current = null; } }
+  draw();
+});
+
+/* ---- controls ---- */
+$("modes").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  mode = b.dataset.mode; current = null;
+  document.querySelectorAll("#modes button").forEach(x => x.classList.toggle("on", x === b));
+  draw();
+});
+const finishLine = () => { current = null; draw(); };
+$("newLine").onclick = finishLine;
+const undo = () => { const s = history.pop(); if (!s) return; ({ map, title } = JSON.parse(s)); current = null; $("title").value = title; draw(); };
+$("undo").onclick = undo;
+$("clear").onclick = () => { if (!confirm("Clear the whole map?")) return; snapshot(); map = blank(); $("by").value = ""; current = null; draw(); };
+addEventListener("keydown", e => {
+  if (e.target.matches("input, textarea")) return;
+  if (e.key === "Enter") { e.preventDefault(); finishLine(); }
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); undo(); }
+});
+$("title").value = title; $("by").value = map.by;
+$("title").oninput = () => { title = $("title").value.trim(); draw(); };
+$("by").oninput = () => draw();
+$("name").oninput = () => draw();
+$("out").oninput = () => { load($("out").value); $("title").value = title; $("by").value = map.by; draw({ keepText: true }); };
+const toast = msg => { $("toast").textContent = msg; setTimeout(() => { $("toast").textContent = ""; }, 2200); };
+const copy = async el => {
+  try { await navigator.clipboard.writeText(el.value); toast("Copied"); }
+  catch { el.select(); toast("Press Ctrl+C to copy"); }
+};
+$("copy").onclick = () => copy($("out"));
+$("copyBlock").onclick = () => copy($("block"));
+$("download").onclick = () => {
+  const name = fileName();
+  if (!name) { toast("Give the file a name first"); $("name").focus(); return; }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([$("out").value + "\n"], { type: "text/plain" }));
+  a.download = name + ".txt"; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+};
+/* open a map to keep editing: from this site by name, or a file from your computer */
+const opened = (text, name) => {
+  snapshot(); load(text); $("name").value = name; $("by").value = map.by; draw(); toast(`Opened ${name}.txt`);
+};
+$("openName").onclick = async () => {
+  const name = fileName(); if (!name) { toast("Type the map's file name"); $("name").focus(); return; }
+  try { opened(await NotesConfig.fetchText(NotesConfig.paths.map(name)), name); }
+  catch { toast(`notes/maps/${name}.txt wasn't found`); }
+};
+$("openFile").onchange = async () => {
+  const f = $("openFile").files[0]; if (!f) return;
+  opened(await f.text(), f.name.replace(/\.txt$/i, ""));
+  $("openFile").value = "";
+};
+
+/* the reference screenshot: its shape becomes the map's shape */
+$("file").onchange = () => {
+  const f = $("file").files[0]; if (!f) return;
+  if (refURL) URL.revokeObjectURL(refURL);
+  refURL = URL.createObjectURL(f); refShown = true; $("hideRef").textContent = "Hide";
+  const img = new Image();
+  img.onload = () => { snapshot(); map.ratio = img.naturalHeight / img.naturalWidth; draw(); };
+  img.src = refURL;
+};
+$("hideRef").onclick = () => { refShown = !refShown; $("hideRef").textContent = refShown ? "Hide" : "Show"; draw(); };
+$("opacity").oninput = () => { const i = stage.querySelector("img.ref"); if (i) i.style.opacity = $("opacity").value; };
+
+draw();
+})();
+</script>
+</body>
+</html>

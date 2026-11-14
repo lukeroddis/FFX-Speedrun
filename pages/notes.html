@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FFX Any% Notes</title>
 <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/ingame.css">
 <style>
   :root {
     --bg-1: #4a4f86; --bg-2: #6a6fa8; --bg-3: #8c8fc4;
@@ -270,31 +271,7 @@
   a.skiplink:hover { color: #fff; border-bottom-style: solid; }
   a.skiplink span { font-size: .75em; }
 
-  /* ---------- in-game names in the runner's game language ---------- */
-  /* the game's name, big, with the notes' own name small underneath */
-  /* In-game names, drawn like a row of the game's Item menu: the item's icon, then the name in white on a
-     dark blue strip. In another game language the notes' own name sits small underneath. */
-  .gt { display: inline-flex; align-items: center; gap: .4em; vertical-align: middle; line-height: 1.2; white-space: nowrap;
-        margin: 1px 2px; padding: 1px 10px 1px 5px; border-radius: 3px;
-        background: linear-gradient(180deg, #3a4f8f 0%, #1c2a63 45%, #121c4a 100%);
-        border: 1px solid #6f7fb8; box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 1px 3px rgba(0,0,0,.45); }
-  .gt:not([data-icon]) { padding-left: 8px; }
-  .gt > span { display: inline-flex; flex-direction: column; align-items: flex-start; }
-  .gt b { color: #fff; font-weight: 700; font-family: "Ubuntu", "Yu Gothic UI", "Meiryo", "Noto Sans JP", "Malgun Gothic", "Microsoft JhengHei", "Microsoft YaHei", sans-serif;
-        text-shadow: 1px 1px 0 #000, 2px 2px 2px rgba(0,0,0,.6); letter-spacing: .03em; }
-  .gt small { color: #b9c2e6; font-size: .66em; font-weight: 500; text-shadow: 1px 1px 0 #000; }
-  /* icons: data-icon comes from the glossary */
-  .gt[data-icon]::before { content: ""; flex: none; width: 1em; height: 1em; background: center / contain no-repeat; }
-  .gt[data-icon^="sphere-"]::before { width: .85em; height: .85em; border-radius: 50%; }
-  .gt[data-icon="sphere-red"]::before { background: radial-gradient(circle at 35% 30%, #ffd0c8 0 8%, #f0332a 32%, #9a0c0c 75%, #430202 100%); box-shadow: 0 0 3px rgba(255,80,60,.6); }
-  .gt[data-icon="sphere-purple"]::before { background: radial-gradient(circle at 35% 30%, #f3d9ff 0 8%, #b05cf0 30%, #5d1a9c 75%, #2a0850 100%); box-shadow: 0 0 3px rgba(190,110,255,.7); }
-  .gt[data-icon="sphere-black"]::before { background: radial-gradient(circle at 35% 30%, #c8c8c8 0 8%, #4a4a4a 32%, #151515 75%, #000 100%); box-shadow: 0 0 3px rgba(255,255,255,.35); }
-  .gt[data-icon="weapon"]::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' stroke-linecap='round'%3E%3Cpath d='M14.5 1.5 6.2 9.8' stroke='%23000' stroke-opacity='.5' stroke-width='3.2'/%3E%3Cpath d='M14.5 1.5 6.2 9.8' stroke='%23eef3ff' stroke-width='2'/%3E%3Cpath d='M3.6 8.4l4 4' stroke='%2393a0c8' stroke-width='1.8'/%3E%3Cpath d='M5 11 1.8 14.2' stroke='%23748099' stroke-width='1.8'/%3E%3C/svg%3E"); }
-  .gt[data-icon^="potion-"]::before { --p: #3f9cff;
-        background: radial-gradient(circle at 40% 70%, #fff8 0 6%, transparent 10%), radial-gradient(circle at 50% 66%, var(--p) 0 42%, transparent 44%),
-                    linear-gradient(#dfe8ff, #dfe8ff) 50% 8% / 32% 34% no-repeat; filter: drop-shadow(0 0 1px #fff); }
-  .gt[data-icon="potion-orange"]::before { --p: #ff7a2a; }
-  .gt[data-icon="potion-purple"]::before { --p: #8a5cff; }
+  /* in-game names (.gt) and maps (.nmap) are styled in ../assets/ingame.css, shared with the map editor */
 
   /* ---------- route variants ---------- */
   /* route toggles: in the right-hand panel, and in the phone bar's Route drop-down */
@@ -382,6 +359,7 @@
 <script src="../assets/grid-layout.js"></script>
 <script src="../assets/route-engine.js"></script>
 <script src="../assets/notes-config.js"></script>
+<script src="../assets/notes-map.js"></script>
 <script src="../assets/hub.js"></script>
 <script src="../assets/portraits.js"></script>
 <script>
@@ -456,6 +434,15 @@ let gameLang, GAME = {};   // GAME: the game language's names, by id
   gameLang = glossary.languages[saved] ? saved : NOTES_LANG;
   if (gameLang !== NOTES_LANG) GAME = await NotesConfig.loadGlossaryNames(gameLang);
 }
+
+/* ================= MAPS ================= */
+/* Map files (notes/maps/<name>.txt) named by ":::map" blocks, fetched once before the notes are drawn */
+const MAP_FILES = new Map();
+await Promise.all([...new Set(areaList.flatMap(a => [...(a.text || "").matchAll(/^\s*file:\s*([\w-]+)\s*$/gm)].map(m => m[1])))]
+  .map(async name => {
+    try { MAP_FILES.set(name, NotesMap.parse((await NotesConfig.fetchText(NotesConfig.paths.map(name))).replace(/\r/g, "").split("\n"))); }
+    catch { MAP_FILES.set(name, null); }
+  }));
 
 /* ================= INLINE TEXT ================= */
 /* Names are coloured from the front matter's colour words; lighter shades so they read on the purple panels */
@@ -692,7 +679,7 @@ function blockHTML(b) {
   const intro = before.map(p => `<p class="intro">${fmt(p.text)}</p>`).join("");
   const drops = after.map(p => `<p class="drops">${fmt(p.text)}</p>`).join("");
   const drop = dropsOf(b.lines.join(" "));
-  const KIND = { battle: "BATTLE", spheregrid: "SPHERE GRID", trial: "TRIAL", encounters: "ENCOUNTERS", equip: "EQUIP", shop: "SHOP", blitzball: "BLITZBALL" };
+  const KIND = { battle: "BATTLE", spheregrid: "SPHERE GRID", trial: "TRIAL", encounters: "ENCOUNTERS", map: "MAP", equip: "EQUIP", shop: "SHOP", blitzball: "BLITZBALL" };
   const head = `<div class="bhead"><span class="kind">${KIND[b.type] || b.type.toUpperCase()}</span>
     ${b.title ? `<span class="title">${fmt(b.title)}</span>` : ""}
     ${b.extra ? (/HP/.test(b.extra) ? `<span class="hp">HP<b>${esc(b.extra.replace(/\s*HP/, ""))}</b></span>` : `<span class="hp">${esc(b.extra)}</span>`) : ""}</div>`;
@@ -723,6 +710,16 @@ function blockHTML(b) {
       const other = /^(else|otherwise|anything else|any other|others?)$/i.test(foe);
       return `<li><span class="foe${other ? " other" : ""}">${esc(other ? "Anything else" : foe)}</span><ol class="turns">${kids.map(row).join("")}</ol></li>`;
     }).join("")}</ul>`;
+  } else if (b.type === "map") {
+    // drawn by assets/notes-map.js; chest names go through fmt, so items get their icon and game-language name
+    // "file: kilika-woods" draws notes/maps/kilika-woods.txt, with any lines in the block added to it
+    const own = NotesMap.parse(b.lines);
+    if (own.file && !MAP_FILES.get(own.file))
+      return `<li class="block stop kind-map">${head}<div class="bbody"><p class="intro">Map file notes/maps/${esc(own.file)}.txt wasn't found.</p></div></li>`;
+    const map = NotesMap.render(own.file ? NotesMap.merge(MAP_FILES.get(own.file), own) : own, {
+      label: (name, kind) => { const h = fmt(name); return kind === "chest" && !h.includes('class="gt"') ? `<span class="gt"><span><b>${h}</b></span></span>` : h; },
+    });
+    return `<li class="block stop kind-map">${head}<div class="bbody">${map}</div></li>`;
   } else if (b.type === "spheregrid") {
     // "route: name" or, for a variant not chosen yet, "route: name | label"; one grid each
     let routes = b.lines.filter(l => /^\s*route:/.test(l)).map(l => {
@@ -769,15 +766,15 @@ const flatItems = items => items.flatMap(it => it.type === "vgroup" ? flatItems(
    Hidden items are still drawn (with "hidden"), so Power Sphere drops and party changes in them still count. */
 const SHOW_KINDS = [
   ["battle", "Battles"], ["spheregrid", "Sphere Grid"], ["shops", "Shops & Equip"],
-  ["encounters", "Encounters"], ["trial", "Trials"], ["blitzball", "Blitzball"],
+  ["encounters", "Encounters"], ["maps", "Maps"], ["trial", "Trials"], ["blitzball", "Blitzball"],
 ];
 const PRESETS = {
-  full:  { label: "Full notes", show: { battle: 1, spheregrid: 1, shops: 1, encounters: 1, trial: 1, blitzball: 1, steps: "all" } },
-  menus: { label: "Menus only", show: { battle: 1, spheregrid: 1, shops: 1, encounters: 1, trial: 0, blitzball: 0, steps: "key" } },
+  full:  { label: "Full notes", show: { battle: 1, spheregrid: 1, shops: 1, encounters: 1, maps: 1, trial: 1, blitzball: 1, steps: "all" } },
+  menus: { label: "Menus only", show: { battle: 1, spheregrid: 1, shops: 1, encounters: 1, maps: 1, trial: 0, blitzball: 0, steps: "key" } },
 };
 let show;
 try { show = { ...PRESETS.full.show, ...JSON.parse(store.get("ffx-show", "{}")) }; } catch { show = { ...PRESETS.full.show }; }
-const kindOf = it => ({ battle: "battle", spheregrid: "spheregrid", shop: "shops", equip: "shops", encounters: "encounters", trial: "trial", blitzball: "blitzball" })[it.type];
+const kindOf = it => ({ battle: "battle", spheregrid: "spheregrid", shop: "shops", equip: "shops", encounters: "encounters", map: "maps", trial: "trial", blitzball: "blitzball" })[it.type];
 /* key steps stay in a lighter view: ones marked "!", or with something in bold (key items, Formation),
    or a Power Sphere drop */
 const keyStep = it => it.important || /\*\*/.test(it.text + JSON.stringify(it.sub || [])) || dropsOf(it.text || "") > 0;
@@ -1143,6 +1140,10 @@ $("notes").addEventListener("click", e => {
   const id = t.closest(".area").id;
   setCollapsed(id, !collapsed.has(id));
 });
+
+/* A map: click to see it full width, and click again to shrink it. (Capture, so it runs before the click
+   moves the cursor to the map's block.) */
+document.addEventListener("click", e => { const m = e.target.closest(".nmap"); if (m) m.classList.toggle("big"); }, true);
 
 build();
 })();

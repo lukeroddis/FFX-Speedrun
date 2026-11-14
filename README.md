@@ -38,6 +38,7 @@ notes/
   glossary/           In-game names, shared by all categories
     terms.yml           The game's languages, and each name's type and icon
     en.yml, ja.yml…     The names in one game language
+  maps/               Area maps (no language, so any category can show them)
   any/                FFX Any%
     category.yml        Shared by every language: grid, languages, route toggles, targets, area order
     sphere-grid/        Sphere Grid route files (no language, so every language uses them)
@@ -193,6 +194,41 @@ The notes live in `notes/<category>/<language>/`, one Markdown file per area (se
 The short form `- Dingo: Tidus Attack` works too. A line without a character (`- Otherwise run away`) shows as plain text, and `Else` / `Otherwise` get a grey *Anything else* box. The whole block is one step when stepping through the notes.
 
 A **`**Formation:** Tidus, Yuna, Lulu`** anywhere in a step also sets the party, and `Switch X for Y` and `Summon …` turns in battles update it as you step past them.
+
+### Maps
+
+A map draws an area cleanly: the paths in a muted blue, the route in gold with an arrow at its end, and only the chests worth opening. It's drawn from text, so it's sharp at any size and its names follow the **Game text** toggle (with Japanese game text, *Luck Sphere* shows as **運スフィア**). Runners click a map to see it full width.
+
+Each map is a file of its own in **`notes/maps/`**, such as `notes/maps/kilika-woods.txt`. Maps have no language, so every category's notes, in every language, can show the same one. The notes show it with a short block:
+
+```markdown
+:::map Kilika Woods
+file: kilika-woods
+:::
+```
+
+The title after `:::map` is shown above the map, in the notes' own language. The map file itself looks like this:
+
+```text
+size: 100x125
+trail: 50,96 50,70 47,45 50,6
+trail: 48,52 30,48 22,16
+route: 50,96 50,74 44,70 49,60 47,46 30,47 23,18
+chest: 44,72 Scout | 14,4
+chest: 22,15 Luck Sphere
+label: 50,4 To the temple | below
+by: Someone
+```
+
+- **You don't need to write the numbers yourself.** The [Map Editor](tools/map-editor.html) (on the Tools page) does it: load a screenshot of the in-game map, click along the trails, then along the route, then on each chest. Drag the names off any paths they cover. Then download the file into `notes/maps/` and copy the short block into the notes. The screenshot stays on your computer; only the traced lines are saved. To change a map later, type its file name in the editor and press **Open**.
+- **Positions** are `x,y` as a percentage of the map's width and height from the top left. `size` gives the map's shape (width x height); the editor takes it from the screenshot.
+- **`trail:`** is one path you can walk, and **`route:`** is the way to go. Use more than one `route:` line for a detour, such as going to a chest and back.
+- **`chest:`** names what's inside. Names in the glossary get their item icon and game-language name, so add new ones there (`notes/glossary/`). **`label:`** names anything else, more plainly.
+- **Where a name sits:** to the right of its point, or to the left near the map's right-hand edge. After a `|` you can choose `left`, `right`, `above` or `below`, or give an offset like `| 14,4` to move the name's centre that far from its point. The editor writes the offset when you drag a name, and draws a thin line from the name back to its chest.
+- **`by: Name`** credits someone whose map you based yours on. It's shown under the map.
+- **A category that differs:** lines inside the `:::map` block are added to the file's. A block can add its own `chest:` lines, and if it has `route:` lines, they replace the file's route, for a category that goes another way.
+- The whole map can also be written inside the block instead of a file, which is handy for a quick one-off.
+- Maps are a kind of their own in the **Show** filter, kept in both presets.
 
 ### Route toggles
 

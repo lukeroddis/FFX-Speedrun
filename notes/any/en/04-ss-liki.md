@@ -16,11 +16,11 @@ party: Tidus, Yuna, Kimahri
 * Enemy: Spines and Move
 * Valefor: Thunder the Sin Fin x2
 * *If Sin Fin is not dead yet:*
-
   * Enemy: Spines
   * Switch Tidus for Wakka
   * Wakka: Attack the Sin Fin
 :::
+
 1. FMV+CS (1:40)
 
 :::battle Sinspawn Echuilles | 2,000 HP
@@ -28,7 +28,10 @@ party: Tidus, Wakka
 
 * Tidus: Cheer x2
 * Wakka: Dark Attack
-* Tidus: if Str Node Attack x2, otherwise Cheer x2
+* *If got +1 Str Node from earlier menu:*
+  * Tidus: Attack x2
+* *Else:*
+  * Tidus: Cheer x2
 * Wakka: Attack x2
 * Enemy: Blender
 * Wakka: Attack x2
@@ -36,5 +39,5 @@ party: Tidus, Wakka
 * Tidus: Spiral Cut
 Check for **Ice Brand, Ice Ball**
 :::
-1. Skippable FMV+CS (1:30), SD during Tidus monologue.
 
+1. Skippable FMV+CS (1:30), SD during Tidus monologue.
