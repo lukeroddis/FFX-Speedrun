@@ -20,4 +20,4 @@ targets:
     blitz=loss: 9
 
 # The run, in order: one Markdown file per area, with the same file name in every language folder.
-areas: [00-introduction, 01-zanarkand, 02-baaj-temple, 03-besaid, 04-ss-liki, 05-kilika, 06-ss-winno, 07-luca, 08-mihen-highroad, 09-mushroom-rock-road, 10-djose, 11-moonflow, 12-guadosalam, 13-thunder-plains, 14-macalania-woods, 15-lake-macalania, 16-bikanel-desert, 17-home, 18-airship, 19-bevelle, 20-via-purifico, 21-highbridge, 22-calm-lands, 23-mt-gagazet, 24-zanarkand, 25-airship-2, 26-inside-sin]
+areas: [00-introduction, 01-zanarkand, 02-baaj-temple, 03-besaid, 04-ss-liki, 05-kilika, 06-luca, 07-mihen-highroad, 08-mushroom-rock-road, 09-djose, 10-moonflow, 11-guadosalam, 12-thunder-plains, 13-macalania-woods, 14-lake-macalania, 15-bikanel-desert, 16-home, 17-airship, 18-bevelle, 19-via-purifico, 20-highbridge, 21-calm-lands, 22-mt-gagazet, 23-zanarkand, 24-airship-2, 25-inside-sin]

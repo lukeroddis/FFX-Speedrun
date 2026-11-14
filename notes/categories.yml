@@ -6,7 +6,7 @@
 any:
   name: Any%
   about: Beat the game as fast as possible. One set of notes covers PS2, HD Console, PC and Cutscene Remover runs, with the differences as toggles.
-  boards: [ps2-any, pc-any, csr-any]
+  boards: [ps2-any, pc-any, csr-any, csr-truerng]
 nsg:
   name: No Sphere Grid
   about: Beat the game without using the Sphere Grid.
