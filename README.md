@@ -114,7 +114,11 @@ The site reads that file.
 
 **Things to know:**
 
-- **Schedule:** GitHub can delay scheduled runs by a few minutes when it's busy, so "every 10 minutes" is approximate. The page says when the list was last checked if it's more than 30 minutes old.
+- **Schedule:** GitHub's scheduled runs are "best effort". A new schedule can take a while before its first run, and runs can be delayed or skipped when GitHub is busy (most often around the top of the hour, which is why this one runs at 4, 14, 24… past). The page says when the list was last checked if it's more than 30 minutes old.
+- **If the schedule proves unreliable:** an outside scheduler can start the check instead. For example, a free [cron-job.org](https://cron-job.org) job every 10 minutes that sends:
+  - **Request:** `POST https://api.github.com/repos/lukeroddis/FFX-Speedrun/dispatches`
+  - **Body:** `{"event_type": "twitch-live"}`
+  - **Headers:** `Accept: application/vnd.github+json` and `Authorization: Bearer <token>`. The token is a fine-grained GitHub token limited to this repository, with *Contents: Read and write* permission, which the dispatches endpoint needs.
 - **Pausing:** in a public repository, GitHub pauses scheduled workflows after 60 days without any commits. A commit, or **Enable workflow** on the Actions tab, starts it again.
 - **Testing the pages:** `?live=<file>` makes them read a local sample file instead, e.g. `pages/community.html?live=hub/my-sample.json`.
 

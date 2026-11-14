@@ -109,7 +109,7 @@
   }
   async function board(b, top = 5) {
     const key = `ffx-board-${b.id}-${top}`;
-    try { const c = JSON.parse(store.get(key, "null")); if (c && Date.now() - c.at < DAY) return c.data; } catch {}
+    try { const c = JSON.parse(store.get(key, "null")); if (c && Date.now() - c.at < DAY) return { ...c.data, at: c.at }; } catch {}
     const vars = String(b.vars || "").split(",").map(s => s.trim()).filter(Boolean).map(v => { const [k, val] = v.split("="); return `var-${k}=${val}`; });
     const api = `https://www.speedrun.com/api/v1/leaderboards/${b.game}/category/${b.category}?${[...vars, `top=${top}`, "embed=players"].join("&")}`;
     const j = await fetch(api).then(r => { if (!r.ok) throw new Error(`speedrun.com answered ${r.status}`); return r.json(); });
@@ -121,8 +121,9 @@
         players: x.run.players.map(p => p.rel === "user" ? (people.get(p.id) || { name: "?" }) : { name: p.name }),
       })),
     };
-    store.set(key, JSON.stringify({ at: Date.now(), data }));
-    return data;
+    const at = Date.now();
+    store.set(key, JSON.stringify({ at, data }));
+    return { ...data, at };
   }
   function time(sec) {
     const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = Math.floor(sec % 60), ms = Math.round((sec % 1) * 1000);
@@ -184,5 +185,12 @@
   });
   document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.matches?.(".video[data-yt], .video[data-ch]")) e.target.click(); });
 
-  window.Hub = { url, esc, nav, footer, links, skips, tools, byHTML, starsHTML, categories, notesUrl, boards, board, boardHTML, time, videoHTML, youtubeId, live, liveHTML };
+  /* "Updated 3 hours ago from speedrun.com": the oldest of these boards' fetch times */
+  function updatedText(datas) {
+    const ats = datas.filter(Boolean).map(d => d.at).filter(Boolean);
+    if (!ats.length) return "";
+    return `Updated ${ago(new Date(Math.min(...ats)).toISOString())} ago from speedrun.com · refreshes once a day`.replace("Updated 0 min ago", "Updated just now");
+  }
+
+  window.Hub = { url, esc, nav, footer, links, skips, tools, byHTML, starsHTML, categories, notesUrl, boards, board, boardHTML, time, videoHTML, youtubeId, live, liveHTML, updatedText };
 })();

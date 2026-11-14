@@ -107,7 +107,7 @@
       return `<tr><td class="cat"><a href="${esc(d?.link || links.speedrun || "#")}">${esc(b.name)}</a></td>
         <td>${r ? r.players.map(p => p.link ? `<a href="${esc(p.link)}">${esc(p.name)}</a>` : esc(p.name)).join(", ") : `<span class="muted">Couldn't load</span>`}</td>
         <td class="time">${r ? (r.video ? `<a href="${esc(r.video)}" title="Watch the run">${Hub.time(r.time)}</a>` : Hub.time(r.time)) : ""}</td></tr>`;
-    }).join("")}</table><div class="note">From speedrun.com, refreshed once a day.</div>`
+    }).join("")}</table><div class="note">${esc(Hub.updatedText(rows.map(r => r.d)) || "From speedrun.com, refreshed once a day.")}</div>`
     : `<p class="muted" style="padding:14px 16px;margin:0">No leaderboards set up.</p>`;
 
   // the first few skips

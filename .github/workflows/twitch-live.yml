@@ -5,8 +5,13 @@ name: Twitch live check
 
 on:
   schedule:
-    - cron: "*/10 * * * *"
+    # every 10 minutes, at 4, 14, 24… past the hour: GitHub most often delays or drops scheduled runs
+    # at busy times like the top of the hour
+    - cron: "4-59/10 * * * *"
   workflow_dispatch:
+  # lets an outside scheduler start a run too, if GitHub's own schedule proves unreliable (see README)
+  repository_dispatch:
+    types: [twitch-live]
 
 permissions:
   contents: write

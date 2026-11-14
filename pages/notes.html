@@ -402,8 +402,10 @@ $("runTitle").textContent = meta.title || "FFX Notes";
 const namesIn = body => Object.fromEntries([...body.matchAll(/^- \[(.+?)\]\((.+?)\.md\)/gm)].map(m => [m[2], m[1]]));
 const langNames = namesIn(langIndex.body), enNames = namesIn(enIndex.body);
 const slugs = CAT.areas.map(id => id.replace(/^\d+-/, ""));
+// an area missing from the index's list still gets a readable name: "lake-macalania" → "Lake Macalania"
+const readable = slug => slug.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
 const areaList = CAT.areas.map((id, i) => ({
-  id, file: id + ".md", name: langNames[id] || enNames[id] || slugs[i],
+  id, file: id + ".md", name: langNames[id] || enNames[id] || readable(slugs[i]),
   anchor: slugs.indexOf(slugs[i]) !== slugs.lastIndexOf(slugs[i]) ? id : slugs[i],
 }));
 await Promise.all(areaList.map(async a => {
