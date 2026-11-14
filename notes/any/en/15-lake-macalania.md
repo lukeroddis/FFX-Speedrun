@@ -20,7 +20,7 @@
 :::
 - Switch Yuna for Tidus
 - Tidus: Equip Brotherhood
-- Rikku: Overdrive Lv. 2 Key Sphere and Lightning Marble
+- Rikku: Mix Lv. 2 Key Sphere and Lightning Marble
 Tidus, Yuna, Lulu and Kimahri need AP.
 :::
 

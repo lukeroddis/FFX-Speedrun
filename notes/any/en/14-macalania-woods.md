@@ -35,7 +35,7 @@
 - *If you have the Elemental item necessary to Mix:*
   - Switch Yuna for Lulu
   - Lulu: Defend
-  - Rikku: Overdrive, HP Sphere with
+  - Rikku: Mix, HP Sphere with
     - Fire: Arctic Wind
     - Ice: Bomb Core
     - Water: Lightning Marble
@@ -46,7 +46,7 @@
   - Lulu: Use the spell opposite of what Spherimorph used
   - Kimahri: Attack, check the Element
   - Switch Yuna for Rikku
-  - Rikku: Overdrive
+  - Rikku: Mix
 Tidus, Yuna, Kimahri, Lulu, Rikku all need AP.
 :::
 
