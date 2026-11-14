@@ -2,7 +2,7 @@
 
 A home for the **Final Fantasy X** speedrunning community, styled after the game's own menus and hosted on GitHub Pages:
 
-- **Run notes** for each category and language, stepped through with the mouse wheel without leaving the game. One set of notes covers every version of a category, with toggles for the parts that differ.
+- **Run notes** for each category and language, stepped through line by line with the arrow keys. One set of notes covers every version of a category, with toggles for the parts that differ.
 - **Sphere Grid routes** drawn on a recreated, interactive Sphere Grid, with animations that step through each character's moves and teleports, and a **route builder** to make them.
 - **Skips:** a video library of the skips the routes use, crediting who made each video.
 - **Leaderboards:** the current top runs, read from speedrun.com once a day.

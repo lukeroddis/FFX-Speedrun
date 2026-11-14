@@ -310,7 +310,6 @@
   <header class="panel top">
     <button id="navBtn" class="nav-btn" aria-label="Show or hide the Areas menu">☰ Areas</button>
     <h1 id="runTitle">FFX Any%</h1>
-    <div class="seg" id="wheelSeg"><span>MOUSE WHEEL</span><button data-v="step">Steps</button><button data-v="scroll">Scrolls</button></div>
   </header>
 
   <!-- phones only: party, spheres and stepping in one bar that stays at the top -->
@@ -354,8 +353,8 @@
         <div class="show-host"></div>
       </div>
       <div class="box keys">
-        <kbd>Scroll</kbd> steps through the notes, no need to click away from the game.<br>
-        <kbd>Space</kbd>/<kbd>↓</kbd> next · <kbd>↑</kbd> back · click any line to jump there
+        <kbd>↓</kbd> or <kbd>Space</kbd> next line · <kbd>↑</kbd> back<br>
+        Click any line to jump there. The mouse wheel scrolls the page as usual.
       </div>
     </aside>
   </div>
@@ -922,7 +921,6 @@ function setCollapsed(id, on) {
   sec.classList.toggle("collapsed", on);
   sec.querySelector(".loc-toggle").setAttribute("aria-expanded", String(!on));
 }
-let wheelMode = store.get("ffx-wheel", "step");
 let stops = [], allStops = [], cur = 0, bonus = +store.get("ffx-bonus", 0) || 0;
 
 function build() {
@@ -946,7 +944,6 @@ function build() {
   document.querySelectorAll(".sg svg").forEach(mountGrid);
   renderToggles();
   renderShow();
-  for (const b of document.querySelectorAll("#wheelSeg button")) b.classList.toggle("on", b.dataset.v === wheelMode);
   showBonus();
   let at = 0;
   if (keep) {
@@ -1037,7 +1034,6 @@ function go(i, quiet) {
   if (!quiet) stops[cur].scrollIntoView({ block: "center", behavior: "smooth" });
 }
 
-document.querySelectorAll("#wheelSeg button").forEach(b => b.onclick = () => { wheelMode = b.dataset.v; store.set("ffx-wheel", wheelMode); build(); });
 function showBonus() {
   const { text: need, open } = targetText("power-bonus");
   $("pBonus").innerHTML = `${bonus}<small> / ${need}</small>`;
@@ -1055,17 +1051,6 @@ document.addEventListener("keydown", e => {
   if (e.key === " " || e.key === "ArrowDown") { e.preventDefault(); go(cur + 1); }
   else if (e.key === "ArrowUp") { e.preventDefault(); go(cur - 1); }
 });
-/* Mouse wheel: one notch = one line, and the page follows the cursor. Works while the game keeps focus. */
-let wheelAcc = 0, wheelLock = 0;
-document.addEventListener("wheel", e => {
-  if (wheelMode !== "step" || e.ctrlKey || e.target.closest("nav.areas")) return;
-  e.preventDefault();
-  const now = performance.now(); if (now < wheelLock) return;
-  const d = e.deltaMode === 1 ? e.deltaY * 40 : e.deltaY;
-  if (Math.sign(d) !== Math.sign(wheelAcc)) wheelAcc = 0;
-  wheelAcc += d;
-  if (Math.abs(wheelAcc) >= 50) { go(cur + Math.sign(wheelAcc)); wheelAcc = 0; wheelLock = now + 140; }
-}, { passive: false });
 /* Area menu jumps the cursor to that area's first line */
 $("areaNav").addEventListener("click", e => {
   const a = e.target.closest("a"); if (!a) return; e.preventDefault();
