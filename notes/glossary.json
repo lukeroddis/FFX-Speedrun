@@ -1,0 +1,13 @@
+{
+  "about": "In-game names in each game language. Notes written in any language find these names in their text, and the page shows the name the game uses for the runner's game language. Copy names exactly as the game shows them.",
+  "languages": {
+    "en": "English",
+    "ja": "日本語"
+  },
+  "terms": {
+    "arctic-wind":      { "type": "item", "en": "Arctic Wind",      "ja": "北極の風" },
+    "bomb-core":        { "type": "item", "en": "Bomb Core",        "ja": "ボムの魂" },
+    "lightning-marble": { "type": "item", "en": "Lightning Marble", "ja": "落雷玉" },
+    "fish-scale":       { "type": "item", "en": "Fish Scale",       "ja": "魚のウロコ" }
+  }
+}

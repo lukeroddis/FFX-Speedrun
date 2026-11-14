@@ -60,6 +60,8 @@
 
   .layout { display: grid; grid-template-columns: 200px minmax(0, 1fr) 230px; gap: 20px; align-items: start; }
   .sticky { position: sticky; top: 16px; display: grid; gap: 14px; }
+  /* the right panel scrolls inside itself on short screens, so nothing in it is cut off */
+  .tracker { max-height: calc(100vh - 32px); overflow-y: auto; align-content: start; }
   body.nav-collapsed .layout { grid-template-columns: minmax(0, 1fr) 230px; }
   body.nav-collapsed nav.areas { display: none; }
   .scrim { display: none; position: fixed; inset: 0; z-index: 15; background: rgba(10,10,40,.5); }
@@ -88,6 +90,8 @@
       border-bottom: 2px solid #9fa2c8; box-shadow: 0 4px 12px rgba(0,0,0,.35);
     }
     .mbar .r { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .mbar .mroute { display: none; padding: 8px 2px 2px; border-top: 1px solid rgba(255,255,255,.15); }
+    .mbar.route-open .mroute { display: block; }
     .mbar button { padding: 2px 10px; font-size: .9rem; }
     .mbar .where { flex: 1; min-width: 0; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .mbar .mparty { display: flex; gap: 4px; }
@@ -146,7 +150,7 @@
                font-size: .78rem; font-weight: 700; background: #1d1d45; border: 2px solid #9fa2c8; margin-top: -1px; }
   .step .body { flex: 1; min-width: 0; }
   .step ul, .block ul { margin: 4px 0 0; padding-left: 20px; }
-  .formation { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .formation { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; vertical-align: middle; }
   .formation b { color: var(--gold); margin-right: 4px; }
 
   /* coloured names and terms */
@@ -253,6 +257,40 @@
   .party .member.empty .tile { background: rgba(10,10,40,.45); border-style: dashed; border-color: #6d70a8; outline: none; }
   .keys { font-size: .76rem; color: var(--text-dim); line-height: 1.6; }
   .err { padding: 30px; text-align: center; }
+  [hidden] { display: none !important; }   /* lines hidden by the Show filter, even ones styled as flex */
+
+  /* ---------- in-game names in the runner's game language ---------- */
+  /* the game's name, big, with the notes' own name small underneath */
+  .gt { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; line-height: 1.15;
+        margin: 1px 1px; padding: 1px 7px 2px; border-radius: 4px; text-shadow: none;
+        background: rgba(255,240,180,.14); border: 1px solid rgba(255,216,74,.6); }
+  .gt > b { color: #fff3c4; font-size: 1.05em; font-family: "Ubuntu", "Yu Gothic UI", "Meiryo", "Noto Sans JP", "Microsoft YaHei", sans-serif; }
+  .gt > small { color: var(--text-dim); font-size: .66em; font-weight: 500; }
+
+  /* ---------- route variants ---------- */
+  /* route toggles: in the right-hand panel, and in the phone bar's Route drop-down */
+  .var-host .vrow { margin-bottom: 9px; }
+  .var-host .vrow:last-child { margin-bottom: 0; }
+  .var-host .vrow > span { display: block; margin: 0 0 3px 1px; font-size: .68rem; font-weight: 700; letter-spacing: .08em; color: var(--label); }
+  .var-host .opts { display: flex; flex-wrap: wrap; gap: 4px; }
+  .var-host .opts button, .show-host .opts button { padding: 2px 8px; font-size: .8rem; }
+  .show-host .vrow { margin-bottom: 9px; }
+  .show-host .vrow:last-child { margin-bottom: 0; }
+  .show-host .vrow > span { display: block; margin: 0 0 3px 1px; font-size: .68rem; font-weight: 700; letter-spacing: .08em; color: var(--label); }
+  .show-host .opts { display: flex; flex-wrap: wrap; gap: 4px; }
+  .mroute .show-host { margin-top: 10px; padding-top: 8px; border-top: 1px dashed rgba(255,255,255,.15); }
+  button.unset.on { background: linear-gradient(180deg, #c9cbf0, #8d8fc4); color: #1b1b3b; text-shadow: none; }
+  /* a variant that isn't chosen yet: each option's notes show, labelled */
+  .vtag { display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: .72rem; font-weight: 700; letter-spacing: .05em;
+          color: #0b2350; text-shadow: none; background: #9fdcff; }
+  .vgroup { list-style: none; border-left: 3px solid #9fdcff; padding: 2px 0 2px 10px; }
+  .vgroup > .items { margin-top: 8px; }
+  .branch.vbranch { border-left-color: #9fdcff; }
+  .branch.vbranch > p { font-style: normal; color: inherit; }
+  li.vitem { list-style: none; margin-left: -18px; }
+  li.vitem > ul { border-left: 2px dashed #9fdcff; margin-top: 3px; }
+  .sg .grids { display: grid; gap: 10px; }
+  .sg .g .vtag { margin-bottom: 4px; }
 </style>
 </head>
 <body>
@@ -261,7 +299,6 @@
   <header class="panel top">
     <button id="navBtn" class="nav-btn" aria-label="Show or hide the Areas menu">☰ Areas</button>
     <h1 id="runTitle">FFX Any%</h1>
-    <div class="seg" id="blitzSeg"><span>BLITZBALL</span><button data-v="win">Win</button><button data-v="loss">Loss</button></div>
     <div class="seg" id="wheelSeg"><span>MOUSE WHEEL</span><button data-v="step">Steps</button><button data-v="scroll">Scrolls</button></div>
   </header>
 
@@ -269,6 +306,7 @@
   <div class="mbar" id="mbar">
     <div class="r">
       <button id="mNav" aria-label="Areas">☰</button>
+      <button id="mRoute" aria-expanded="false" title="Route and game text">Route</button>
       <span class="where" id="mWhere"></span>
       <button id="mPrev" aria-label="Previous line">▲</button><button id="mNext" aria-label="Next line">▼</button>
     </div>
@@ -277,6 +315,7 @@
       <div class="ps">Power <b id="mGuar">0</b> · Bonus
         <button id="mMinus" aria-label="One fewer bonus sphere">−</button><b id="mBonus">0/8</b><button id="mPlus" aria-label="One more bonus sphere">+</button></div>
     </div>
+    <div class="mroute"><div class="var-host"></div><div class="show-host"></div></div>
   </div>
 
   <div class="layout">
@@ -289,11 +328,19 @@
         <div class="row"><span>Guaranteed</span><span class="big" id="pGuar">0</span></div>
         <div class="row"><span>Bonus</span>
           <span class="ctr"><button id="bMinus" aria-label="One fewer bonus sphere">−</button><span class="big" id="pBonus">0<small> / 8</small></span><button id="bPlus" aria-label="One more bonus sphere">+</button></span></div>
-        <div class="sub">Guaranteed counts up as you pass each drop. Tap + for every overkill or rare drop. The route needs <b id="bNeed">8</b> bonus spheres on Blitz <span id="bWhich">Win</span>.</div>
+        <div class="sub">Guaranteed counts up as you pass each drop. Tap + for every overkill or rare drop. The route needs <b id="bNeed">8</b> bonus spheres<span id="bWhich"></span>.</div>
       </div>
       <div class="box">
         <h2>PARTY</h2>
         <div class="party" id="party"></div>
+      </div>
+      <div class="box">
+        <h2>ROUTE</h2>
+        <div class="var-host"></div>
+      </div>
+      <div class="box">
+        <h2>SHOW</h2>
+        <div class="show-host"></div>
       </div>
       <div class="box keys">
         <kbd>Scroll</kbd> steps through the notes, no need to click away from the game.<br>
@@ -318,18 +365,35 @@ let index;
 try { index = await fetch("../notes/index.md").then(r => { if (!r.ok) throw r; return r.text(); }); }
 catch { $("notes").innerHTML = `<div class="box err">Couldn't load the notes. Open this page through a local server (see README).</div>`; return; }
 
+/* The front matter is a small YAML subset: "key: value", indented maps, [a, b] lists and # comments */
+function parseYaml(src) {
+  const root = {}, stack = [{ indent: -1, obj: root }];
+  for (const raw of src.split("\n")) {
+    if (!raw.trim() || raw.trim().startsWith("#")) continue;
+    const indent = raw.match(/^\s*/)[0].length, m = raw.trim().match(/^([^:]+?):\s*(.*)$/);
+    if (!m) continue;
+    while (stack.at(-1).indent >= indent) stack.pop();
+    const parent = stack.at(-1).obj, key = m[1].trim(), val = m[2].trim();
+    if (val === "") stack.push({ indent, obj: parent[key] = {} });
+    else parent[key] = /^\[.*\]$/.test(val) ? val.slice(1, -1).split(",").map(s => s.trim()).filter(Boolean) : val;
+  }
+  return root;
+}
 function frontMatter(text) {
   const m = text.match(/^---\n([\s\S]*?)\n---\n?/);
-  const meta = { names: {}, terms: [], overdrives: [] };
-  if (!m) return { meta, body: text };
-  let inNames = false;
-  for (const line of m[1].split("\n")) {
-    const kv = line.match(/^(\w+):\s*(.*)$/), sub = line.match(/^\s+([\w' .]+):\s*(\S+)/);
-    if (kv) { inNames = kv[1] === "names"; if (kv[1] === "title") meta.title = kv[2];
-              if (kv[1] === "terms" || kv[1] === "overdrives") meta[kv[1]] = kv[2].replace(/^\[|\]$/g, "").split(",").map(s => s.trim()).filter(Boolean); }
-    else if (sub && inNames) meta.names[sub[1].trim()] = sub[2];
+  const y = m ? parseYaml(m[1]) : {};
+  // variants: { key: { name, id: label, ... } }. The old one-line form "blitz = win | loss" still works.
+  let vs = y.variants || {};
+  if (typeof vs === "string") {
+    const [k, opts] = vs.split("=").map(s => s.trim());
+    vs = { [k]: Object.fromEntries((opts || "").split("|").map(o => [o.trim(), o.trim()])) };
   }
-  return { meta, body: text.slice(m[0].length) };
+  const variants = Object.entries(vs).map(([key, v]) => {
+    const { name, ...opts } = v;
+    return { key, name: name || key, options: Object.entries(opts).map(([id, label]) => ({ id, label })) };
+  });
+  const meta = { title: y.title, names: y.names || {}, terms: y.terms || [], overdrives: y.overdrives || [], variants, targets: y.targets || {} };
+  return { meta, body: m ? text.slice(m[0].length) : text };
 }
 const { meta, body: indexBody } = frontMatter(index.replace(/\r/g, ""));
 $("runTitle").textContent = meta.title || "FFX Notes";
@@ -337,6 +401,20 @@ const areaList = [...indexBody.matchAll(/^- \[(.+?)\]\((.+?)\)/gm)].map(m => ({ 
 await Promise.all(areaList.map(async a => {
   try { const r = await fetch("../notes/" + a.file); if (r.ok) a.text = (await r.text()).replace(/\r/g, ""); } catch {}
 }));
+
+/* ================= GAME LANGUAGE ================= */
+/* notes/glossary.json: in-game names (items, abilities…) in each game language. The notes are written in
+   NOTES_LANG; wherever one of its names appears, the page shows the name the runner's game uses. */
+const NOTES_LANG = "en";
+let glossary = { languages: { [NOTES_LANG]: "English" }, terms: {} };
+try { const r = await fetch("../notes/glossary.json"); if (r.ok) glossary = await r.json(); } catch {}
+const GLOSS = new Map();   // the name as written in the notes → its entry
+for (const t of Object.values(glossary.terms || {})) if (t[NOTES_LANG]) GLOSS.set(t[NOTES_LANG], t);
+let gameLang;
+{
+  const saved = new URLSearchParams(location.search).get("game") ?? store.get("ffx-game-lang", NOTES_LANG);
+  gameLang = glossary.languages[saved] ? saved : NOTES_LANG;
+}
 
 /* ================= INLINE TEXT ================= */
 /* Names are coloured from the front matter's colour words; lighter shades so they read on the purple panels */
@@ -353,12 +431,20 @@ const TERM_INFO = {
 };
 const terms = meta.terms.filter(t => TERM_INFO[t]);
 const names = Object.keys(meta.names).filter(n => n !== "Enemy");
-const wordRe = new RegExp(`\\b(${[...terms, ...names].sort((a, b) => b.length - a.length).map(s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})\\b`, "g");
+// names, terms and glossary names, longest first; a trailing "s" (plurals) is allowed
+const wordRe = new RegExp(`\\b(${[...terms, ...names, ...GLOSS.keys()].sort((a, b) => b.length - a.length).map(s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})(s?)\\b`, "g");
 function fmt(s) {
   return esc(s)
-    .replace(wordRe, w => TERM_INFO[w]
-      ? `<abbr class="term ${TERM_INFO[w][0]}" title="${esc(TERM_INFO[w][1])}">${w}</abbr>`
-      : `<span class="nm" style="--c:${nameColor(w)}">${w}</span>`)
+    .replace(wordRe, (all, w, plural) => {
+      const g = GLOSS.get(w);
+      if (g) return gameLang !== NOTES_LANG && g[gameLang]
+        ? `<span class="gt" lang="${esc(gameLang)}" title="${esc(w + plural)}"><b>${esc(g[gameLang])}</b><small>${w}${plural}</small></span>`
+        : all;
+      if (plural) return all;
+      return TERM_INFO[w]
+        ? `<abbr class="term ${TERM_INFO[w][0]}" title="${esc(TERM_INFO[w][1])}">${w}</abbr>`
+        : `<span class="nm" style="--c:${nameColor(w)}">${w}</span>`;
+    })
     .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\*(.+?)\*/g, "<i>$1</i>").replace(/`(.+?)`/g, "<code>$1</code>")
     .replace(/'(.+?)'/g, "‘$1’");
 }
@@ -368,20 +454,64 @@ const tile = (n, cls = "") => n === "Enemy" ? `<div class="tile mon ${cls}">mon<
 loadPortraits(Object.keys(meta.names), "../assets/portraits/");
 
 /* ================= PARSING ================= */
-/* 1. Keep only the parts that match the chosen variant (:::if blitz=win … :::) */
+/* 1. Route variants.
+   ":::if blitz=loss" keeps its lines only on Blitz Loss. Conditions combine ("blitz=loss spheres=return4")
+   and a condition can allow several options ("spheres=return4,return2").
+   When a variant isn't chosen yet, every option's lines stay, labelled:
+   - outside a block they're wrapped in ":::vgroup <label>", drawn as a labelled group
+   - inside a block they go under a "⟦label⟧" list item, drawn as a labelled branch
+   - "route:" lines get " | label" so each option's grid is drawn and labelled */
+const VARIANT = Object.fromEntries(meta.variants.map(v => [v.key, v]));
+const parseCond = s => s.trim().split(/\s+/).map(p => {
+  const [key, vals = ""] = p.split("=");
+  return { key: key.trim(), values: vals.split(",").map(v => v.trim()).filter(Boolean) };
+});
+const condLabel = c => {
+  const v = VARIANT[c.key];
+  return `${v.name}: ${c.values.map(id => v.options.find(o => o.id === id)?.label || id).join(" or ")}`;
+};
+/* "keep", "drop", or the label to show while the variants involved aren't chosen */
+function evalCond(conds, vars) {
+  const open = [];
+  for (const c of conds) {
+    if (!VARIANT[c.key]) { console.warn(`:::if ${c.key}=... isn't one of the variants in notes/index.md`); continue; }
+    if (vars[c.key]) { if (!c.values.includes(vars[c.key])) return "drop"; }
+    else open.push(c);
+  }
+  return open.length ? open.map(condLabel).join(" · ") : "keep";
+}
 function applyVariants(text, vars) {
-  const out = [], stack = [];
+  const root = { lines: [] }, stack = [root];
+  const sink = () => [...stack].reverse().find(f => f.lines).lines;
   for (const line of text.split("\n")) {
     const open = line.match(/^:::(\w+)\s*(.*)$/);
     if (open && open[1] === "if") {
-      const [k, v] = open[2].split("=").map(s => s.trim());
-      stack.push({ isIf: true, keep: vars[k] === v }); continue;
+      stack.push({ isIf: true, lines: [], decision: evalCond(parseCond(open[2]), vars), inBlock: stack.some(f => f.block) });
+      continue;
     }
-    if (line.trim() === ":::") { const f = stack.pop(); if (f?.isIf) continue; }
-    else if (open) stack.push({ isIf: false });
-    if (stack.every(f => !f.isIf || f.keep)) out.push(line);
+    if (line.trim() === ":::" && stack.length > 1) {
+      const f = stack.pop();
+      if (!f.isIf) { sink().push(line); continue; }
+      const out = sink();
+      if (f.decision === "keep") out.push(...f.lines);
+      else if (f.decision !== "drop") {
+        const label = f.decision;
+        if (!f.inBlock) out.push(`:::vgroup ${label}`, ...f.lines, ":::");
+        else {
+          const routes = f.lines.filter(l => /^\s*route:/.test(l)), rest = f.lines.filter(l => l.trim() && !/^\s*(route:|!\[)/.test(l));   // images inside blocks aren't shown
+          out.push(...routes.map(l => `${l.trim()} | ${label}`));
+          if (rest.length) {
+            const ind = Math.min(...rest.map(l => l.match(/^\s*/)[0].length));
+            out.push(`${" ".repeat(ind)}- ⟦${label}⟧`, ...rest.map(l => "  " + l));
+          }
+        }
+      }
+      continue;
+    }
+    if (open) stack.push({ block: true });
+    sink().push(line);
   }
-  return out;
+  return root.lines;
 }
 /* 2. Bullet lists into a tree; lines that aren't bullets become paragraphs */
 function parseList(lines) {
@@ -397,7 +527,11 @@ function parseList(lines) {
   }
   return root;
 }
-const plainList = items => items.length ? `<ul>${items.map(i => `<li>${fmt(i.text)}${plainList(i.children)}</li>`).join("")}</ul>` : "";
+const VLABEL = /^⟦(.+)⟧$/;
+const plainList = items => items.length ? `<ul>${items.map(i => {
+  const v = i.text.match(VLABEL);
+  return v ? `<li class="vitem"><span class="vtag">${esc(v[1])}</span>${plainList(i.children)}</li>` : `<li>${fmt(i.text)}${plainList(i.children)}</li>`;
+}).join("")}</ul>` : "";
 /* 3. The body of the area: numbered steps, blocks, paragraphs */
 function parseArea(lines) {
   const items = [];
@@ -420,7 +554,9 @@ function parseArea(lines) {
     if (step) {
       const sub = [];
       while (i + 1 < lines.length && /^\s+[-*\d]/.test(lines[i + 1])) sub.push(lines[++i]);
-      items.push({ kind: "step", text: step[1], sub: parseList(sub.map(s => s.replace(/^  /, ""))).children });
+      // "1. ! …" marks a step to keep even in a lighter view
+      const important = /^!\s+/.test(step[1]);
+      items.push({ kind: "step", text: step[1].replace(/^!\s+/, ""), important, sub: parseList(sub.map(s => s.replace(/^  /, ""))).children });
       continue;
     }
     const pm = line.match(/^party:\s*(.+)$/);
@@ -438,6 +574,8 @@ function turnHTML(t, foe = "Enemy") {   // foe: the battle's title, shown in pla
   const sw = t.text.match(/^Switch (\w+) for (\w+)$/);
   if (sw) return `<li class="turn stop" data-swap="${esc(sw[1])},${esc(sw[2])}"><div class="swap">${tile(sw[1])}<span>➜</span>${tile(sw[2])}</div>
     <div class="act">Switch ${fmt(sw[1])} for ${fmt(sw[2])}</div></li>`;
+  const vb = t.text.match(VLABEL);
+  if (vb) return `<li class="branch vbranch"><p><span class="vtag">${esc(vb[1])}</span></p><ol class="turns">${t.children.map(c => turnHTML(c, foe)).join("")}</ol></li>`;
   const cond = t.text.match(/^\*(.+?):?\*:?$/);
   if (cond) return `<li class="branch"><p>${esc(cond[1])}:</p><ol class="turns">${t.children.map(c => turnHTML(c, foe)).join("")}</ol></li>`;
   const a = t.text.match(ACTOR);
@@ -458,7 +596,8 @@ function turnHTML(t, foe = "Enemy") {   // foe: the battle's title, shown in pla
 const dropsOf = s => [...s.matchAll(/guaranteed (\d+) power spheres?/gi)].reduce((a, m) => a + +m[1], 0);
 
 function blockHTML(b) {
-  const tree = parseList(b.lines.filter(l => !/^(route|party):/.test(l)));
+  // directive lines aren't shown; old Sphere Grid images inside blocks are left out (the live grid replaces them)
+  const tree = parseList(b.lines.filter(l => !/^\s*(route|party|split):/.test(l) && !/^\s*!\[/.test(l)));
   // a battle that starts with a set party (e.g. "party: Tidus, Yuna, Kimahri")
   const setParty = (b.lines.find(l => /^party:/.test(l)) || "").replace(/^party:\s*/, "").split(",").map(s => s.trim()).filter(Boolean);
   const before = tree.paras.filter(p => p.after === 0 && !/guaranteed/i.test(p.text));
@@ -485,34 +624,82 @@ function blockHTML(b) {
       return `<li><span class="foe">${esc(m[1])}</span><div class="what">${m[2] ? fmt(m[2]) : ""}${plainList(t.children)}</div></li>`;
     }).join("")}</ul>`;
   } else if (b.type === "spheregrid") {
-    const route = (b.lines.find(l => /^route:/.test(l)) || "").replace(/^route:\s*/, "").trim();
-    inner = `<div class="sg"><div><svg data-route="${esc(route)}" aria-label="Sphere Grid moves"></svg>
-      <div class="gtools"><button class="replay">↻ Replay</button>${route ? `<a href="sphere-grid.html?route=${encodeURIComponent(route)}" target="_blank">Open in the full grid ↗</a>` : ""}</div></div>
+    // "route: name" or, for a variant not chosen yet, "route: name | label"; one grid each
+    let routes = b.lines.filter(l => /^\s*route:/.test(l)).map(l => {
+      const [name, label] = l.trim().replace(/^route:\s*/, "").split("|").map(s => s.trim());
+      return { name, label };
+    });
+    if (!routes.length) routes = [{ name: "", label: "" }];
+    inner = `<div class="sg"><div class="grids">${routes.map(r => `<div class="g">${r.label ? `<span class="vtag">${esc(r.label)}</span>` : ""}
+      <svg data-route="${esc(r.name)}" aria-label="Sphere Grid moves"></svg>
+      <div class="gtools"><button class="replay">↻ Replay</button>${r.name ? `<a href="sphere-grid.html?route=${encodeURIComponent(r.name)}" target="_blank">Open in the full grid ↗</a>` : ""}</div></div>`).join("")}</div>
       <div class="moves">${plainList(tree.children)}</div></div>`;
   } else inner = plainList(tree.children);
   return `<li class="block stop kind-${esc(b.type)}" data-drops="${drop}">${head}<div class="bbody">${intro}${inner}${drops}</div></li>`;
 }
 function stepHTML(it, n) {
-  const f = it.text.match(/^\*\*Formation:\*\*\s*(.+)$/);
-  const party = f ? f[1].split(",").map(s => s.trim()) : null;
-  const body = party ? `<div class="formation"><b>Formation</b>${party.map(p => tile(p, "sm") + fmt(p)).join(" ")}</div>` : fmt(it.text) + plainList(it.sub);
+  // "**Formation:** Tidus, Kimahri, Auron" anywhere in a step: drawn with portraits, and it sets the Party panel
+  const FORMATION = /\*\*Formation:\*\*\s*([A-Z][\w']*(?:,\s*[A-Z][\w']*)*)/g;
+  const found = [...it.text.matchAll(FORMATION)].map(m => ({ m, names: m[1].split(",").map(s => s.trim()).filter(nm => meta.names[nm]) }));
+  const party = found[0]?.names.length ? found[0].names : null;
+  let body = "", at = 0;
+  for (const { m, names } of found) {
+    body += fmt(it.text.slice(at, m.index)) + `<span class="formation"><b>Formation</b>${names.map(p => tile(p, "sm") + fmt(p)).join(" ")}</span>`;
+    at = m.index + m[0].length;
+  }
+  body += fmt(it.text.slice(at)) + plainList(it.sub);
   return `<li class="step stop" data-drops="${dropsOf(it.text)}"${party ? ` data-party="${esc(party.join(","))}"` : ""}><span class="num">${n}</span><div class="body">${body}</div></li>`;
 }
 function areaHTML(a, vars) {
   const items = parseArea(applyVariants(a.text, vars));
-  let n = 0;
-  const html = items.map(it =>
-    it.kind === "step" ? stepHTML(it, ++n) :
-    it.kind === "block" ? blockHTML(it) :
-    it.kind === "party" ? `<li class="party-mark" hidden data-party="${esc(it.names.join(","))}"></li>`   /* invisible: only updates the Party panel */ :
-    it.kind === "image" ? `<li class="step"><div class="body" style="color:var(--text-dim)">[Map image: ${esc(it.src)}]</div></li>` :
-    `<li class="step"><div class="body">${fmt(it.text)}</div></li>`).join("");
+  const html = itemsHTML(items, { n: 0 });
   const id = a.file.replace(/^\d+-|\.md$/g, "");
-  const steps = items.filter(it => it.kind === "step").length, fights = items.filter(it => it.type === "battle").length;
+  const all = flatItems(items);
+  const steps = all.filter(it => it.kind === "step").length, fights = all.filter(it => it.type === "battle").length;
   const sum = [`${steps} step${steps === 1 ? "" : "s"}`, fights ? `${fights} battle${fights === 1 ? "" : "s"}` : ""].filter(Boolean).join(" · ");
   return `<section class="area${collapsed.has(id) ? " collapsed" : ""}" id="${id}" data-name="${esc(a.name)}"><p class="label">LOCATION</p>
     <div class="panel"><h2><button class="loc-toggle" aria-expanded="${!collapsed.has(id)}"><span class="chev">▾</span>${esc(a.name)}<span class="sum">${sum}</span></button></h2></div>
     <ol class="items">${html}</ol></section>`;
+}
+/* a labelled group (a variant not chosen yet) holds its own items */
+const flatItems = items => items.flatMap(it => it.type === "vgroup" ? flatItems(parseArea(it.lines)) : [it]);
+/* ---- Show filter: which kinds of content are on screen ----
+   Hidden items are still drawn (with "hidden"), so Power Sphere drops and party changes in them still count. */
+const SHOW_KINDS = [
+  ["battle", "Battles"], ["spheregrid", "Sphere Grid"], ["shops", "Shops & Equip"],
+  ["encounters", "Encounters"], ["trial", "Trials"], ["blitzball", "Blitzball"],
+];
+const PRESETS = {
+  full:  { label: "Full notes", show: { battle: 1, spheregrid: 1, shops: 1, encounters: 1, trial: 1, blitzball: 1, steps: "all" } },
+  menus: { label: "Menus only", show: { battle: 1, spheregrid: 1, shops: 1, encounters: 1, trial: 0, blitzball: 0, steps: "key" } },
+};
+let show;
+try { show = { ...PRESETS.full.show, ...JSON.parse(store.get("ffx-show", "{}")) }; } catch { show = { ...PRESETS.full.show }; }
+const kindOf = it => ({ battle: "battle", spheregrid: "spheregrid", shop: "shops", equip: "shops", encounters: "encounters", trial: "trial", blitzball: "blitzball" })[it.type];
+/* key steps stay in a lighter view: ones marked "!", or with something in bold (key items, Formation),
+   or a Power Sphere drop */
+const keyStep = it => it.important || /\*\*/.test(it.text + JSON.stringify(it.sub || [])) || dropsOf(it.text || "") > 0;
+function visible(it) {
+  if (it.kind === "party") return true;
+  if (it.kind === "block") { const k = kindOf(it); return k ? !!show[k] : true; }
+  return show.steps === "all" || (show.steps === "key" && keyStep(it));   // steps, paragraphs and images
+}
+const hide = (html, on) => on ? html : html.replace(/^<li/, "<li hidden");
+function itemsHTML(items, counter) {
+  return items.map(it => it.type === "vgroup" ? vgroupHTML(it, counter) : hide(itemHTML(it, counter), visible(it))).join("");
+}
+function vgroupHTML(it, counter) {
+  const inner = parseArea(it.lines);
+  return hide(`<li class="vgroup"><span class="vtag">${esc(it.title)}</span><ol class="items">${itemsHTML(inner, counter)}</ol></li>`,
+              inner.some(x => x.kind !== "party" && visible(x)));
+}
+function itemHTML(it, counter) {
+  return (
+    it.kind === "step" ? stepHTML(it, ++counter.n) :
+    it.kind === "block" ? blockHTML(it) :
+    it.kind === "party" ? `<li class="party-mark" hidden data-party="${esc(it.names.join(","))}"></li>`   /* invisible: only updates the Party panel */ :
+    it.kind === "image" ? `<li class="step"><div class="body" style="color:var(--text-dim)">[Map image: ${esc(it.src)}]</div></li>` :
+    `<li class="step"><div class="body">${fmt(it.text)}</div></li>`);
 }
 
 /* ================= SPHERE GRID BLOCKS ================= */
@@ -604,11 +791,89 @@ async function mountGrid(svg) {
   svg.showEnd = () => { tok++; draw(frames.at(-1)); };
   svg.showStart = () => { tok++; draw(frames[0]); };
   svg.showStart();
-  svg.closest(".sg").querySelector(".replay").onclick = e => { e.stopPropagation(); svg.play(); };
+  svg.closest(".g").querySelector(".replay").onclick = e => { e.stopPropagation(); svg.play(); };
 }
 
 /* ================= STEPPING ================= */
-const vars = { blitz: store.get("ffx-blitz", "win") };
+/* Chosen route variants: from the link (?blitz=loss&spheres=return4) first, then this browser's last choice.
+   "" means not known yet, which shows every option's notes, labelled. */
+const vars = {};
+{
+  const qs = new URLSearchParams(location.search);
+  for (const v of meta.variants) {
+    const saved = qs.get(v.key) ?? store.get("ffx-var-" + v.key, v.key === "blitz" ? store.get("ffx-blitz", "") : "");
+    vars[v.key] = v.options.some(o => o.id === saved) ? saved : "";
+  }
+}
+function setVariant(key, id) {
+  vars[key] = id;
+  store.set("ffx-var-" + key, id);
+  const qs = new URLSearchParams(location.search);
+  id ? qs.set(key, id) : qs.delete(key);   // the address always holds the current choice, so it can be shared
+  history.replaceState(null, "", location.pathname + (qs.toString() ? "?" + qs : "") + location.hash);
+  build();
+}
+/* The route toggles (one row per variant) and the Game text toggle. Drawn into every .var-host:
+   the ROUTE box in the right-hand panel, and the phone bar's Route drop-down. */
+function renderToggles() {
+  const row = (k, label, buttons) => `<div class="vrow" data-k="${esc(k)}"><span>${esc(label.toUpperCase())}</span><div class="opts">${buttons}</div></div>`;
+  const btn = (v, label, on, extra = "") => `<button data-v="${esc(v)}" class="${on ? "on" : ""} ${extra}">${esc(label)}</button>`;
+  const html = meta.variants.map(v => row(v.key, v.name,
+      `<button data-v="" class="unset ${vars[v.key] ? "" : "on"}" title="Not known yet: show every option, labelled">?</button>` +
+      v.options.map(o => btn(o.id, o.label, vars[v.key] === o.id)).join("")))
+    .join("") + row("game", "Game text", Object.entries(glossary.languages).map(([id, label]) => btn(id, label, id === gameLang)).join(""));
+  document.querySelectorAll(".var-host").forEach(h => { h.innerHTML = html; });
+}
+/* The SHOW controls: two presets, a chip per kind of block, and how many steps to keep */
+function renderShow() {
+  const same = pr => Object.entries(PRESETS[pr].show).every(([k, v]) => (k === "steps" ? show.steps === v : !!show[k] === !!v));
+  const b = (attr, label, on) => `<button ${attr} class="${on ? "on" : ""}">${esc(label)}</button>`;
+  const html =
+    `<div class="vrow"><span>PRESET</span><div class="opts">${Object.entries(PRESETS).map(([k, p]) => b(`data-preset="${k}"`, p.label, same(k))).join("")}</div></div>` +
+    `<div class="vrow"><span>BLOCKS</span><div class="opts">${SHOW_KINDS.map(([k, label]) => b(`data-kind="${k}"`, label, show[k])).join("")}</div></div>` +
+    `<div class="vrow"><span>STEPS</span><div class="opts">${[["all", "All"], ["key", "Key only"], ["none", "None"]].map(([v, label]) => b(`data-steps="${v}"`, label, show.steps === v)).join("")}</div></div>`;
+  document.querySelectorAll(".show-host").forEach(h => { h.innerHTML = html; });
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest(".show-host button"); if (!b) return;
+  if (b.dataset.preset) show = { ...PRESETS[b.dataset.preset].show };
+  else if (b.dataset.kind) show[b.dataset.kind] = show[b.dataset.kind] ? 0 : 1;
+  else if (b.dataset.steps) show.steps = b.dataset.steps;
+  store.set("ffx-show", JSON.stringify(show));
+  build();
+});
+/* Game text: which language the runner's game is in. Also kept in the address (?game=ja). */
+function setGameLang(id) {
+  gameLang = id;
+  store.set("ffx-game-lang", gameLang);
+  const qs = new URLSearchParams(location.search);
+  gameLang !== NOTES_LANG ? qs.set("game", gameLang) : qs.delete("game");
+  history.replaceState(null, "", location.pathname + (qs.toString() ? "?" + qs : "") + location.hash);
+  build();
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest(".var-host button"); if (!b) return;
+  const k = b.closest(".vrow").dataset.k;
+  k === "game" ? setGameLang(b.dataset.v) : setVariant(k, b.dataset.v);
+});
+$("mRoute").onclick = () => {
+  const open = $("mbar").classList.toggle("route-open");
+  $("mRoute").classList.toggle("on", open);
+  $("mRoute").setAttribute("aria-expanded", String(open));
+};
+/* A number from "targets:" for the chosen variants: one value, or "8–9" while it still depends on a variant */
+function targetText(name) {
+  const t = meta.targets[name];
+  if (t === undefined || typeof t !== "object") return { text: t ?? "", open: [] };
+  const vals = [], open = new Set();
+  for (const [cond, val] of Object.entries(t)) {
+    const conds = parseCond(cond), r = evalCond(conds, vars);
+    if (r === "keep") return { text: val, open: [] };
+    if (r !== "drop") { vals.push(+val); conds.forEach(c => { if (!vars[c.key]) open.add(VARIANT[c.key]?.name || c.key); }); }
+  }
+  const lo = Math.min(...vals), hi = Math.max(...vals);
+  return { text: vals.length ? (lo === hi ? lo : `${lo}–${hi}`) : "", open: [...open] };
+}
 let collapsed;
 try { collapsed = new Set(JSON.parse(store.get("ffx-collapsed", "[]"))); } catch { collapsed = new Set(); }
 function setCollapsed(id, on) {
@@ -619,27 +884,41 @@ function setCollapsed(id, on) {
   sec.querySelector(".loc-toggle").setAttribute("aria-expanded", String(!on));
 }
 let wheelMode = store.get("ffx-wheel", "step");
-let stops = [], cur = 0, bonus = +store.get("ffx-bonus", 0) || 0;
+let stops = [], allStops = [], cur = 0, bonus = +store.get("ffx-bonus", 0) || 0;
 
 function build() {
-  const keep = stops[cur]?.dataset.key;
+  // Changing a toggle adds or removes lines, so remember the current line by its area and text, not its number
+  const was = stops[cur], keep = was && {
+    area: was.closest(".area")?.id, text: was.textContent.trim().slice(0, 120),
+    idx: [...(was.closest(".area")?.querySelectorAll(".stop") || [])].indexOf(was)   // counts hidden lines too
+  };
   $("notes").innerHTML = areaList.filter(a => a.text).map(a => areaHTML(a, vars)).join("")
     || `<div class="box err">No area files found.</div>`;
   $("areaNav").innerHTML = areaList.map(a => `<li><a href="#${a.file.replace(/^\d+-|\.md$/g, "")}" class="${a.text ? "" : "soon"}" title="${a.text ? "" : "Not migrated yet"}">${esc(a.name)}</a></li>`).join("");
-  stops = [...document.querySelectorAll(".stop")];
+  // every line, and the ones on screen; stepping only visits the visible ones
+  allStops = [...document.querySelectorAll(".stop")];
+  stops = allStops.filter(el => !el.closest("[hidden]"));
   // a "party:" line isn't a stop itself; it takes effect at the next line you step to
   for (const m of document.querySelectorAll(".party-mark")) {
-    const next = stops.find(el => m.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING);
+    const next = allStops.find(el => m.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING);
     if (next) next.dataset.setParty = m.dataset.party;
   }
   stops.forEach((el, i) => { el.dataset.key = i; el.addEventListener("click", e => { e.stopPropagation(); go(i); }); });
   document.querySelectorAll(".sg svg").forEach(mountGrid);
-  for (const b of document.querySelectorAll("#blitzSeg button")) b.classList.toggle("on", b.dataset.v === vars.blitz);
+  renderToggles();
+  renderShow();
   for (const b of document.querySelectorAll("#wheelSeg button")) b.classList.toggle("on", b.dataset.v === wheelMode);
-  const need = vars.blitz === "loss" ? 9 : 8;
-  $("bNeed").textContent = need; $("bWhich").textContent = vars.blitz === "loss" ? "Loss" : "Win";
   showBonus();
-  go(Math.min(+keep || 0, stops.length - 1), true);
+  let at = 0;
+  if (keep) {
+    const inArea = [...(document.getElementById(keep.area)?.querySelectorAll(".stop") || [])];
+    const el = inArea.find(e => e.textContent.trim().slice(0, 120) === keep.text) || inArea[Math.min(keep.idx, inArea.length - 1)];
+    // if that line is now hidden, land on the next line that's still shown
+    if (el) at = stops.findIndex(s => s === el || (el.compareDocumentPosition(s) & Node.DOCUMENT_POSITION_FOLLOWING));
+    if (at < 0) at = stops.length - 1;
+  }
+  go(Math.max(0, at), true);
+  if (keep) stops[cur]?.scrollIntoView({ block: "center" });   // the line you were on stays in view
 }
 
 /* Who is in the party at stop i.
@@ -648,10 +927,19 @@ function build() {
    - Switches and summons count once you're past them, so a switch turn still shows who you're switching out.
    - A summon leaves only the aeon. The party comes back as soon as one of them acts or is switched
      (the aeon was dismissed or KO'd), or when the battle ends. */
-function partyAt(i) {
-  let party = null, before = null, beforeSummon = null, battle = null;
+function partyAt(i) {   // i: index into allStops, so hidden battles still count
+  let party = null, before = null, beforeSummon = null, battle = null, branch = null, branchBase = null;
   for (let j = 0; j <= i; j++) {
-    const el = stops[j], b = el.closest(".kind-battle");
+    const el = allStops[j], b = el.closest(".kind-battle");
+    // "If …" / "Else" branches (and options of a variant not chosen yet) are alternatives:
+    // each starts from the party before them, and after them the party goes back to that
+    const br = el.closest(".branch");
+    if (br !== branch) {
+      if (br && branch && br.parentElement === branch.parentElement) party = branchBase && [...branchBase];
+      else if (br) branchBase = party && [...party];
+      else party = branchBase;
+      branch = br;
+    }
     if (b !== battle) {
       if (beforeSummon) { party = beforeSummon; beforeSummon = null; }
       if (battle?.dataset.startParty) party = before;
@@ -668,8 +956,8 @@ function partyAt(i) {
     if (el.dataset.summon) { beforeSummon = party; party = [el.dataset.summon]; }
     if (el.dataset.swap) {
       const [out, inn] = el.dataset.swap.split(",");
-      if (party?.includes(out)) party = party.map(p => p === out ? inn : p);
-      else console.warn(`Switch ${out} for ${inn}: ${out} isn't in the party`, party);
+      if (party?.includes(out) && !party.includes(inn)) party = party.map(p => p === out ? inn : p);
+      else console.warn(`Switch ${out} for ${inn}: doesn't fit the party`, party);
     }
   }
   return party;
@@ -680,20 +968,19 @@ const CARRY_IN = 2;
 function go(i, quiet) {
   if (!stops.length) return;
   cur = Math.max(0, Math.min(stops.length - 1, i));
+  stops.forEach((el, j) => { el.classList.toggle("current", j === cur); el.classList.toggle("past", j < cur); });
+  // drops count once you reach them (a battle's from its first turn), hidden lines included
+  const upTo = allStops.indexOf(stops[cur]);
   let guar = CARRY_IN;
   const counted = new Set();
-  stops.forEach((el, j) => {
-    el.classList.toggle("current", j === cur); el.classList.toggle("past", j < cur);
-    if (j <= cur) {
-      // a drop counts once you reach it (a battle's drop counts from its first turn)
-      const holder = el.dataset.drops !== undefined ? el : el.closest("[data-drops]");
-      if (holder && !counted.has(holder)) { counted.add(holder); guar += +holder.dataset.drops || 0; }
-    }
+  allStops.slice(0, upTo + 1).forEach(el => {
+    const holder = el.dataset.drops !== undefined ? el : el.closest("[data-drops]");
+    if (holder && !counted.has(holder)) { counted.add(holder); guar += +holder.dataset.drops || 0; }
   });
   // the block holding the cursor gets the gold frame
   document.querySelectorAll(".block").forEach(b => b.classList.toggle("current", b.contains(stops[cur])));
   $("pGuar").textContent = $("mGuar").textContent = guar;
-  const party = partyAt(cur);
+  const party = partyAt(upTo);
   // always three slots; empty ones stay as dashed outlines until a Formation step fills them
   $("party").innerHTML = [0, 1, 2].map(k => party?.[k]
     ? `<div class="member">${tile(party[k])}${fmt(party[k])}</div>`
@@ -711,12 +998,13 @@ function go(i, quiet) {
   if (!quiet) stops[cur].scrollIntoView({ block: "center", behavior: "smooth" });
 }
 
-document.querySelectorAll("#blitzSeg button").forEach(b => b.onclick = () => { vars.blitz = b.dataset.v; store.set("ffx-blitz", vars.blitz); build(); });
 document.querySelectorAll("#wheelSeg button").forEach(b => b.onclick = () => { wheelMode = b.dataset.v; store.set("ffx-wheel", wheelMode); build(); });
 function showBonus() {
-  const need = vars.blitz === "loss" ? 9 : 8;
+  const { text: need, open } = targetText("power-bonus");
   $("pBonus").innerHTML = `${bonus}<small> / ${need}</small>`;
   $("mBonus").textContent = `${bonus}/${need}`;
+  $("bNeed").textContent = need;
+  $("bWhich").textContent = open.length ? ` (depends on ${open.join(" and ")})` : "";
 }
 const setBonus = v => { bonus = Math.max(0, v); store.set("ffx-bonus", bonus); showBonus(); };
 $("bPlus").onclick = $("mPlus").onclick = () => setBonus(bonus + 1);

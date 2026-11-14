@@ -1,6 +1,21 @@
 ---
 title: FFX Any%
-variants: blitz = win | loss
+# Route toggles. Each one shows in the page header; ":::if key=value" picks the notes for one option.
+variants:
+  blitz:
+    name: Blitzball
+    win: Win
+    loss: Loss
+  spheres:
+    name: Sphere drop
+    return4: 4 Return
+    return2: 2 Return + 2 Friend
+    return0: 4 Friend
+# Numbers that depend on the route. "key=value" picks the value for that option.
+targets:
+  power-bonus:
+    blitz=win: 8
+    blitz=loss: 9
 names:
   Lulu: purple
   Yuna: gray

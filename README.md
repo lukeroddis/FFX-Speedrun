@@ -58,7 +58,69 @@ The notes live in `notes/`, one Markdown file per area, listed in order in `note
 - **`party: Tidus, Yuna, Kimahri`** inside a `:::battle` block: the party the game puts you in for that fight. The previous party comes back once the fight is over.
 - **`route: besaid-tidus`** inside a `:::spheregrid` block: the route file to draw (see below).
 
-A **`**Formation:** Tidus, Yuna, Lulu`** step also sets the party, and `Switch X for Y` and `Summon …` turns in battles update it as you step past them.
+A **`**Formation:** Tidus, Yuna, Lulu`** anywhere in a step also sets the party, and `Switch X for Y` and `Summon …` turns in battles update it as you step past them.
+
+### Route toggles
+
+Parts of the route depend on how the run goes. Each of these is a **variant**, declared in the front matter of `notes/index.md`, and each one gets a toggle in the page header:
+
+```yaml
+variants:
+  blitz:
+    name: Blitzball
+    win: Win
+    loss: Loss
+  spheres:
+    name: Sphere drop
+    return4: 4 Return
+    return2: 2 Return + 2 Friend
+    return0: 4 Friend
+```
+
+Wrap the notes that only apply to some options in `:::if … :::`. This works around whole steps and blocks, or around lines inside a block:
+
+- `:::if blitz=loss` applies on Blitz Loss only.
+- `:::if spheres=return4,return2` applies to either of those options.
+- `:::if blitz=loss spheres=return0` applies only when both are true.
+
+Every toggle also has a **?** option, for "not known yet". It's the default, so before the Blitzball game, or before the sphere drop, every option's notes show with a small label such as *Blitzball: Loss*. The chosen options are remembered and also go into the page address (`run.html?blitz=loss&spheres=return2`), so a link opens the notes on the same route.
+
+Numbers that depend on the route go under `targets:`. The Power Sphere tracker reads `power-bonus` and shows a range, such as 8–9, until the variant is chosen:
+
+```yaml
+targets:
+  power-bonus:
+    blitz=win: 8
+    blitz=loss: 9
+```
+
+Adding another variant needs no code: add it to `variants:` and use it in `:::if`.
+
+### Lighter views
+
+The **Show** box lets a runner hide what they no longer need. **Full notes** shows everything, for a first run. **Menus only** keeps battles, sphere grids, shops, equips and encounters, and only the *key* steps. Each kind of block can also be switched on or off by itself, and steps can be All, Key only or None.
+
+A step counts as **key** when it has something in **bold** (a key item, a **Formation:**, a warning) or a Power Sphere drop. To keep a step that doesn't, start it with `!`:
+
+```markdown
+1. ! Talk to the guy in red shorts for 400 Gil
+```
+
+Hidden lines still count: Power Sphere drops and party changes in them still update the right-hand panel.
+
+### Game language
+
+Runners don't always play the game in the language they read. The **Game text** toggle in the header picks the game's language, and wherever an in-game name from `notes/glossary.json` appears in the notes, the page shows the game's name, large, with the notes' name small underneath. For example, with Japanese game text, "Arctic Wind" shows as **北極の風** with *Arctic Wind* beneath it.
+
+```json
+"arctic-wind": { "type": "item", "en": "Arctic Wind", "ja": "北極の風" }
+```
+
+- Write the notes normally; nothing needs marking up. The page finds glossary names in the text by itself, plurals included.
+- Copy names exactly as the game shows them, so the runner can match them on screen.
+- A term without a name in the chosen game language is shown as written.
+- To add a game language, add it to `languages` at the top of the glossary. It appears in the toggle straight away.
+- The choice is remembered and goes into the page address (`?game=ja`).
 
 ## Writing a Sphere Grid route
 
