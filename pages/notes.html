@@ -440,16 +440,21 @@ await Promise.all(areaList.map(async a => {
 }));
 
 /* ================= GAME LANGUAGE ================= */
-/* notes/glossary.json: in-game names (items, abilities…) in each game language. The notes are written in
-   NOTES_LANG; wherever one of its names appears, the page shows the name the runner's game uses. */
-let glossary = { languages: { [NOTES_LANG]: "English" }, terms: {} };
-try { glossary = await NotesConfig.fetchJson(NotesConfig.paths.glossary()); } catch {}
-const GLOSS = new Map();   // the name as written in the notes → its entry
-for (const t of Object.values(glossary.terms || {})) if (t[NOTES_LANG]) GLOSS.set(t[NOTES_LANG], t);
-let gameLang;
+/* notes/glossary/: in-game names (items, abilities…). terms.yml gives each name's type and icon, and one
+   file per game language gives the names. The notes are written in NOTES_LANG; wherever one of its names
+   appears, the page shows the name the runner's game uses. Only those two languages are fetched. */
+const glossary = await NotesConfig.loadGlossary();
+if (!Object.keys(glossary.languages).length) glossary.languages = { [NOTES_LANG]: NOTES_LANG === "en" ? "English" : NOTES_LANG };
+const GLOSS = new Map();   // a name as written in the notes (every form of it) → { id, term }
+// an area not translated yet falls back to the English notes, so English names are found as well
+for (const lang of NOTES_LANG === BASE_LANG ? [NOTES_LANG] : [NOTES_LANG, BASE_LANG])
+  for (const [id, forms] of Object.entries(await NotesConfig.loadGlossaryNames(lang)))
+    if (glossary.terms[id]) for (const f of forms) if (!GLOSS.has(f)) GLOSS.set(f, { id, term: glossary.terms[id] });
+let gameLang, GAME = {};   // GAME: the game language's names, by id
 {
   const saved = new URLSearchParams(location.search).get("game") ?? store.get("ffx-game-lang", NOTES_LANG);
   gameLang = glossary.languages[saved] ? saved : NOTES_LANG;
+  if (gameLang !== NOTES_LANG) GAME = await NotesConfig.loadGlossaryNames(gameLang);
 }
 
 /* ================= INLINE TEXT ================= */
@@ -467,14 +472,29 @@ const TERM_INFO = {
 };
 const terms = meta.terms.filter(t => TERM_INFO[t]);
 const names = Object.keys(meta.names).filter(n => n !== "Enemy");
-// names, terms and glossary names, longest first; a trailing "s" (plurals) is allowed
-const wordRe = new RegExp(`\\b(${[...terms, ...names, ...GLOSS.keys()].sort((a, b) => b.length - a.length).map(s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})(s?)\\b`, "g");
+/* Names, terms and glossary names found in the text, longest first. The text is matched after escaping,
+   so each is looked up by its escaped form.
+   A name must stand as a whole word, but only where its edge is a letter of a script written with spaces:
+   accented letters count ("Élixir"), and Japanese, Chinese and Korean names match inside running text
+   (北極の風を盗む, 수류탄을), since those languages don't put spaces around words. A name ending in such a
+   letter may take a trailing "s" (plurals). Other plural forms are listed in the language's glossary file. */
+const reEscape = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const SPACED = "(?:(?![\\p{sc=Han}\\p{sc=Hiragana}\\p{sc=Katakana}\\p{sc=Hangul}])[\\p{L}\\p{N}_])";
+const isSpaced = new RegExp(`^${SPACED}$`, "u");
+const WORDS = new Map();   // escaped name → { kind: "term" | "name" | "gloss", raw, g }
+for (const t of terms) WORDS.set(esc(t), { kind: "term", raw: t });
+for (const n of names) WORDS.set(esc(n), { kind: "name", raw: n });
+for (const [f, g] of GLOSS) WORDS.set(esc(f), { kind: "gloss", raw: f, g });
+const wordRe = WORDS.size ? new RegExp(`(${[...WORDS.keys()].sort((a, b) => b.length - a.length).map(w => {
+  const first = isSpaced.test([...w][0]), last = isSpaced.test([...w].at(-1));
+  // a hyphen joins words too: "Potion" isn't found inside "Hi-Potion"
+  return (first ? `(?<!${SPACED}-?)` : "") + reEscape(w) + (last ? `s?(?!-?${SPACED})` : "");
+}).join("|")})`, "gu") : null;
 /* Skip names in the notes link to the skip's page (in a new tab, so your place in the run stays put).
    The names and aliases come from skips/index.json, made by the build from hub/skips/*.md. */
 const SKIPS = (await Hub.skips()) || [];
 const skipByName = new Map(SKIPS.flatMap(s => [s.name, ...(s.aliases || [])].map(n => [n.toLowerCase(), s])));
-const reEscape = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-const skipRe = skipByName.size ? new RegExp(`(?<![\\w])(${[...skipByName.keys()].sort((a, b) => b.length - a.length).map(n => reEscape(esc(n))).join("|")})(?![\\w])`, "gi") : null;
+const skipRe = skipByName.size ? new RegExp(`(?<!${SPACED})(${[...skipByName.keys()].sort((a, b) => b.length - a.length).map(n => reEscape(esc(n))).join("|")})(?!${SPACED})`, "giu") : null;
 const skipLink = m => {
   const s = skipByName.get(m.toLowerCase());
   return `<a class="skiplink" href="${esc(s.link)}" target="_blank" rel="noopener" title="How to do the ${esc(s.name)} (opens in a new tab)">${m}<span aria-hidden="true"> ▶</span></a>`;
@@ -496,17 +516,20 @@ function fmt(s) {
   let html = esc(s);
   if (skipRe) html = html.replace(skipRe, m => keep(skipLink(m)));
   return html
-    .replace(wordRe, (all, w, plural) => {
-      const g = GLOSS.get(w);
-      if (g) {
+    .replace(wordRe || /$^/, all => {
+      let w = all, plural = "", hit = WORDS.get(all);
+      if (!hit && all.endsWith("s")) { w = all.slice(0, -1); plural = "s"; hit = WORDS.get(w); }
+      if (!hit) return all;
+      if (hit.kind === "gloss") {
         // In the game's language, with the notes' name small underneath. Items keep their in-game icon even
         // when the game text matches the notes.
-        const loc = gameLang !== NOTES_LANG && g[gameLang];
-        if (!loc && !g.icon) return all;
-        return keep(`<span class="gt"${g.icon ? ` data-icon="${esc(g.icon)}"` : ""}${loc ? ` lang="${esc(gameLang)}"` : ""}><span><b>${esc(loc || w + plural)}</b>${loc ? `<small>${w}${plural}</small>` : ""}</span></span>`);
+        const { id, term } = hit.g;
+        const loc = gameLang !== NOTES_LANG && GAME[id]?.[0];
+        if (!loc && !term.icon) return all;
+        return keep(`<span class="gt"${term.icon ? ` data-icon="${esc(term.icon)}"` : ""}${loc ? ` lang="${esc(gameLang)}"` : ""}><span><b>${loc ? esc(loc) : all}</b>${loc ? `<small>${all}</small>` : ""}</span></span>`);
       }
       if (plural) return all;
-      return keep(TERM_INFO[w] ? termHTML(w) : `<span class="nm" style="--c:${nameColor(w)}">${w}</span>`);
+      return keep(hit.kind === "term" ? termHTML(hit.raw) : `<span class="nm" style="--c:${nameColor(hit.raw)}">${w}</span>`);
     })
     .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\*(.+?)\*/g, "<i>$1</i>").replace(/`(.+?)`/g, "<code>$1</code>")
     .replace(/'(.+?)'/g, "‘$1’")
@@ -913,7 +936,8 @@ document.addEventListener("click", e => {
   build();
 });
 /* Game text: which language the runner's game is in. Also kept in the address (?game=ja). */
-function setGameLang(id) {
+async function setGameLang(id) {
+  GAME = id !== NOTES_LANG ? await NotesConfig.loadGlossaryNames(id) : {};
   gameLang = id;
   store.set("ffx-game-lang", gameLang);
   const qs = new URLSearchParams(location.search);

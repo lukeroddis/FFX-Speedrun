@@ -1,0 +1,28 @@
+# English: each term's name exactly as the game shows it in this language.
+# The ids come from terms.yml. A term missing here is shown as the notes wrote it.
+# Notes written in this language find these names in their text. If a name changes form
+# (a plural, a grammatical case), list every form with | between them, e.g.
+#   grenade: Granate | Granaten
+# The first form is the one shown to runners playing in this language.
+
+power-sphere:     Power Sphere
+mana-sphere:      Mana Sphere
+speed-sphere:     Speed Sphere
+ability-sphere:   Ability Sphere
+
+hp-sphere:        HP Sphere
+mp-sphere:        Magic Sphere
+strength-sphere:  Strength Sphere
+luck-sphere:      Luck Sphere
+
+arctic-wind:      Arctic Wind
+bomb-core:        Bomb Core
+lightning-marble: Lightning Marble
+fish-scale:       Fish Scale
+grenade:          Grenade
+
+potion:           Potion
+mega-potion:      Mega-Potion
+elixir:           Elixir
+phoenix-down:     Phoenix Down
+mega-phoenix:     Mega Phoenix

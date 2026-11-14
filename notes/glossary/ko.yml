@@ -1,0 +1,28 @@
+# 한국어: each term's name exactly as the game shows it in this language.
+# The ids come from terms.yml. A term missing here is shown as the notes wrote it.
+# Notes written in this language find these names in their text. If a name changes form
+# (a plural, a grammatical case), list every form with | between them, e.g.
+#   grenade: Granate | Granaten
+# The first form is the one shown to runners playing in this language.
+
+power-sphere:     파워 스피어
+mana-sphere:      매직 스피어
+speed-sphere:     스피드 스피어
+ability-sphere:   어빌리티 스피어
+
+hp-sphere:        HP 스피어
+mp-sphere:        마력 스피어
+strength-sphere:  공격력 스피어
+luck-sphere:      운 스피어
+
+arctic-wind:      북극의 바람
+bomb-core:        봄의 혼
+lightning-marble: 낙뢰옥
+fish-scale:       생선 비늘
+grenade:          수류탄
+
+potion:           포션
+mega-potion:      메가 포션
+elixir:           엘릭서
+phoenix-down:     피닉스의 꼬리
+mega-phoenix:     메가 피닉스

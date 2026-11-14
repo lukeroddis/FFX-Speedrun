@@ -1,0 +1,74 @@
+# Every in-game name the notes can mention, shared by all categories and languages.
+# The names themselves live in one file per game language, beside this one (en.yml, ja.yml...).
+#
+# languages: the game's languages. Each one has a <id>.yml file here and appears in the
+#            notes page's Game text toggle.
+# terms:     one entry per in-game name, by id. The language files use these ids.
+#   type: item (more types, such as ability, can be added later)
+#   icon: the icon the game's Item menu shows beside it:
+#         sphere-red, sphere-purple, sphere-black, weapon, potion-blue, potion-orange, potion-purple
+
+languages:
+  en: English
+  ja: 日本語
+  zh: 繁體中文
+  ko: 한국어
+
+terms:
+  power-sphere:
+    type: item
+    icon: sphere-red
+  mana-sphere:
+    type: item
+    icon: sphere-red
+  speed-sphere:
+    type: item
+    icon: sphere-red
+  ability-sphere:
+    type: item
+    icon: sphere-red
+
+  hp-sphere:
+    type: item
+    icon: sphere-purple
+  mp-sphere:
+    type: item
+    icon: sphere-purple
+  strength-sphere:
+    type: item
+    icon: sphere-purple
+  luck-sphere:
+    type: item
+    icon: sphere-purple
+
+  arctic-wind:
+    type: item
+    icon: weapon
+  bomb-core:
+    type: item
+    icon: weapon
+  lightning-marble:
+    type: item
+    icon: weapon
+  fish-scale:
+    type: item
+    icon: weapon
+  grenade:
+    type: item
+    icon: weapon
+
+  potion:
+    type: item
+    icon: potion-blue
+  mega-potion:
+    type: item
+    icon: potion-blue
+  elixir:
+    type: item
+    icon: potion-purple
+  phoenix-down:
+    type: item
+    icon: potion-orange
+  mega-phoenix:
+    type: item
+    icon: potion-orange

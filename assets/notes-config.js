@@ -1,7 +1,8 @@
 /* Where things live, shared by every page.
 
    notes/categories.yml              the categories on the site
-   notes/glossary.json               in-game names in every game language (shared by all categories)
+   notes/glossary/terms.yml          the game's languages, and every in-game name's type and icon (shared by all categories)
+   notes/glossary/<language>.yml     those names in one game language
    notes/<category>/category.yml     settings shared by every language: grid, languages, toggles, targets, area order
    notes/<category>/sphere-grid/     Sphere Grid route files (no language: shared by every language)
    notes/<category>/<language>/      the notes: index.md (wording) and one Markdown file per area
@@ -34,7 +35,8 @@
   };
   const paths = {
     categories: () => `${ROOT}notes/categories.yml`,
-    glossary: () => `${ROOT}notes/glossary.json`,
+    glossaryTerms: () => `${ROOT}notes/glossary/terms.yml`,
+    glossary: lang => `${ROOT}notes/glossary/${encodeURIComponent(lang)}.yml`,
     category: cat => `${ROOT}notes/${cat}/category.yml`,
     route: (cat, name) => `${ROOT}notes/${cat}/sphere-grid/${encodeURIComponent(name)}.json`,
     notes: (cat, lang, file) => `${ROOT}notes/${cat}/${lang}/${file}`,
@@ -65,6 +67,23 @@
       ? { name: v.name || id, about: v.about || "", boards: Array.isArray(v.boards) ? v.boards : [], status: v.status || "" }
       : { name: v || id, about: "", boards: [], status: "" }]));
   }
+  /* The glossary: { languages: { en: "English", … }, terms: { id: { type, icon } } } */
+  async function loadGlossary() {
+    try {
+      const y = parseYaml(await fetchText(paths.glossaryTerms()));
+      return { languages: y.languages || {}, terms: y.terms || {} };
+    } catch { return { languages: {}, terms: {} }; }
+  }
+  /* One game language's names: { id: ["Name", "other form", …] }; the first form is the one shown.
+     Each language is fetched once, and only when a page needs it. */
+  const namesCache = new Map();
+  function loadGlossaryNames(lang) {
+    if (!namesCache.has(lang)) namesCache.set(lang, fetchText(paths.glossary(lang))
+      .then(t => Object.fromEntries(Object.entries(parseYaml(t)).filter(([, v]) => typeof v === "string")
+        .map(([id, v]) => [id, v.split("|").map(s => s.trim()).filter(Boolean)])))
+      .catch(() => ({})));
+    return namesCache.get(lang);
+  }
   const loadGrid = cfg => fetchJson(paths.grid(cfg.grid));
   /* a route loader for RouteEngine.resolve, cached */
   function routeLoader(cat) {
@@ -75,5 +94,5 @@
     };
   }
 
-  window.NotesConfig = { DEFAULT_CATEGORY, DEFAULT_LANGUAGE, parseYaml, params, paths, fetchText, fetchJson, loadCategory, loadCategories, loadGrid, routeLoader };
+  window.NotesConfig = { DEFAULT_CATEGORY, DEFAULT_LANGUAGE, parseYaml, params, paths, fetchText, fetchJson, loadCategory, loadCategories, loadGlossary, loadGlossaryNames, loadGrid, routeLoader };
 })();

@@ -92,7 +92,7 @@
 
   // categories, built from notes/categories.yml and each category's languages
   let langNames = {};
-  try { langNames = (await NotesConfig.fetchJson(NotesConfig.paths.glossary())).languages || {}; } catch {}
+  langNames = (await NotesConfig.loadGlossary()).languages;
   const cats = await Hub.categories();
   $("cats").innerHTML = cats.map(c => c.status === "coming-soon"
     ? `<div class="card"><h3>${esc(c.name)}</h3><p>${esc(c.about)}</p><div class="foot"><span class="tag soon">Notes coming soon</span></div></div>`

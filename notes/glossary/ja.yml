@@ -1,0 +1,28 @@
+# 日本語: each term's name exactly as the game shows it in this language.
+# The ids come from terms.yml. A term missing here is shown as the notes wrote it.
+# Notes written in this language find these names in their text. If a name changes form
+# (a plural, a grammatical case), list every form with | between them, e.g.
+#   grenade: Granate | Granaten
+# The first form is the one shown to runners playing in this language.
+
+power-sphere:     パワースフィア
+mana-sphere:      マジックスフィア
+speed-sphere:     スピードスフィア
+ability-sphere:   アビリティスフィア
+
+hp-sphere:        HPスフィア
+mp-sphere:        魔力スフィア
+strength-sphere:  攻撃力スフィア
+luck-sphere:      運スフィア
+
+arctic-wind:      北極の風
+bomb-core:        ボムの魂
+lightning-marble: 落雷玉
+fish-scale:       魚のウロコ
+grenade:          手榴弾
+
+potion:           ポーション
+mega-potion:      メガポーション
+elixir:           エリクサー
+phoenix-down:     フェニックスの尾
+mega-phoenix:     メガフェニックス

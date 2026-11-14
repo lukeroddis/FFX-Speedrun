@@ -240,6 +240,7 @@ async function main() {
     } catch {}
   }
 
+  await checkGlossary();
   const skips = await readSkips(notesAreas, categoryNames);
   for (const s of skips) {
     await mkdir(join(OUT, "skips", s.id), { recursive: true });
@@ -259,5 +260,20 @@ ${pages.map(p => `  <url><loc>${esc(site + p)}</loc><lastmod>${today}</lastmod><
 `);
   await writeFile(join(OUT, "robots.txt"), `User-agent: *\nAllow: /\nSitemap: ${site}sitemap.xml\n`);
   console.log(`Built ${OUT}/ with ${skips.length} skip pages: ${skips.map(s => s.id).join(", ")}`);
+}
+/* The glossary is split by language (notes/glossary/<lang>.yml), so a language's missing names don't show
+   in one table. The build lists them instead, along with ids that aren't in terms.yml (usually a typo). */
+async function checkGlossary() {
+  let y;
+  try { y = parseYaml(await readFile("notes/glossary/terms.yml", "utf8")); } catch { return; }
+  const ids = Object.keys(y.terms || {});
+  for (const lang of Object.keys(y.languages || {})) {
+    let names = {};
+    try { names = parseYaml(await readFile(`notes/glossary/${lang}.yml`, "utf8")); }
+    catch { console.warn(`Glossary ${lang}: no notes/glossary/${lang}.yml yet`); continue; }
+    const missing = ids.filter(id => !names[id]), unknown = Object.keys(names).filter(id => !y.terms[id]);
+    console.log(`Glossary ${lang}: ${ids.length - missing.length} of ${ids.length} names` + (missing.length ? `; missing ${missing.join(", ")}` : ""));
+    if (unknown.length) console.warn(`Glossary ${lang}: not in terms.yml: ${unknown.join(", ")}`);
+  }
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main().catch(e => { console.error(e); process.exit(1); });

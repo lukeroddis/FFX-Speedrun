@@ -23,7 +23,7 @@
   Hub.footer();
   const $ = id => document.getElementById(id), esc = Hub.esc;
   let langNames = {};
-  try { langNames = (await NotesConfig.fetchJson(NotesConfig.paths.glossary())).languages || {}; } catch {}
+  langNames = (await NotesConfig.loadGlossary()).languages;
   const [cats, boards] = await Promise.all([Hub.categories(), Hub.boards().catch(() => [])]);
   const boardName = id => boards.find(b => b.id === id)?.name || id;
   $("cats").innerHTML = cats.map(c => `<div class="card"><h3>${esc(c.name)}</h3><p>${esc(c.about)}</p>

@@ -35,7 +35,9 @@ hub/                The hub's data
 .github/            GitHub Actions: building and publishing the site (pages.yml, build-site.mjs) and the Twitch live check
 notes/
   categories.yml      The categories on the site: name, description, leaderboards, "coming soon"
-  glossary.json       In-game names in every game language, shared by all categories
+  glossary/           In-game names, shared by all categories
+    terms.yml           The game's languages, and each name's type and icon
+    en.yml, ja.yml…     The names in one game language
   any/                FFX Any%
     category.yml        Shared by every language: grid, languages, route toggles, targets, area order
     sphere-grid/        Sphere Grid route files (no language, so every language uses them)
@@ -142,7 +144,7 @@ Each category (a way of running the game) is a folder in `notes/`, and each lang
 - **`notes/<category>/<language>/index.md`** holds that language's wording: the title, the toggle labels, character names and colours, terms, Overdrive names, and the name of each area.
 - **Area files** have the same name in every language, e.g. `03-besaid.md`. If a language hasn't translated an area yet, the page shows the English one, marked *Not translated yet*. So a translation can grow one area at a time.
 - **`notes/<category>/sphere-grid/`** holds the category's Sphere Grid routes. Routes have no language, so a fix there reaches every language at once.
-- **The glossary** of in-game names (`notes/glossary.json`) and the **grids** (`sphere-grid/`) belong to the game, so they're shared by every category.
+- **The glossary** of in-game names (`notes/glossary/`) and the **grids** (`sphere-grid/`) belong to the game, so they're shared by every category.
 
 The run page picks these from its address: `run.html?cat=any&lang=en` (the defaults).
 
@@ -252,18 +254,35 @@ Hidden lines still count: Power Sphere drops and party changes in them still upd
 
 ### Game language
 
-Runners don't always play the game in the language they read. The **Game text** toggle in the header picks the game's language, and wherever an in-game name from `notes/glossary.json` appears in the notes, the page shows the game's name, large, with the notes' name small underneath. For example, with Japanese game text, "Arctic Wind" shows as **北極の風** with *Arctic Wind* beneath it.
+Runners don't always play the game in the language they read. The **Game text** toggle picks the game's language, and wherever an in-game name from the glossary appears in the notes, the page shows the game's name, large, with the notes' name small underneath. For example, with Japanese game text, "Arctic Wind" shows as **北極の風** with *Arctic Wind* beneath it.
 
-Names are drawn like a row of the game's Item menu. An item with an `icon` shows that icon in every language, English included. The icons are `sphere-red`, `sphere-purple`, `sphere-black`, `weapon`, `potion-blue`, `potion-orange` and `potion-purple`.
+Names are drawn like a row of the game's Item menu. An item with an `icon` shows that icon in every language, English included.
 
-```json
-"arctic-wind": { "type": "item", "icon": "weapon", "en": "Arctic Wind", "ja": "北極の風" }
-```
+The glossary lives in `notes/glossary/`, split so each translator only touches their own language:
 
-- Write the notes normally; nothing needs marking up. The page finds glossary names in the text by itself, plurals included.
+- **`terms.yml`** lists the game's languages, and every name once by id, with its type and icon. The icons are `sphere-red`, `sphere-purple`, `sphere-black`, `weapon`, `potion-blue`, `potion-orange` and `potion-purple`.
+  ```yaml
+  terms:
+    arctic-wind:
+      type: item
+      icon: weapon
+  ```
+- **`<language>.yml`** (`en.yml`, `ja.yml`…) gives each id's name in that language:
+  ```yaml
+  arctic-wind: 北極の風
+  ```
+  If a name changes form in the notes (a plural, a grammatical case), list the forms with `|` between them: `grenade: Granate | Granaten`. The first form is the one shown to runners.
+
+How it behaves:
+
+- Write the notes normally; nothing needs marking up. The page finds the notes language's names in the text by itself. A trailing "s" is understood as a plural; other plural forms go in the language file as above.
+- Names match as whole words where the language uses spaces, accents included ("Élixir"). Japanese, Chinese and Korean names match inside running text too (北極の風を盗む).
+- Notes in any language work the same way: French notes saying a term's French name find it through `fr.yml`, and show the icon and the runner's game-language name.
 - Copy names exactly as the game shows them, so the runner can match them on screen.
 - A term without a name in the chosen game language is shown as written.
-- To add a game language, add it to `languages` at the top of the glossary. It appears in the toggle straight away.
+- The page only fetches `terms.yml`, the notes language and the game language, however many languages exist.
+- The build lists, per language, how many names exist and which are missing, plus any ids not in `terms.yml`.
+- To add a game language, add it to `languages` in `terms.yml` and add its `<language>.yml`. It appears in the toggle straight away.
 - The choice is remembered and goes into the page address (`?game=ja`).
 
 ## Writing a Sphere Grid route
