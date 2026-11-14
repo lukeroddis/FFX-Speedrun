@@ -272,11 +272,29 @@
 
   /* ---------- in-game names in the runner's game language ---------- */
   /* the game's name, big, with the notes' own name small underneath */
-  .gt { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; line-height: 1.15;
-        margin: 1px 1px; padding: 1px 7px 2px; border-radius: 4px; text-shadow: none;
-        background: rgba(255,240,180,.14); border: 1px solid rgba(255,216,74,.6); }
-  .gt > b { color: #fff3c4; font-size: 1.05em; font-family: "Ubuntu", "Yu Gothic UI", "Meiryo", "Noto Sans JP", "Microsoft YaHei", sans-serif; }
-  .gt > small { color: var(--text-dim); font-size: .66em; font-weight: 500; }
+  /* In-game names, drawn like a row of the game's Item menu: the item's icon, then the name in white on a
+     dark blue strip. In another game language the notes' own name sits small underneath. */
+  .gt { display: inline-flex; align-items: center; gap: .4em; vertical-align: middle; line-height: 1.2; white-space: nowrap;
+        margin: 1px 2px; padding: 1px 10px 1px 5px; border-radius: 3px;
+        background: linear-gradient(180deg, #3a4f8f 0%, #1c2a63 45%, #121c4a 100%);
+        border: 1px solid #6f7fb8; box-shadow: inset 0 1px 0 rgba(255,255,255,.18), 0 1px 3px rgba(0,0,0,.45); }
+  .gt:not([data-icon]) { padding-left: 8px; }
+  .gt > span { display: inline-flex; flex-direction: column; align-items: flex-start; }
+  .gt b { color: #fff; font-weight: 700; font-family: "Ubuntu", "Yu Gothic UI", "Meiryo", "Noto Sans JP", "Malgun Gothic", "Microsoft JhengHei", "Microsoft YaHei", sans-serif;
+        text-shadow: 1px 1px 0 #000, 2px 2px 2px rgba(0,0,0,.6); letter-spacing: .03em; }
+  .gt small { color: #b9c2e6; font-size: .66em; font-weight: 500; text-shadow: 1px 1px 0 #000; }
+  /* icons: data-icon comes from the glossary */
+  .gt[data-icon]::before { content: ""; flex: none; width: 1em; height: 1em; background: center / contain no-repeat; }
+  .gt[data-icon^="sphere-"]::before { width: .85em; height: .85em; border-radius: 50%; }
+  .gt[data-icon="sphere-red"]::before { background: radial-gradient(circle at 35% 30%, #ffd0c8 0 8%, #f0332a 32%, #9a0c0c 75%, #430202 100%); box-shadow: 0 0 3px rgba(255,80,60,.6); }
+  .gt[data-icon="sphere-purple"]::before { background: radial-gradient(circle at 35% 30%, #f3d9ff 0 8%, #b05cf0 30%, #5d1a9c 75%, #2a0850 100%); box-shadow: 0 0 3px rgba(190,110,255,.7); }
+  .gt[data-icon="sphere-black"]::before { background: radial-gradient(circle at 35% 30%, #c8c8c8 0 8%, #4a4a4a 32%, #151515 75%, #000 100%); box-shadow: 0 0 3px rgba(255,255,255,.35); }
+  .gt[data-icon="weapon"]::before { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' stroke-linecap='round'%3E%3Cpath d='M14.5 1.5 6.2 9.8' stroke='%23000' stroke-opacity='.5' stroke-width='3.2'/%3E%3Cpath d='M14.5 1.5 6.2 9.8' stroke='%23eef3ff' stroke-width='2'/%3E%3Cpath d='M3.6 8.4l4 4' stroke='%2393a0c8' stroke-width='1.8'/%3E%3Cpath d='M5 11 1.8 14.2' stroke='%23748099' stroke-width='1.8'/%3E%3C/svg%3E"); }
+  .gt[data-icon^="potion-"]::before { --p: #3f9cff;
+        background: radial-gradient(circle at 40% 70%, #fff8 0 6%, transparent 10%), radial-gradient(circle at 50% 66%, var(--p) 0 42%, transparent 44%),
+                    linear-gradient(#dfe8ff, #dfe8ff) 50% 8% / 32% 34% no-repeat; filter: drop-shadow(0 0 1px #fff); }
+  .gt[data-icon="potion-orange"]::before { --p: #ff7a2a; }
+  .gt[data-icon="potion-purple"]::before { --p: #8a5cff; }
 
   /* ---------- route variants ---------- */
   /* route toggles: in the right-hand panel, and in the phone bar's Route drop-down */
@@ -480,9 +498,13 @@ function fmt(s) {
   return html
     .replace(wordRe, (all, w, plural) => {
       const g = GLOSS.get(w);
-      if (g) return gameLang !== NOTES_LANG && g[gameLang]
-        ? keep(`<span class="gt" lang="${esc(gameLang)}" title="${esc(w + plural)}"><b>${esc(g[gameLang])}</b><small>${w}${plural}</small></span>`)
-        : all;
+      if (g) {
+        // In the game's language, with the notes' name small underneath. Items keep their in-game icon even
+        // when the game text matches the notes.
+        const loc = gameLang !== NOTES_LANG && g[gameLang];
+        if (!loc && !g.icon) return all;
+        return keep(`<span class="gt"${g.icon ? ` data-icon="${esc(g.icon)}"` : ""}${loc ? ` lang="${esc(gameLang)}"` : ""}><span><b>${esc(loc || w + plural)}</b>${loc ? `<small>${w}${plural}</small>` : ""}</span></span>`);
+      }
       if (plural) return all;
       return keep(TERM_INFO[w] ? termHTML(w) : `<span class="nm" style="--c:${nameColor(w)}">${w}</span>`);
     })

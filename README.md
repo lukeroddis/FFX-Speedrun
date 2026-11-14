@@ -254,8 +254,10 @@ Hidden lines still count: Power Sphere drops and party changes in them still upd
 
 Runners don't always play the game in the language they read. The **Game text** toggle in the header picks the game's language, and wherever an in-game name from `notes/glossary.json` appears in the notes, the page shows the game's name, large, with the notes' name small underneath. For example, with Japanese game text, "Arctic Wind" shows as **北極の風** with *Arctic Wind* beneath it.
 
+Names are drawn like a row of the game's Item menu. An item with an `icon` shows that icon in every language, English included. The icons are `sphere-red`, `sphere-purple`, `sphere-black`, `weapon`, `potion-blue`, `potion-orange` and `potion-purple`.
+
 ```json
-"arctic-wind": { "type": "item", "en": "Arctic Wind", "ja": "北極の風" }
+"arctic-wind": { "type": "item", "icon": "weapon", "en": "Arctic Wind", "ja": "北極の風" }
 ```
 
 - Write the notes normally; nothing needs marking up. The page finds glossary names in the text by itself, plurals included.
