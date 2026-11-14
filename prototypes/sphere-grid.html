@@ -85,7 +85,9 @@
   .chip { font-size: .7rem; font-weight: 700; padding: 1px 7px; border-radius: 9px; text-shadow: none; color: #1b1b2b; }
   .Power { background: #ff8a8a; } .Mana { background: #b99bff; } .Speed { background: #7fe0d0; }
   .Ability { background: #ffe07a; } .Teleport { background: #8fb4ff; } .Warp { background: #d6a0ff; }
-  .Fortune { background: #ffd34a; } .Key { background: #c9cbd6; }
+  .Fortune { background: #ffd34a; } .Key { background: #c9cbd6; } .Return { background: #9fd0ff; } .Friend { background: #ffb3e0; }
+  .step .problem { color: #ffb3b3; }
+  .levels { width: 100%; margin-top: 8px; font-size: .82rem; color: var(--text-dim); }
   .btns { display: flex; gap: 6px; margin-top: 10px; }
   button {
     flex: 1; font: inherit; color: var(--text); text-shadow: var(--shadow); padding: 7px 0; cursor: pointer;
@@ -137,7 +139,7 @@
           <kbd>Space</kbd>/<kbd>↓</kbd> next · <kbd>↑</kbd> back · <kbd>P</kbd> play · <kbd>R</kbd> reset</div>
       </div>
       <div class="box">
-        <h2>SPHERES USED SO FAR</h2>
+        <h2>USED SO FAR</h2>
         <div class="chips" id="totals"></div>
       </div>
     </aside>
@@ -146,6 +148,7 @@
 
 <script src="../assets/grid-icons.js"></script>
 <script src="../assets/grid-layout.js"></script>
+<script src="../assets/route-engine.js"></script>
 <script>
 (async () => {
 const $ = id => document.getElementById(id);
@@ -155,12 +158,12 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;",
 
 /* ================= LOAD ================= */
 const routeName = new URLSearchParams(location.search).get("route") || "demo";
-let grid, route;
+let grid, route, ENGINE, START;
+const loadRoute = name => fetch(`../sphere-grid/routes/${encodeURIComponent(name)}.json`).then(r => { if (!r.ok) throw r; return r.json(); });
 try {
-  [grid, route] = await Promise.all([
-    fetch("../sphere-grid/grid.json").then(r => { if (!r.ok) throw r; return r.json(); }),
-    fetch(`../sphere-grid/routes/${encodeURIComponent(routeName)}.json`).then(r => { if (!r.ok) throw r; return r.json(); }),
-  ]);
+  grid = await fetch("../sphere-grid/grid.json").then(r => { if (!r.ok) throw r; return r.json(); });
+  ENGINE = RouteEngine.create(grid);
+  ({ route, start: START } = await RouteEngine.resolve(ENGINE, routeName, loadRoute));   // "after" routes are played first
 } catch {
   $("routeTitle").textContent = "";
   document.querySelector(".layout").innerHTML = `<div class="box error">Couldn't load the grid or route “${esc(routeName)}”.<br>Open this page through a local server (see README).</div>`;
@@ -182,63 +185,15 @@ const nodeName = id => { const n = N.get(id); return n.name || (n.value ? `${n.v
 const charName = c => CHARS[c]?.name || c;
 const charColor = c => CHARS[c]?.color || "#888";
 
-/* ================= SIMULATE THE ROUTE ================= */
-/* state: where each character stands, who activated which node, which links were walked, teleports */
-const starts = {};
-for (const n of grid.nodes) if (n.start) starts[n.start] = n.id;
-const clone = s => ({ pos: { ...s.pos }, act: new Map(s.act), walk: new Map(s.walk), teles: [...s.teles] });
-
-function path(from, to, s) {          // shortest walk; locks block unless already opened
-  const prev = new Map([[from, null]]), q = [from];
-  for (let i = 0; i < q.length; i++) {
-    const c = q[i]; if (c === to) break;
-    for (const nb of adj.get(c) || []) {
-      if (prev.has(nb)) continue;
-      if (TYPES[N.get(nb).type].lock && nb !== to && !s.act.has(nb)) continue;
-      prev.set(nb, c); q.push(nb);
-    }
-  }
-  if (!prev.has(to)) return null;
-  const out = []; for (let c = to; c !== from; c = prev.get(c)) out.unshift(c);
-  return out;
-}
-
-const FRAMES = [{ pos: { ...starts }, act: new Map(), walk: new Map(), teles: [] }];
-const SUBS = [[]], FOCUS = [Object.values(starts)];
-const problems = [];
-route.steps.forEach((step, i) => {
-  const ch = step.character;
-  let s = clone(FRAMES.at(-1));
-  const subs = [], focus = [s.pos[ch]];
-  if (step.teleport || step.warp) {
-    const to = step.teleport || step.warp;
-    step.saves = path(s.pos[ch], to, s)?.length;
-    s = clone(s); s.teles.push({ ch, from: s.pos[ch], to }); s.pos[ch] = to;
-    subs.push({ state: s, action: "teleport", ch }); focus.push(to);
-  }
-  const walkTo = target => {
-    const p = path(s.pos[ch], target, s);
-    if (!p) { problems.push(`Step ${i + 1}: ${charName(ch)} can't reach ${target}`); return false; }
-    for (const n of p) {
-      s = clone(s); s.walk.set(ek(s.pos[ch], n), s.walk.get(ek(s.pos[ch], n)) || ch); s.pos[ch] = n;
-      subs.push({ state: s, action: "move", ch }); focus.push(n);
-    }
-    step.moves = (step.moves || 0) + p.length;
-    return true;
-  };
-  if (step.move) walkTo(step.move);
-  for (const target of step.activate || []) {
-    // as in the game, a node can be activated from where you stand or from next to it;
-    // anything further away is walked to first
-    const near = target === s.pos[ch] || (adj.get(s.pos[ch]) || []).includes(target);
-    if (!near && !walkTo(target)) continue;
-    focus.push(target);
-    s = clone(s); if (!s.act.has(target)) s.act.set(target, ch);
-    subs.push({ state: s, action: "activate", ch, node: target });
-  }
-  FRAMES.push(s); SUBS.push(subs); FOCUS.push(focus);
-});
-if (problems.length) console.warn(problems.join("\n"));
+/* ================= PLAY THE ROUTE (assets/route-engine.js) ================= */
+/* FRAMES[i]: the state after step i (0 = the start); SUBS[i]: the in-between states to animate; FOCUS[i]: nodes to frame */
+const RESULT = ENGINE.run(route, START);
+const starts = ENGINE.starts;   // every character gets a nameplate
+const routeChars = [...new Set(route.steps.map(st => st.character))];
+const FRAMES = [RESULT.start], SUBS = [[]], FOCUS = [routeChars.map(c => RESULT.start.pos[c]).filter(Boolean)];
+if (!FOCUS[0].length) FOCUS[0] = Object.values(RESULT.start.pos);
+for (const st of RESULT.steps) { FRAMES.push(st.subs.at(-1)?.state || FRAMES.at(-1)); SUBS.push(st.subs); FOCUS.push(st.focus); }
+if (RESULT.problems.length) console.warn(RESULT.problems.join("\n"));
 
 /* ================= DRAW THE STATIC GRID ================= */
 const el = (tag, attrs, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); parent?.appendChild(e); return e; };
@@ -252,7 +207,7 @@ const svg = $("grid");
 const labelEls = new Map();   // node id → [label elements]
 /* Only nodes this route activates or teleports to get labels, so the grey grid stays clean.
    They show faintly up front (what's coming) and light up once activated. */
-const routeNodes = new Set(route.steps.flatMap(st => [...(st.activate || []), st.teleport, st.warp].filter(Boolean)));
+const routeNodes = new Set(RESULT.steps.flatMap(st => st.targets));
 {
   const out = [];
   for (const n of grid.nodes) {
@@ -300,10 +255,14 @@ function render(s, action, node, ch) {
   }).join("");
   // nodes the coloured track passes through (but not activated) are redrawn on top of it, still greyed out
   const onTrack = new Set();
-  for (const k of s.walk.keys()) for (const id of k.split("|")) if (!s.act.has(id)) onTrack.add(id);
+  for (const k of s.walk.keys()) for (const id of k.split("|")) if (!s.act.has(id) && !s.unlocked.has(id)) onTrack.add(id);
   $("track").innerHTML = [...onTrack].map(id => {
     const n = N.get(id);   // solid backing disc hides the track; the faded icon matches the rest of the grey grid
     return `<g transform="translate(${n.x} ${n.y}) scale(${L.nodeRadius(n, R)})"><circle r="1" fill="var(--grid-bg)"/><g class="ico">${gridIcon(n.type)}</g></g>`;
+  }).join("") + [...s.unlocked].map(id => {
+    const n = N.get(id);   // an unlocked lock becomes an empty node
+    return `<g class="${id === node && action === "unlock" ? "pop" : ""}" transform="translate(${n.x} ${n.y})"><circle r="${R * 1.04}" fill="var(--grid-bg)"/>
+      <g><g class="ico" transform="scale(${R * 0.65})">${gridIcon("empty")}</g></g></g>`;
   }).join("");
   // activated nodes in full colour
   $("active").innerHTML = [...s.act].map(([id]) => {
@@ -327,7 +286,7 @@ function render(s, action, node, ch) {
     const cx = (A.x + B.x) / 2 - dy / len * len * 0.28, cy = (A.y + B.y) / 2 + dx / len * len * 0.28;
     const mx = (A.x + 2 * cx + B.x) / 4, my = (A.y + 2 * cy + B.y) / 4;
     return `<path class="tele" d="M${A.x} ${A.y}Q${cx} ${cy} ${B.x} ${B.y}" stroke="${charColor(t.ch)}" stroke-width="${R * 0.28}" marker-end="url(#arrow)"/>
-      <text x="${mx}" y="${my - R * 0.6}" text-anchor="middle" font-size="${R * 0.95}" font-weight="700" fill="${charColor(t.ch)}" stroke="#fff" stroke-width="${R * 0.25}" paint-order="stroke">Teleport</text>`;
+      <text x="${mx}" y="${my - R * 0.6}" text-anchor="middle" font-size="${R * 0.95}" font-weight="700" fill="${charColor(t.ch)}" stroke="#fff" stroke-width="${R * 0.25}" paint-order="stroke">${esc(t.sphere || "Teleport")}</text>`;
   }).join("");
   // nameplates (characters sharing a node stack downwards)
   const onNode = {};
@@ -338,7 +297,7 @@ function render(s, action, node, ch) {
       setTimeout(() => { tags[c].style.transition = "none"; placeTag(c, s.pos[c], stack); tags[c].getBoundingClientRect(); tags[c].style.transition = ""; tags[c].style.opacity = 1; }, 280);
     } else { tags[c].style.opacity = 1; placeTag(c, s.pos[c], stack); }
   }
-  if (action === "activate") {
+  if (action === "activate" || action === "unlock") {
     const n = N.get(node), ring = el("circle", { class: "ring", cx: n.x, cy: n.y, r: R, "stroke-width": R * 0.3 }, $("fx"));
     setTimeout(() => ring.remove(), 750);
   }
@@ -395,29 +354,39 @@ svg.addEventListener("pointerup", () => { drag = null; svg.classList.remove("dra
 const stepEls = [];
 {
   const li = document.createElement("li");
-  li.className = "step"; li.innerHTML = `<span class="n">0</span><div class="t">Start</div><div class="note">Everyone on their starting node</div>`;
+  const from = route.after ? `Continues from “${route.after}”` : "Everyone on their starting node";
+  const placed = Object.entries(route.start || {}).map(([c, id]) => `${charName(c)} on ${nodeName(id)}`).join(", ");
+  li.className = "step"; li.innerHTML = `<span class="n">0</span><div class="t">Start</div><div class="note">${esc([from, placed].filter(Boolean).join(" · "))}</div>`;
   $("steps").appendChild(li); stepEls.push(li);
 }
-route.steps.forEach((st, i) => {
-  const li = document.createElement("li"), c = charColor(st.character);
-  li.className = "step"; li.style.setProperty("--c", c);
-  const to = st.teleport || st.warp;
-  const acts = (st.activate || []).map(id => esc(nodeName(id))).join(", ");
-  const what = to ? `${st.warp ? "Warp" : "Teleport"} → ${esc(nodeName(to))}${acts ? `, activate ${acts}` : ""}`
-    : st.move ? `Move to ${esc(nodeName(st.move))}${acts ? `, activate ${acts}` : ""}` : `Activate ${acts}`;
-  const note = [st.note, st.moves ? `${st.moves} move${st.moves > 1 ? "s" : ""}` : "", st.saves ? `skips ${st.saves} moves` : ""].filter(Boolean).map(esc).join(" · ");
+const listNames = ids => (Array.isArray(ids) ? ids : [ids]).map(id => esc(nodeName(id))).join(", ");
+RESULT.steps.forEach((info, i) => {
+  const st = info.step, li = document.createElement("li");
+  li.className = "step"; li.style.setProperty("--c", charColor(st.character));
+  const tp = st.teleport && typeof st.teleport === "object" ? st.teleport : st.teleport ? { sphere: "Teleport", to: st.teleport } : st.warp ? { sphere: "Warp", to: st.warp } : null;
+  const parts = [
+    tp && `${esc(tp.sphere)} → ${esc(nodeName(tp.to))}`,
+    st.move && `move to ${esc(nodeName(Array.isArray(st.move) ? st.move.at(-1) : st.move))}`,
+    st.unlock && `unlock ${listNames(st.unlock)}`,
+    st.activate?.length && `activate ${listNames(st.activate)}`,
+  ].filter(Boolean);
+  const what = parts.join(", ").replace(/^./, c => c.toUpperCase());
+  const note = [st.note, info.moves ? `${info.moves} move${info.moves > 1 ? "s" : ""}` : "", info.levels ? `${info.levels} S.Lvl` : "",
+    info.saves ? `skips ${info.saves} moves` : ""].filter(Boolean).map(esc).join(" · ");
   li.innerHTML = `<span class="n">${i + 1}</span><div class="t"><span class="who">${esc(charName(st.character))}</span>: ${what}</div>
     ${note ? `<div class="note">${note}</div>` : ""}
-    <div class="chips">${Object.entries(st.spheres || {}).map(([k, v]) => `<span class="chip ${esc(k)}">${v}× ${esc(k)}</span>`).join("")}</div>`;
+    ${info.problems.map(m => `<div class="note problem">⚠ ${esc(m)}</div>`).join("")}
+    <div class="chips">${Object.entries(info.spheres).map(([k, v]) => `<span class="chip ${esc(k)}">${v}× ${esc(k)}</span>`).join("")}</div>`;
   $("steps").appendChild(li); stepEls.push(li);
 });
 stepEls.forEach((li, i) => li.addEventListener("click", () => go(i, true)));
 function totals(i) {
-  const t = {};
-  route.steps.slice(0, i).forEach(st => { for (const k in st.spheres || {}) t[k] = (t[k] || 0) + st.spheres[k]; });
-  $("totals").innerHTML = Object.keys(t).length
-    ? Object.entries(t).map(([k, v]) => `<span class="chip ${esc(k)}">${v}× ${esc(k)}</span>`).join("")
-    : `<span style="color:var(--text-dim);font-size:.85rem">None yet</span>`;
+  const t = ENGINE.totals({ steps: RESULT.steps.slice(0, i) });
+  const lv = Object.entries(t.levels).filter(([, v]) => v);
+  $("totals").innerHTML = (Object.keys(t.spheres).length
+    ? Object.entries(t.spheres).map(([k, v]) => `<span class="chip ${esc(k)}">${v}× ${esc(k)}</span>`).join("")
+    : `<span style="color:var(--text-dim);font-size:.85rem">None yet</span>`)
+    + (lv.length ? `<div class="levels">Sphere Levels: ${lv.map(([c, v]) => `<span class="who" style="--c:${charColor(c)}">${esc(charName(c))}</span> ${v}`).join(" · ")}</div>` : "");
 }
 
 /* ================= STEPPING ================= */

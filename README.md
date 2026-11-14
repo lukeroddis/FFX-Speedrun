@@ -18,6 +18,7 @@ index.html       The landing page, linking to everything below
 assets/          Shared code and styles for the site
   grid-icons.js    Sphere Grid node types, icons and character colours
   grid-layout.js   Shared link shapes and label positions
+  route-engine.js  Plays Sphere Grid routes: moves, Sphere Levels, unlocks, teleports, spheres and rule checks
   portraits.js     Shows character portraits on tiles when an image exists
   portraits/       Character portrait images (see the README inside)
 battles/         One data file per boss fight (coming soon)
@@ -27,6 +28,7 @@ sphere-grid/
   grid.json        The full Sphere Grid: 860 nodes, their types, values, names and links
   routes/          Route files played by the Sphere Grid page (demo.json is an example)
 tools/
+  route-builder.html  Build Sphere Grid routes by clicking, and export them as route files
   grid-editor.html The Sphere Grid editor (tracing, editing, label layout)
   grid-detect.js   Auto-detection of nodes, types and links from a reference image
 ```
@@ -41,6 +43,7 @@ python -m http.server 8765
 
 Then open <http://localhost:8765/> for the landing page, or go straight to:
 
+- Sphere Grid route builder: <http://localhost:8765/tools/route-builder.html>
 - Sphere Grid editor: <http://localhost:8765/tools/grid-editor.html>
 - Run notes: <http://localhost:8765/prototypes/run.html>
 - Battle mock-up: <http://localhost:8765/prototypes/sin-fin.html>
@@ -128,22 +131,54 @@ Runners don't always play the game in the language they read. The **Game text** 
 
 ## Writing a Sphere Grid route
 
-Routes live in `sphere-grid/routes/` and refer to nodes by their ID from `grid.json` (select a node in the editor to see its ID). Each step is one character's turn in the Sphere Grid menu:
+The easiest way is the **route builder** (`tools/route-builder.html`):
+
+1. Give the route a title and file name. Under **Continue from**, name the route it follows on from, if any.
+2. Pick a character and a tool, then click the grid:
+   - **Move:** walk there. Hover to see the path, moves and Sphere Levels; Shift+click walks one node at a time.
+   - **Activate** and **Unlock:** valid nodes are ringed.
+   - **Teleport:** pick the sphere first.
+   - **Place:** put a character anywhere before the route starts.
+3. The step list shows each step's moves, Sphere Levels, spheres and any rule problems. Steps can be reordered or deleted, and Ctrl+Z undoes. **▶ Play** previews the animation.
+4. **Export JSON** saves the file for `sphere-grid/routes/`, and **Copy route: line** gives the line for the notes. **Import**, **Paste JSON** and **Open by name** load an existing route to change it.
+
+Route files can also be written by hand:
+
+Routes live in `sphere-grid/routes/` and refer to nodes by their ID from `grid.json` (hover a node in the route builder to see its ID). The Sphere Grid page, the run notes and the route builder all play routes with the same engine, `assets/route-engine.js`.
 
 ```json
 {
-  "title": "Demo route",
+  "title": "Kilika: Tidus",
+  "after": "besaid-tidus",
+  "start": { "wakka": "n541" },
   "steps": [
-    { "character": "tidus", "move": "n247", "activate": ["n222", "n256"], "spheres": { "Ability": 1, "Power": 1 } },
-    { "character": "tidus", "teleport": "n538", "spheres": { "Teleport": 1 } }
+    { "character": "tidus", "move": "n247", "activate": ["n222", "n256"] },
+    { "character": "tidus", "unlock": "n266" },
+    { "character": "tidus", "teleport": { "sphere": "Return", "to": "n222" } }
   ]
 }
 ```
 
-- `move`: the node to walk to. The page works out the path itself, and locked nodes block the way until they're opened. The node you stop on isn't activated unless it's also listed in `activate`.
-- `activate`: nodes to activate in order. As in the game, these can be the node you're standing on or one next to it. A node further away is walked to first.
-- `teleport` / `warp`: jump straight to a node. The page shows how many moves it saves. A step can teleport and then activate.
-- `spheres`: what the step uses (Power, Mana, Speed, Ability, Fortune, Key, Teleport, Warp). These are added up as you go.
+**Where everyone starts.** A route begins where the route named in `after` ends: same positions, with everything activated, walked and unlocked so far, so each segment of the run carries on from the last. Without `after`, everyone starts on their own starting node. `start` then puts characters on any node you like, for experiments or challenge runs.
+
+**Each step** is one character's turn in the menu, done in this order:
+
+- `teleport`: `{ "sphere": "Teleport", "to": "n538" }`. The sphere decides where it can go:
+  - **Teleport:** any activated node.
+  - **Return:** a node this character activated.
+  - **Friend:** where another character stands.
+  - **Warp:** any node.
+  
+  The older `"teleport": "n538"` and `"warp": "n538"` still work. The page shows how many moves a teleport saves.
+- `move`: a node to walk to, by the cheapest path; or a list of nodes to walk along exactly, e.g. `["n232", "n222", "n247"]`. Locks block the way until they're unlocked. The node you stop on isn't activated unless it's also in `activate`.
+- `unlock`: Level 1–4 locks next to you. An unlocked lock becomes an empty node anyone can walk through.
+- `activate`: nodes on or next to you, in order.
+
+**Worked out for you:**
+
+- **Spheres:** worked out from the nodes: Power, Mana, Speed, Ability, Fortune, Key Lv1–4, and the teleporting spheres. A `spheres` value written in a step is kept, with a warning if it doesn't match.
+- **Sphere Levels:** counted per character. Each move onto a new link costs 1. Moving back along links the character has already walked costs 1 per 4, rounded up. Teleports, unlocks and activations cost none.
+- **Rule checks:** anything the game wouldn't allow shows as a ⚠ warning: a node out of reach, an already-activated node, a teleport its sphere can't make.
 
 Open a route with `prototypes/sphere-grid.html?route=<file name>`. Without `?route=` it plays `demo`.
 

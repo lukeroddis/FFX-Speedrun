@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Route Builder – FFX Notes</title>
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-1: #4a4f86; --bg-2: #6a6fa8; --bg-3: #8c8fc4;
+    --text: #fff; --text-dim: #c9cbe8; --label: #e8e8ff; --gold: #ffd84a;
+    --shadow: 0 2px 0 rgba(0,0,0,.55), 0 0 4px rgba(0,0,0,.35);
+    --grid-bg: #eceef2; --line: #a3a8b0;
+    --box: linear-gradient(180deg, rgba(60,62,110,.94), rgba(40,40,85,.94));
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    color: var(--text); font-family: "Ubuntu", "Segoe UI", sans-serif; font-weight: 500; text-shadow: var(--shadow);
+    background:
+      radial-gradient(ellipse at 15% 20%, rgba(255,255,255,.10), transparent 45%),
+      repeating-linear-gradient(115deg, rgba(255,255,255,.025) 0 2px, transparent 2px 9px),
+      linear-gradient(160deg, var(--bg-3), var(--bg-2) 40%, var(--bg-1));
+    background-attachment: fixed;
+    display: flex; flex-direction: column; padding: 12px 14px; gap: 10px;
+  }
+  .panel {
+    background: linear-gradient(90deg, rgba(30,30,70,.85), rgba(70,70,130,.55) 60%, rgba(70,70,130,.15));
+    border-top: 2px solid rgba(255,255,255,.25); border-bottom: 2px solid rgba(0,0,0,.35);
+    padding: 8px 16px 8px 32px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
+  }
+  .panel h1 { margin: 0; font-size: 1.3rem; }
+  .panel a { color: var(--text-dim); font-size: .85rem; }
+  button, .btn {
+    font: inherit; font-size: .85rem; color: var(--text); text-shadow: var(--shadow); padding: 4px 10px; cursor: pointer;
+    background: linear-gradient(180deg, #7476b8, #3b3c7a); border: 1px solid #c9cbf0; border-radius: 3px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.3); white-space: nowrap;
+  }
+  button:hover, .btn:hover { filter: brightness(1.15); }
+  button.on { background: linear-gradient(180deg, #ffe58a, #d6a516); color: #2a1d00; text-shadow: none; }
+  button:disabled { opacity: .45; cursor: default; filter: none; }
+  input[type=text], select, textarea {
+    font: inherit; font-size: .88rem; color: #fff; background: #1d1d45; border: 1px solid #9fa2c8; border-radius: 3px; padding: 4px 7px;
+  }
+  .layout { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 12px; }
+  @media (max-width: 900px) { body { height: auto; } .layout { grid-template-columns: 1fr; } .frame { height: 70vh; } }
+  .frame { position: relative; border: 2px solid #9fa2c8; border-radius: 6px; padding: 5px; background: var(--box);
+           box-shadow: inset 0 0 0 2px #2a2a55, 0 4px 14px rgba(0,0,0,.35); min-height: 0; }
+  svg.grid { display: block; width: 100%; height: 100%; background: var(--grid-bg); border-radius: 3px; cursor: crosshair; touch-action: none; }
+  svg.grid.dragging { cursor: grabbing; }
+  svg text { text-shadow: none; font-family: "Ubuntu", sans-serif; pointer-events: none; }
+  .view-btns { position: absolute; right: 12px; top: 12px; display: flex; gap: 4px; }
+  .view-btns button { padding: 2px 8px; }
+  .hint { position: absolute; left: 12px; bottom: 12px; max-width: 70%; padding: 5px 10px; border-radius: 4px; font-size: .82rem;
+          background: rgba(20,20,55,.88); border: 1px solid #9fa2c8; pointer-events: none; }
+  .hint:empty { display: none; }
+  .hint .bad { color: #ffb3b3; }
+  .toast { position: absolute; left: 50%; top: 14px; translate: -50% 0; padding: 6px 14px; border-radius: 4px; font-size: .88rem;
+           background: #6a1630; border: 1px solid #ff9ab8; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+
+  /* grid layers */
+  #base { filter: grayscale(1); opacity: .42; }
+  #track { filter: grayscale(1); } #track .ico { opacity: .42; }
+  .edge { fill: none; stroke: var(--line); stroke-linecap: round; }
+  .walk { fill: none; stroke-linecap: round; }
+  .tele { fill: none; stroke-dasharray: 9 7; }
+  .tag text { fill: #fff; font-weight: 700; }
+  .pop > g { transform-box: fill-box; transform-origin: center; animation: pop .45s ease-out; }
+  @keyframes pop { 0% { transform: scale(.4); } 60% { transform: scale(1.25); } 100% { transform: scale(1); } }
+  .hl { fill: none; stroke: #f2a516; animation: blink 1.1s ease-in-out infinite; }
+  @keyframes blink { 50% { opacity: .35; } }
+  .prev { fill: none; stroke-dasharray: 6 6; stroke-linecap: round; opacity: .9; }
+  .lbl text, text.lbl { pointer-events: none; }
+
+  /* side panel */
+  .side { display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow-y: auto; }
+  .box { background: var(--box); border: 2px solid #9fa2c8; border-radius: 6px; box-shadow: inset 0 0 0 2px #2a2a55; padding: 10px 12px; }
+  .box h2 { margin: 0 0 8px; font-size: .74rem; letter-spacing: .1em; color: var(--label); }
+  .row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 6px; }
+  .row:last-child { margin-bottom: 0; }
+  .row label { font-size: .78rem; color: var(--text-dim); min-width: 62px; }
+  .row input[type=text] { flex: 1; min-width: 0; }
+  .chars { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+  .chars button { padding: 3px 4px; font-size: .8rem; border-left: 4px solid var(--c); }
+  .tools { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+  .tools button { padding: 4px 2px; font-size: .8rem; }
+  .help { font-size: .76rem; color: var(--text-dim); line-height: 1.45; margin-top: 6px; }
+  kbd { font-family: inherit; padding: 0 4px; border: 1px solid #9fa2c8; border-radius: 3px; background: #1d1d45; font-size: .72rem; }
+
+  ol.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; max-height: 38vh; overflow-y: auto; }
+  .step { position: relative; padding: 6px 54px 6px 30px; border-radius: 3px; background: rgba(255,255,255,.05); cursor: pointer; font-size: .86rem; }
+  .step.sel { background: linear-gradient(90deg, rgba(255,255,255,.22), rgba(255,255,255,.04)); box-shadow: inset 3px 0 0 var(--gold); }
+  .step .n { position: absolute; left: 6px; top: 7px; width: 18px; height: 18px; border-radius: 50%; background: #1d1d45;
+             border: 2px solid var(--c, #9fa2c8); font-size: .66rem; display: grid; place-items: center; }
+  .step .who { font-weight: 700; color: color-mix(in srgb, var(--c) 65%, white); }
+  .step .meta { font-size: .74rem; color: var(--text-dim); margin-top: 2px; }
+  .step .bad { font-size: .74rem; color: #ffb3b3; margin-top: 2px; }
+  .step .ops { position: absolute; right: 4px; top: 4px; display: flex; gap: 2px; }
+  .step .ops button { padding: 0 5px; font-size: .72rem; }
+  .chips { display: flex; flex-wrap: wrap; gap: 4px; }
+  .chip { font-size: .7rem; font-weight: 700; padding: 1px 7px; border-radius: 9px; text-shadow: none; color: #1b1b2b; background: #c9cbd6; }
+  .Power { background: #ff8a8a; } .Mana { background: #b99bff; } .Speed { background: #7fe0d0; } .Ability { background: #ffe07a; }
+  .Fortune { background: #ffd34a; } .Teleport { background: #8fb4ff; } .Warp { background: #d6a0ff; } .Return { background: #9fd0ff; } .Friend { background: #ffb3e0; }
+  .totals { font-size: .8rem; color: var(--text-dim); margin-top: 6px; }
+  dialog { background: var(--box); color: #fff; border: 2px solid #9fa2c8; border-radius: 6px; width: min(640px, 92vw); }
+  dialog textarea { width: 100%; height: 300px; font-family: Consolas, monospace; font-size: .8rem; }
+  dialog::backdrop { background: rgba(10,10,40,.6); }
+</style>
+</head>
+<body>
+<header class="panel">
+  <h1>Sphere Grid Route Builder</h1>
+  <a href="../index.html">← Home</a>
+  <a href="../README.md#writing-a-sphere-grid-route">Route format</a>
+</header>
+
+<div class="layout">
+  <div class="frame">
+    <svg class="grid" id="grid" aria-label="Sphere Grid">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <path d="M0 0 L10 5 L0 10 z" fill="context-stroke"/>
+        </marker>
+      </defs>
+      <g id="base"></g><g id="walk"></g><g id="track"></g><g id="active"></g><g id="teles"></g><g id="hls"></g>
+      <g id="here"></g><g id="labels"></g><g id="preview"></g><g id="tags"></g>
+    </svg>
+    <div class="view-btns">
+      <button id="fit" title="Frame the route">Fit route</button>
+      <button id="whole">Whole grid</button>
+      <button id="zin" aria-label="Zoom in">+</button><button id="zout" aria-label="Zoom out">−</button>
+    </div>
+    <div class="hint" id="hint"></div>
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <aside class="side">
+    <div class="box">
+      <h2>ROUTE</h2>
+      <div class="row"><label for="title">Title</label><input type="text" id="title" placeholder="Kilika: Tidus"></div>
+      <div class="row"><label for="name">File name</label><input type="text" id="name" placeholder="kilika-tidus"></div>
+      <div class="row"><label for="after">Continue from</label><input type="text" id="after" placeholder="a route's file name (optional)" list="known"><datalist id="known"></datalist></div>
+      <div class="row" id="afterMsg" style="font-size:.76rem;color:var(--text-dim)"></div>
+    </div>
+
+    <div class="box">
+      <h2>CHARACTER</h2>
+      <div class="chars" id="chars"></div>
+      <h2 style="margin-top:10px">TOOL</h2>
+      <div class="tools" id="tools">
+        <button data-tool="move" title="Walk to a node (M)">Move</button>
+        <button data-tool="activate" title="Activate a node on or next to the character (A)">Activate</button>
+        <button data-tool="unlock" title="Unlock a Level 1–4 lock next to the character (U)">Unlock</button>
+        <button data-tool="teleport" title="Teleport with a sphere (T)">Teleport</button>
+        <button data-tool="place" title="Put the character on any node before the route starts (P)">Place</button>
+      </div>
+      <div class="row" id="sphereRow" style="margin-top:6px" hidden><label for="sphere">Sphere</label><select id="sphere"></select></div>
+      <div class="help" id="toolHelp"></div>
+    </div>
+
+    <div class="box">
+      <h2>STEPS</h2>
+      <ol class="steps" id="steps"></ol>
+      <div class="totals" id="totals"></div>
+      <div class="row" style="margin-top:8px">
+        <button id="play" title="Play the whole route">▶ Play</button>
+        <button id="undo" title="Undo (Ctrl+Z)">↶ Undo</button>
+        <button id="redo" title="Redo (Ctrl+Y)">↷ Redo</button>
+        <button id="clear" title="Start a new, empty route">New</button>
+      </div>
+    </div>
+
+    <div class="box">
+      <h2>SHARE</h2>
+      <div class="row">
+        <button id="export" title="Download the route file for sphere-grid/routes/">⬇ Export JSON</button>
+        <button id="copy">Copy JSON</button>
+        <button id="copyLine" title="The line to put in a :::spheregrid block of the notes">Copy route: line</button>
+      </div>
+      <div class="row">
+        <label class="btn" for="importFile">⬆ Import file</label><input type="file" id="importFile" accept=".json" hidden>
+        <button id="paste">Paste JSON</button>
+        <button id="open" title="Open a route from sphere-grid/routes/ by its file name">Open by name</button>
+      </div>
+      <div class="help">Save the exported file in <code>sphere-grid/routes/</code>, then put <code>route: &lt;file name&gt;</code> in the notes' <code>:::spheregrid</code> block. Your work is also kept in this browser.</div>
+    </div>
+  </aside>
+</div>
+
+<dialog id="pasteDlg">
+  <h2 style="margin-top:0;font-size:1rem">Paste a route</h2>
+  <textarea id="pasteText" spellcheck="false" placeholder='{ "title": "…", "steps": [ … ] }'></textarea>
+  <div class="row" style="margin-top:8px"><button id="pasteOk">Load</button><button id="pasteCancel">Cancel</button></div>
+</dialog>
+
+<script src="../assets/grid-icons.js"></script>
+<script src="../assets/grid-layout.js"></script>
+<script src="../assets/route-engine.js"></script>
+<script>
+(async () => {
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const store = { get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+const TYPES = window.GRID_TYPES, CHARS = window.GRID_CHARACTERS, L = window.GridLayout;
+const toast = msg => { $("toast").textContent = msg; $("toast").classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => $("toast").classList.remove("show"), 2600); };
+
+/* ================= LOAD ================= */
+let grid;
+try { grid = await fetch("../sphere-grid/grid.json").then(r => { if (!r.ok) throw r; return r.json(); }); }
+catch { document.querySelector(".layout").innerHTML = `<div class="box">Couldn't load the grid. Open this page through a local server (see README).</div>`; return; }
+const E = RouteEngine.create(grid), R = grid.meta.nodeRadius, { N } = E;
+const loadRoute = name => fetch(`../sphere-grid/routes/${encodeURIComponent(name)}.json`).then(r => { if (!r.ok) throw new Error(`No route called "${name}"`); return r.json(); });
+const charName = c => CHARS[c]?.name || c, charColor = c => CHARS[c]?.color || "#888";
+const nodeName = E.nodeName;
+
+/* ================= THE ROUTE BEING BUILT ================= */
+/* route: the file as it will be exported. Undo/redo keep copies of it. */
+const blank = () => ({ title: "", name: "", after: "", start: {}, steps: [] });
+let route;
+try { route = { ...blank(), ...JSON.parse(store.get("ffx-route-builder", "null") || "null") }; } catch { route = blank(); }
+const undoStack = [], redoStack = [];
+const snapshot = () => JSON.stringify(route);
+function change(fn) {
+  undoStack.push(snapshot()); redoStack.length = 0;
+  fn(); refresh();
+}
+function undo() { if (!undoStack.length) return; redoStack.push(snapshot()); route = JSON.parse(undoStack.pop()); fillInfo(); refreshAfter(); }
+function redo() { if (!redoStack.length) return; undoStack.push(snapshot()); route = JSON.parse(redoStack.pop()); fillInfo(); refreshAfter(); }
+
+/* the state the route starts from: the end of its "after" route, then its "start" placements */
+let afterEnd = null, afterError = "";
+async function refreshAfter() {
+  afterEnd = null; afterError = "";
+  if (route.after) {
+    try { const r = await RouteEngine.resolve(E, route.after, loadRoute); afterEnd = E.run(r.route, r.start).end; }
+    catch (e) { afterError = e.message || String(e); }
+  }
+  $("afterMsg").innerHTML = !route.after ? "Starts with everyone on their own starting node."
+    : afterError ? `<span style="color:#ffb3b3">⚠ ${esc(afterError)}</span>` : `Starts where “${esc(route.after)}” ends.`;
+  refresh();
+}
+
+/* ================= PLAYING IT ================= */
+let RESULT, FRAMES, view = 0;   // view: how many steps are shown applied (FRAMES[view])
+function exportable() {
+  const out = { title: route.title || undefined, after: route.after || undefined };
+  if (Object.keys(route.start || {}).length) out.start = route.start;
+  out.steps = route.steps;
+  return out;
+}
+function play() {
+  RESULT = E.run(exportable(), E.startOf(exportable(), afterEnd));
+  FRAMES = [RESULT.start];
+  for (const st of RESULT.steps) FRAMES.push(st.subs.at(-1)?.state || FRAMES.at(-1));
+}
+const endState = () => FRAMES.at(-1);
+
+/* ================= DRAWING ================= */
+const svg = $("grid");
+{
+  const out = [];
+  for (const e of grid.edges) out.push(`<path class="edge" d="${L.edgePath(N.get(e.a), N.get(e.b), e.bend)}" stroke-width="${R * 0.45}"/>`);
+  for (const n of grid.nodes) out.push(`<g transform="translate(${n.x} ${n.y}) scale(${L.nodeRadius(n, R)})">${gridIcon(n.type)}</g>`);
+  $("base").innerHTML = out.join("");
+}
+const icon = (n, cls = "") => `<g class="${cls}" transform="translate(${n.x} ${n.y})"><g><g transform="scale(${L.nodeRadius(n, R)})">${gridIcon(n.type)}</g></g></g>`;
+function labelFor(id) {
+  const n = N.get(id), t = TYPES[n.type] || {};
+  if (n.name) { const b = L.labelBox(n, "name", R);
+    return `<g class="lbl"><rect x="${b.cx - b.w / 2}" y="${b.cy - b.h / 2}" width="${b.w}" height="${b.h}" rx="${R * .3}" fill="#8a3fd1" stroke="#fff" stroke-width="${R * .08}"/>
+      <text x="${b.cx}" y="${b.cy}" dominant-baseline="central" text-anchor="middle" font-size="${R * .85}" fill="#fff">${esc(n.name)}</text></g>`; }
+  if (n.value) { const b = L.labelBox(n, "value", R);
+    return `<text class="lbl" x="${b.cx}" y="${b.cy}" dominant-baseline="central" text-anchor="middle" font-size="${R * .75}" font-weight="700" fill="${t.ink || "#333"}" stroke="#fff" stroke-width="${R * .2}" paint-order="stroke">${esc(n.value)}</text>`; }
+  return "";
+}
+function draw(s, action, node) {
+  $("walk").innerHTML = [...s.walk].map(([k, c]) => { const e = E.edgeByKey.get(k);
+    return `<path class="walk" d="${L.edgePath(N.get(e.a), N.get(e.b), e.bend)}" stroke="${charColor(c)}" stroke-width="${R * .55}"/>`; }).join("");
+  const onTrack = new Set(); for (const k of s.walk.keys()) for (const id of k.split("|")) if (!s.act.has(id) && !s.unlocked.has(id)) onTrack.add(id);
+  $("track").innerHTML = [...onTrack].map(id => { const n = N.get(id);
+      return `<g transform="translate(${n.x} ${n.y}) scale(${L.nodeRadius(n, R)})"><circle r="1" fill="var(--grid-bg)"/><g class="ico">${gridIcon(n.type)}</g></g>`; }).join("")
+    + [...s.unlocked].map(id => { const n = N.get(id);
+      return `<g transform="translate(${n.x} ${n.y})"><circle r="${R * 1.04}" fill="var(--grid-bg)"/><g class="ico" transform="scale(${R * .65})">${gridIcon("empty")}</g></g>`; }).join("");
+  $("active").innerHTML = [...s.act.keys()].map(id => icon(N.get(id), action === "activate" && node === id ? "pop" : "")).join("");
+  $("teles").innerHTML = s.teles.map(t => {
+    const A = N.get(t.from), B = N.get(t.to), dx = B.x - A.x, dy = B.y - A.y;
+    const cx = (A.x + B.x) / 2 - dy * .28, cy = (A.y + B.y) / 2 + dx * .28, mx = (A.x + 2 * cx + B.x) / 4, my = (A.y + 2 * cy + B.y) / 4;
+    return `<path class="tele" d="M${A.x} ${A.y}Q${cx} ${cy} ${B.x} ${B.y}" stroke="${charColor(t.ch)}" stroke-width="${R * .28}" marker-end="url(#arrow)"/>
+      <text x="${mx}" y="${my - R * .6}" text-anchor="middle" font-size="${R * .95}" font-weight="700" fill="${charColor(t.ch)}" stroke="#fff" stroke-width="${R * .25}" paint-order="stroke">${esc(t.sphere)}</text>`;
+  }).join("");
+  const ringCount = {};
+  $("here").innerHTML = E.characters.map(c => { const id = s.pos[c], n = N.get(id), k = ringCount[id] = (ringCount[id] ?? -1) + 1;
+    return `<circle cx="${n.x}" cy="${n.y}" r="${L.nodeRadius(n, R) + R * (.32 + k * .3)}" fill="none" stroke="${charColor(c)}" stroke-width="${R * (c === char ? .34 : .2)}"/>`; }).join("");
+  const onNode = {};
+  $("tags").innerHTML = E.characters.map(c => {
+    const id = s.pos[c], n = N.get(id), k = onNode[id] = (onNode[id] ?? -1) + 1, nm = charName(c), w = nm.length * R * .62 + R;
+    const y = n.y + L.nodeRadius(n, R) + R * 1.55 + k * R * 1.65;
+    return `<g class="tag" transform="translate(${n.x} ${y})" opacity="${c === char || usedChars().has(c) ? 1 : .55}"><rect x="${-w / 2}" y="0" width="${w}" height="${R * 1.45}" rx="${R * .2}" fill="${charColor(c)}" stroke="#fff" stroke-width="${R * .1}"/>
+      <text y="${R * .75}" text-anchor="middle" dominant-baseline="central" font-size="${R * .95}">${esc(nm)}</text></g>`;
+  }).join("");
+  // labels for everything the route has touched so far
+  const targets = new Set(RESULT.steps.flatMap(st => st.targets));
+  $("labels").innerHTML = [...targets].map(labelFor).join("");
+}
+const usedChars = () => new Set(route.steps.map(st => st.character));
+
+/* what the current tool can click, ringed on the grid */
+function highlights() {
+  const s = endState(), pos = s.pos[char];
+  let ids = [];
+  if (view === FRAMES.length - 1) {
+    if (tool === "activate") ids = [pos, ...E.neighbours(pos)].filter(id => !E.whyNotActivate(s, char, id));
+    else if (tool === "unlock") ids = [pos, ...E.neighbours(pos)].filter(id => !E.whyNotUnlock(s, char, id));
+    else if (tool === "teleport") ids = E.teleportTargets(s, char, $("sphere").value);
+  }
+  $("hls").innerHTML = ids.map(id => { const n = N.get(id);
+    return `<circle class="hl" cx="${n.x}" cy="${n.y}" r="${L.nodeRadius(n, R) + R * .5}" stroke-width="${R * .22}"/>`; }).join("");
+}
+
+/* ================= CAMERA ================= */
+const xs = grid.nodes.map(n => n.x), ys = grid.nodes.map(n => n.y), pad = R * 4;
+const WHOLE = { x: Math.min(...xs) - pad, y: Math.min(...ys) - pad, w: Math.max(...xs) - Math.min(...xs) + 2 * pad, h: Math.max(...ys) - Math.min(...ys) + 2 * pad };
+let vb = { ...WHOLE };
+const applyVB = () => svg.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+function fitTo(ids) {
+  const ps = ids.map(id => N.get(id)).filter(Boolean); if (!ps.length) return;
+  let x0 = Math.min(...ps.map(p => p.x)), x1 = Math.max(...ps.map(p => p.x)), y0 = Math.min(...ps.map(p => p.y)), y1 = Math.max(...ps.map(p => p.y));
+  const aspect = svg.clientWidth / svg.clientHeight || 1.5;
+  let w = Math.max(x1 - x0 + R * 12, R * 34), h = Math.max(y1 - y0 + R * 12, (R * 34) / aspect);
+  if (w / h < aspect) w = h * aspect; else h = w / aspect;
+  vb = { x: (x0 + x1) / 2 - w / 2, y: (y0 + y1) / 2 - h / 2, w, h }; applyVB();
+}
+const routeFocus = () => [...new Set([char, ...usedChars()])].map(c => FRAMES[0].pos[c]).concat(RESULT.steps.flatMap(st => st.focus));
+$("fit").onclick = () => fitTo(routeFocus());
+$("whole").onclick = () => { vb = { ...WHOLE }; applyVB(); };
+function zoomAt(f, cx = vb.x + vb.w / 2, cy = vb.y + vb.h / 2) {
+  const w = Math.min(WHOLE.w * 1.6, Math.max(R * 10, vb.w * f)), k = w / vb.w;
+  vb = { x: cx - (cx - vb.x) * k, y: cy - (cy - vb.y) * k, w, h: vb.h * k }; applyVB();
+}
+$("zin").onclick = () => zoomAt(.7); $("zout").onclick = () => zoomAt(1 / .7);
+const toWorld = e => { const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); };
+svg.addEventListener("wheel", e => { e.preventDefault(); const p = toWorld(e); zoomAt(Math.exp(e.deltaY * .0015), p.x, p.y); }, { passive: false });
+function nodeAt(e) {
+  const p = toWorld(e); let best = null, bd = R * 1.3;
+  for (const n of grid.nodes) { const d = Math.hypot(n.x - p.x, n.y - p.y); if (d < bd) { bd = d; best = n.id; } }
+  return best;
+}
+
+/* ================= TOOLS ================= */
+let char = store.get("ffx-rb-char", "tidus"), tool = store.get("ffx-rb-tool", "move");
+if (!CHARS[char]) char = "tidus";
+$("chars").innerHTML = E.characters.map(c => `<button data-c="${c}" style="--c:${charColor(c)}">${esc(charName(c))}</button>`).join("");
+$("sphere").innerHTML = RouteEngine.TELEPORTS.map(s => `<option value="${s}">${s}: ${RouteEngine.TELEPORT_RULE[s]}</option>`).join("");
+const HELP = {
+  move: "Click a node to walk there by the cheapest path (hover to see moves and Sphere Levels). <kbd>Shift</kbd>+click a node next to the character to walk one node at a time instead.",
+  activate: "Click a ringed node: on or next to the character. Activations after a move join that step, as in one turn of the menu.",
+  unlock: "Click a ringed lock next to the character. It becomes an empty node that anyone can walk through.",
+  teleport: "Pick the sphere, then click a ringed node. Each sphere only goes where the game allows.",
+  place: "Click any node to put the character there before the route starts, for experiments and challenge runs. <kbd>Alt</kbd>+click their node to put them back.",
+};
+function setChar(c) { char = c; store.set("ffx-rb-char", c); syncControls(); draw(FRAMES[view]); highlights(); }
+function setTool(t) { tool = t; store.set("ffx-rb-tool", t); syncControls(); highlights(); }
+function syncControls() {
+  document.querySelectorAll("#chars button").forEach(b => b.classList.toggle("on", b.dataset.c === char));
+  document.querySelectorAll("#tools button").forEach(b => b.classList.toggle("on", b.dataset.tool === tool));
+  $("sphereRow").hidden = tool !== "teleport";
+  $("toolHelp").innerHTML = HELP[tool];
+}
+$("chars").onclick = e => { const b = e.target.closest("button"); if (b) setChar(b.dataset.c); };
+$("tools").onclick = e => { const b = e.target.closest("button"); if (b) setTool(b.dataset.tool); };
+$("sphere").onchange = highlights;
+
+/* a click on the grid adds to the route */
+const last = () => route.steps.at(-1);
+const sameTurn = () => last()?.character === char;   // the last step is this character's: activations and unlocks join it
+function clickNode(id, e) {
+  if (view !== FRAMES.length - 1) { view = FRAMES.length - 1; }
+  const s = endState(), pos = s.pos[char];
+  if (tool === "place") {
+    if (e.altKey) return change(() => { delete route.start[char]; });
+    return change(() => { route.start[char] = id; });
+  }
+  if (tool === "move") {
+    if (e.shiftKey) {
+      if (!E.neighbours(pos).includes(id)) return toast(`${nodeName(id)} isn't next to ${charName(char)}`);
+      if (E.isLock(id) && !s.unlocked.has(id)) return toast(`${nodeName(id)} is locked: unlock it first`);
+      return change(() => {
+        const st = last();
+        if (sameTurn() && Array.isArray(st.move) && !st.activate && !st.unlock) st.move.push(id);
+        else route.steps.push({ character: char, move: [id] });
+      });
+    }
+    if (id === pos) return;
+    const p = E.path(s, char, pos, id);
+    if (!p) return toast(`${charName(char)} can't reach ${nodeName(id)}`);
+    return change(() => route.steps.push({ character: char, move: id }));
+  }
+  if (tool === "activate") {
+    const why = E.whyNotActivate(s, char, id); if (why) return toast(why);
+    return change(() => { if (sameTurn()) (last().activate ||= []).push(id); else route.steps.push({ character: char, activate: [id] }); });
+  }
+  if (tool === "unlock") {
+    const why = E.whyNotUnlock(s, char, id); if (why) return toast(why);
+    return change(() => { const st = last(); if (sameTurn() && !st.activate) (st.unlock ||= []).push(id); else route.steps.push({ character: char, unlock: [id] }); });
+  }
+  if (tool === "teleport") {
+    const sphere = $("sphere").value;
+    if (!E.canTeleport(s, char, sphere, id)) return toast(`A ${sphere} Sphere goes to ${RouteEngine.TELEPORT_RULE[sphere]}`);
+    return change(() => route.steps.push({ character: char, teleport: { sphere, to: id } }));
+  }
+}
+
+/* hovering: name of the node, and for Move the path and its cost */
+let drag = null;
+svg.addEventListener("pointerdown", e => { drag = { x: e.clientX, y: e.clientY, vb: { ...vb }, moved: false }; try { svg.setPointerCapture(e.pointerId); } catch {} });
+svg.addEventListener("pointermove", e => {
+  if (drag) {
+    const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+    if (!drag.moved && Math.hypot(dx, dy) < 5) return;
+    drag.moved = true; svg.classList.add("dragging");
+    const k = vb.w / svg.clientWidth; vb.x = drag.vb.x - dx * k; vb.y = drag.vb.y - dy * k; applyVB();
+    return;
+  }
+  hover(nodeAt(e), e);
+});
+svg.addEventListener("pointerup", e => {
+  const wasDrag = drag?.moved; drag = null; svg.classList.remove("dragging");
+  if (!wasDrag) { const id = nodeAt(e); if (id) clickNode(id, e); }
+});
+svg.addEventListener("pointerleave", () => { $("hint").innerHTML = ""; $("preview").innerHTML = ""; });
+function hover(id) {
+  $("preview").innerHTML = "";
+  if (!id) { $("hint").innerHTML = ""; return; }
+  const s = endState(), pos = s.pos[char], n = N.get(id);
+  const sphere = E.sphereFor(id);
+  let line = `<b>${esc(nodeName(id))}</b>${sphere ? ` · ${esc(sphere)} Sphere` : ""} <span style="opacity:.6">${id}</span>`;
+  if (view === FRAMES.length - 1) {
+    if (tool === "move" && id !== pos) {
+      const p = E.path(s, char, pos, id);
+      if (!p) line += ` · <span class="bad">can't reach</span>`;
+      else {
+        line += ` · ${p.length} move${p.length > 1 ? "s" : ""} · ${E.moveCost(s, char, pos, p)} S.Lvl`;
+        const pts = [pos, ...p].map(i => N.get(i));
+        $("preview").innerHTML = `<polyline class="prev" points="${pts.map(q => `${q.x},${q.y}`).join(" ")}" stroke="${charColor(char)}" stroke-width="${R * .4}"/>`;
+      }
+    } else if (tool === "activate") { const why = E.whyNotActivate(s, char, id); line += why ? ` · <span class="bad">${esc(why)}</span>` : " · click to activate"; }
+    else if (tool === "unlock" && E.isLock(id)) { const why = E.whyNotUnlock(s, char, id); line += why ? ` · <span class="bad">${esc(why)}</span>` : " · click to unlock"; }
+    else if (tool === "teleport") { const sp = $("sphere").value; line += E.canTeleport(s, char, sp, id) ? ` · click to ${sp} here` : ` · <span class="bad">a ${sp} Sphere can't go here</span>`; }
+  }
+  $("hint").innerHTML = line;
+}
+
+/* ================= STEP LIST ================= */
+const names = ids => (Array.isArray(ids) ? ids : [ids]).map(i => esc(nodeName(i))).join(", ");
+function describe(st) {
+  const tp = st.teleport && typeof st.teleport === "object" ? st.teleport : st.teleport ? { sphere: "Teleport", to: st.teleport } : st.warp ? { sphere: "Warp", to: st.warp } : null;
+  return [
+    tp && `${esc(tp.sphere)} → ${esc(nodeName(tp.to))}`,
+    st.move && (Array.isArray(st.move) ? `move along ${st.move.length} node${st.move.length > 1 ? "s" : ""} to ${esc(nodeName(st.move.at(-1)))}` : `move to ${esc(nodeName(st.move))}`),
+    st.unlock && `unlock ${names(st.unlock)}`,
+    st.activate?.length && `activate ${names(st.activate)}`,
+  ].filter(Boolean).join(", ").replace(/^./, c => c.toUpperCase());
+}
+function renderSteps() {
+  const starts = Object.entries(route.start || {});
+  const head = `<li class="step ${view === 0 ? "sel" : ""}" data-i="0"><span class="n">0</span>Start
+    <div class="meta">${route.after ? `After “${esc(route.after)}”` : "Everyone on their starting node"}${starts.length ? " · " + starts.map(([c, id]) => `${esc(charName(c))} placed on ${esc(nodeName(id))}`).join(", ") : ""}</div></li>`;
+  $("steps").innerHTML = head + RESULT.steps.map((info, i) => {
+    const st = info.step;
+    const meta = [info.moves ? `${info.moves} move${info.moves > 1 ? "s" : ""}` : "", info.levels ? `${info.levels} S.Lvl` : "", info.saves ? `skips ${info.saves} moves` : ""].filter(Boolean).join(" · ");
+    return `<li class="step ${view === i + 1 ? "sel" : ""}" data-i="${i + 1}" style="--c:${charColor(st.character)}"><span class="n">${i + 1}</span>
+      <span class="who">${esc(charName(st.character))}</span>: ${describe(st)}
+      ${meta ? `<div class="meta">${meta}</div>` : ""}
+      ${info.problems.map(m => `<div class="bad">⚠ ${esc(m)}</div>`).join("")}
+      <div class="chips">${Object.entries(info.spheres).map(([k, v]) => `<span class="chip ${esc(k)}">${v}× ${esc(k)}</span>`).join("")}</div>
+      <span class="ops"><button data-op="up" title="Move up">▲</button><button data-op="down" title="Move down">▼</button><button data-op="del" title="Delete step">✕</button></span></li>`;
+  }).join("");
+  $("steps").querySelector(".sel")?.scrollIntoView({ block: "nearest" });
+  const t = E.totals(RESULT);
+  $("totals").innerHTML = (Object.keys(t.spheres).length ? `<div class="chips">${Object.entries(t.spheres).map(([k, v]) => `<span class="chip ${esc(k)}">${v}× ${esc(k)}</span>`).join("")}</div>` : "No steps yet. Pick a character and a tool, then click the grid.")
+    + (Object.values(t.levels).some(Boolean) ? `<div style="margin-top:4px">Sphere Levels: ${Object.entries(t.levels).filter(([, v]) => v).map(([c, v]) => `${esc(charName(c))} ${v}`).join(" · ")}</div>` : "")
+    + (RESULT.problems.length ? `<div style="color:#ffb3b3;margin-top:4px">⚠ ${RESULT.problems.length} problem${RESULT.problems.length > 1 ? "s" : ""}: the game wouldn't allow ${RESULT.problems.length > 1 ? "these steps" : "this step"}</div>` : "");
+  $("undo").disabled = !undoStack.length; $("redo").disabled = !redoStack.length;
+}
+$("steps").onclick = e => {
+  const li = e.target.closest(".step"); if (!li) return;
+  const i = +li.dataset.i, op = e.target.closest("button")?.dataset.op;
+  if (op) {
+    const k = i - 1;
+    return change(() => {
+      if (op === "del") route.steps.splice(k, 1);
+      if (op === "up" && k > 0) [route.steps[k - 1], route.steps[k]] = [route.steps[k], route.steps[k - 1]];
+      if (op === "down" && k < route.steps.length - 1) [route.steps[k + 1], route.steps[k]] = [route.steps[k], route.steps[k + 1]];
+    });
+  }
+  view = i; renderSteps(); draw(FRAMES[view]); highlights();
+};
+
+/* ================= REFRESH ================= */
+function refresh() {
+  store.set("ffx-route-builder", JSON.stringify(route));
+  play();
+  view = FRAMES.length - 1;
+  renderSteps(); syncControls(); draw(endState()); highlights();
+}
+function fillInfo() { $("title").value = route.title || ""; $("name").value = route.name || ""; $("after").value = route.after || ""; }
+$("title").oninput = () => { route.title = $("title").value; store.set("ffx-route-builder", JSON.stringify(route)); };
+$("name").oninput = () => { route.name = $("name").value.trim(); store.set("ffx-route-builder", JSON.stringify(route)); };
+$("after").onchange = () => { undoStack.push(snapshot()); route.after = $("after").value.trim(); refreshAfter(); };
+
+/* animate the whole route from the start */
+let tok = 0;
+$("play").onclick = async () => {
+  const my = ++tok; view = FRAMES.length - 1; renderSteps();
+  draw(FRAMES[0]);
+  for (const st of RESULT.steps) for (const sb of st.subs) {
+    await new Promise(r => setTimeout(r, sb.action === "move" ? 280 : 450));
+    if (my !== tok) return;
+    draw(sb.state, sb.action, sb.node);
+  }
+  highlights();
+};
+$("undo").onclick = undo; $("redo").onclick = redo;
+$("clear").onclick = () => { if (route.steps.length && !confirm("Start a new, empty route? (Undo can bring it back.)")) return; change(() => { route = blank(); }); fillInfo(); refreshAfter(); };
+document.addEventListener("keydown", e => {
+  if (e.target.closest("input, textarea, select")) return;
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); e.shiftKey ? redo() : undo(); }
+  else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") { e.preventDefault(); redo(); }
+  else if (!e.ctrlKey && !e.metaKey) {
+    const t = { m: "move", a: "activate", u: "unlock", t: "teleport", p: "place" }[e.key.toLowerCase()];
+    if (t) setTool(t);
+  }
+});
+
+/* ================= SHARE ================= */
+/* one step per line, so a pull request shows exactly which steps changed */
+function toJSON() {
+  const r = exportable();
+  const head = Object.entries(r).filter(([k, v]) => k !== "steps" && v !== undefined).map(([k, v]) => `  ${JSON.stringify(k)}: ${JSON.stringify(v)}`);
+  const steps = r.steps.map(st => `    ${JSON.stringify(st)}`).join(",\n");
+  return `{\n${[...head, `  "steps": [\n${steps}\n  ]`].join(",\n")}\n}\n`;
+}
+const fileName = () => (route.name || "new-route").replace(/[^\w-]+/g, "-");
+$("export").onclick = () => {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([toJSON()], { type: "application/json" }));
+  a.download = fileName() + ".json"; a.click(); URL.revokeObjectURL(a.href);
+};
+const copy = async text => { try { await navigator.clipboard.writeText(text); toast("Copied"); } catch { toast("Couldn't copy: your browser blocked it"); } };
+$("copy").onclick = () => copy(toJSON());
+$("copyLine").onclick = () => copy(`route: ${fileName()}`);
+function load(obj, name) {
+  if (!obj || !Array.isArray(obj.steps)) return toast("That isn't a route file: it needs a \"steps\" list");
+  change(() => { route = { ...blank(), ...obj, name: name || obj.name || "", start: obj.start || {} }; });
+  fillInfo(); refreshAfter().then(() => fitTo(routeFocus()));
+}
+$("importFile").onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try { load(JSON.parse(await f.text()), f.name.replace(/\.json$/i, "")); } catch { toast("Couldn't read that file as JSON"); }
+  e.target.value = "";
+};
+$("paste").onclick = () => { $("pasteText").value = ""; $("pasteDlg").showModal(); };
+$("pasteCancel").onclick = () => $("pasteDlg").close();
+$("pasteOk").onclick = () => { try { load(JSON.parse($("pasteText").value)); $("pasteDlg").close(); } catch { toast("That isn't valid JSON"); } };
+$("open").onclick = async () => {
+  const name = prompt("Route file name (from sphere-grid/routes/):", route.name || "");
+  if (!name) return;
+  try { load(await loadRoute(name.trim()), name.trim()); } catch (e) { toast(e.message); }
+};
+$("known").innerHTML = ["besaid-tidus", "demo"].map(n => `<option value="${n}">`).join("");
+
+/* ================= START ================= */
+fillInfo();
+await refreshAfter();
+fitTo(routeFocus());
+})();
+</script>
+</body>
+</html>

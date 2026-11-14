@@ -1,0 +1,7 @@
+{
+  "title": "Kilika: Tidus",
+  "after": "besaid-tidus",
+  "steps": [
+    {"character":"tidus","move":"n207","activate":["n207","n208"]}
+  ]
+}
