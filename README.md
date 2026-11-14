@@ -293,5 +293,5 @@ Open a route with `prototypes/sphere-grid.html?cat=any&route=<file name>`. Witho
 
 ## Credits
 
-- **Final Fantasy X** and the Sphere Grid are © Square Enix. This is an unofficial fan project, not affiliated with or endorsed by Square Enix.
-- The Sphere Grid layout was traced with reference to the Sphere Grid map by **Zomgmeister**. Thank you! The map itself is not included in this repository.
+- **Final Fantasy X**, character names, logos, and related imagery are registered trademarks and copyright material of Square Enix Co., Ltd. This is an unofficial, community-driven speedrunning resource and fan site. It is not affiliated with, endorsed by, or sponsored by Square Enix.
+- The Sphere Grid layout was traced with reference to the Sphere Grid map by **Zomgmeister**.

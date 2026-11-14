@@ -65,7 +65,7 @@
   function footer() {
     const f = document.createElement("footer");
     f.className = "site-foot";
-    f.innerHTML = `<div class="wrap"><span>Final Fantasy X and the Sphere Grid are © Square Enix. This is an unofficial fan project, not affiliated with or endorsed by Square Enix.</span>
+    f.innerHTML = `<div class="wrap"><span>Final Fantasy X, character names, logos, and related imagery are registered trademarks and copyright material of Square Enix Co., Ltd. This is an unofficial, community-driven speedrunning resource and fan site. It is not affiliated with, endorsed by, or sponsored by Square Enix.</span>
       <span><a href="https://github.com/lukeroddis/FFX-Speedrun">Contribute on GitHub</a></span></div>`;
     document.body.appendChild(f);
   }
