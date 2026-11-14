@@ -52,13 +52,22 @@ djose-skip:
   about: Manipulate the purple Crusader so that he delays Lucil just the right amount so that she and Clasko push you to the cutscene, allowing you to escape to Moonflow.
   by: Flobberworm4
   by_url: https://www.youtube.com/@Flobberworm4
-guadosalam-skip:
+guadosalam-skip-HD:
   name: Guadosalam Skip [HD Remaster]
   area: Guadosalam
   difficulty: 2
   categories: [any]
   video: https://www.youtube.com/watch?v=nEzX3p7AIQw
   about: Stand outside the Potion Shop and talk to the male Guado, so that the female Guado pushes you into the shop door, giving you freedom of movement to exit the area.
+  by: Flobberworm4
+  by_url: https://www.youtube.com/@Flobberworm4
+guadosalam-skip-PS2:
+  name: Guadosalam Skip [PS2]
+  area: Guadosalam
+  difficulty: 2
+  categories: [any]
+  video: https://www.youtube.com/watch?v=0Y-0EOmVtVk
+  about: Stand outside the Potion Shop and talk to the female Guado, so that the male Guado pushes you into the shop door, giving you freedom of movement to exit the area.
   by: Flobberworm4
   by_url: https://www.youtube.com/@Flobberworm4
 jyscal-skip:
