@@ -1,0 +1,27 @@
+# The Skips library. Each entry:
+#   name        what the skip is called
+#   area        where it happens in the game
+#   categories  which categories use it (folder names in notes/)
+#   video       a YouTube link
+#   about       optional: a sentence or two on what it does and how
+#   difficulty  1 (easy) to 5 (hardest), shown as stars
+#   by          who made the video (shown as "By …" on the card)
+#   by_url      optional: a link for them, e.g. their YouTube or Twitch channel
+djose-skip:
+  name: Djose Skip [HD Remaster]
+  area: Djose
+  difficulty: 5
+  categories: [any]
+  video: https://www.youtube.com/watch?v=DmEmoQmKeN4
+  about: Manipulate the purple Crusader so that he delays Lucil just the right amount so that she and Clasko push you to the cutscene, allowing you to escape to Moonflow.
+  by: Flobberworm4
+  by_url: https://www.youtube.com/@Flobberworm4
+guadosalam-skip:
+  name: Guadosalam Skip [HD Remaster]
+  area: Guadosalam
+  difficulty: 2
+  categories: [any]
+  video: https://www.youtube.com/watch?v=nEzX3p7AIQw
+  about: Stand outside the Potion Shop and talk to the male Guado, so that the female Guado pushes you into the shop door, giving you freedom of movement to exit the area.
+  by: Flobberworm4
+  by_url: https://www.youtube.com/@Flobberworm4

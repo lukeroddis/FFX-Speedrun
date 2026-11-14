@@ -4,10 +4,10 @@ A home for the **Final Fantasy X** speedrunning community, styled after the game
 
 - **Run notes** for each category and language, stepped through with the mouse wheel without leaving the game. One set of notes covers every version of a category, with toggles for the parts that differ.
 - **Sphere Grid routes** drawn on a recreated, interactive Sphere Grid, with animations that step through each character's moves and teleports, and a **route builder** to make them.
-- **Tricks & Skips:** a video library of the skips the routes use.
+- **Skips:** a video library of the skips the routes use, crediting who made each video.
 - **Leaderboards:** the current top runs, read from speedrun.com once a day.
 - **Community:** the Discord, speedrun.com and who's live on Twitch right now.
-- **Everything is data**, so updating a strategy, route, trick or link means editing a small text file, not redrawing an image or writing HTML.
+- **Everything is data**, so updating a strategy, route, skip or link means editing a small text file, not redrawing an image or writing HTML.
 
 > Status: work in progress.
 
@@ -21,14 +21,15 @@ index.html          The home page
 pages/              The hub's pages
   notes.html          The run notes (?cat=any&lang=en)
   categories.html     Every category and its languages
-  tricks.html         The Tricks & Skips library
+  skips.html          The Skips library
   leaderboards.html   Top runs from speedrun.com
   community.html      Discord, speedrun.com, streams, contributing
   tools.html          The route builder and grid editor
 hub/                The hub's data
   links.yml           Discord, speedrun.com and GitHub links
   leaderboards.yml    Which speedrun.com boards to show, in order
-  tricks.yml          The Tricks & Skips videos
+  skips.yml           The Skips videos, and who made them
+  tools.yml           The Tools page, and who made each tool
   twitch.yml          What the Twitch live check looks for
 .github/            The Twitch live check: a scheduled GitHub Action and its script
 notes/
@@ -81,7 +82,8 @@ Prototypes, for experimenting on their own (not linked from the hub):
 
 Everything on the hub pages comes from small files, so a pull request is all it takes to change them:
 
-- **A trick or skip:** add an entry to `hub/tricks.yml`, with its name, area, categories and YouTube link (and optionally a sentence on how it works). It appears on the Tricks & Skips page, and the newest ones on the home page.
+- **A skip:** add an entry to `hub/skips.yml`, with its name, area, categories, difficulty (1 to 5 stars) and YouTube link, who made the video (`by`, plus an optional `by_url` link to their channel), and optionally a sentence on how it works. It appears on the Skips page, and the first ones on the home page.
+- **A tool:** add an entry to `hub/tools.yml`, with its name, link, a short description, and who made it (`by` and an optional `by_url`).
 - **A leaderboard:** add a board to `hub/leaderboards.yml`, with its speedrun.com category ID and "Category" variable, from <https://www.speedrun.com/api/v1/games/ffx?embed=categories.variables>. Each visitor's browser reads the top runs from speedrun.com and keeps them for a day.
 - **A category:** add it to `notes/categories.yml` with a name, a short description and its leaderboards. Mark it `status: coming-soon` until it has notes.
 - **A link:** change `hub/links.yml`.

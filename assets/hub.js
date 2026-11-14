@@ -1,6 +1,6 @@
-/* The site's shared navigation bar, footer, theme switch and hub data (links, leaderboards, tricks, categories).
+/* The site's shared navigation bar, footer, theme switch and hub data (links, leaderboards, skips, tools, categories).
    Any page can show the navigation bar:  <script src="…/assets/notes-config.js"></script><script src="…/assets/hub.js"></script>
-   then  Hub.nav("tricks")  (the name of the current section). The bar brings its own styles, so it also
+   then  Hub.nav("skips")  (the name of the current section). The bar brings its own styles, so it also
    works on pages that don't use hub.css, such as the notes. */
 (function () {
   const ROOT = new URL("..", document.currentScript.src).href;   // the site root, wherever the page is
@@ -11,7 +11,7 @@
   const SECTIONS = [
     ["home", "Home", ""],
     ["notes", "Notes", "pages/categories.html"],
-    ["tricks", "Tricks & Skips", "pages/tricks.html"],
+    ["skips", "Skips", "pages/skips.html"],
     ["boards", "Leaderboards", "pages/leaderboards.html"],
     ["community", "Community", "pages/community.html"],
     ["tools", "Tools", "pages/tools.html"],
@@ -73,10 +73,23 @@
   /* ---------- data ---------- */
   const yaml = async path => NotesConfig.parseYaml(await NotesConfig.fetchText(url(path)));
   const links = () => yaml("hub/links.yml").catch(() => ({}));
-  async function tricks() {
-    const y = await yaml("hub/tricks.yml").catch(() => ({}));
+  async function skips() {
+    const y = await yaml("hub/skips.yml").catch(() => ({}));
     return Object.entries(y).map(([id, t]) => ({ id, ...t, categories: Array.isArray(t.categories) ? t.categories : [] }));
   }
+  async function tools() {
+    const y = await yaml("hub/tools.yml").catch(() => ({}));
+    return Object.entries(y).map(([id, t]) => ({ id, ...t, link: /^https?:/.test(t.link || "") ? t.link : url(t.link || "") }));
+  }
+  /* difficulty 1–5 as stars, e.g. ★★☆☆☆ */
+  function starsHTML(n) {
+    const d = Math.max(0, Math.min(5, Math.round(+n || 0)));
+    if (!d) return "";
+    return `<p class="difficulty">Difficulty <span class="stars" role="img" aria-label="${d} out of 5" title="${d} out of 5">`
+      + `<span class="on">${"★".repeat(d)}</span><span class="off">${"★".repeat(5 - d)}</span></span></p>`;
+  }
+  /* "By …" credit for a skip video or a tool: by (a name) and by_url (an optional link) */
+  const byHTML = it => it.by ? `<p class="by">By ${it.by_url ? `<a href="${esc(it.by_url)}">${esc(it.by)}</a>` : esc(it.by)}</p>` : "";
   /* each category with notes, plus its languages (from its category.yml) */
   async function categories() {
     const cats = await NotesConfig.loadCategories();
@@ -171,5 +184,5 @@
   });
   document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target.matches?.(".video[data-yt], .video[data-ch]")) e.target.click(); });
 
-  window.Hub = { url, esc, nav, footer, links, tricks, categories, notesUrl, boards, board, boardHTML, time, videoHTML, youtubeId, live, liveHTML };
+  window.Hub = { url, esc, nav, footer, links, skips, tools, byHTML, starsHTML, categories, notesUrl, boards, board, boardHTML, time, videoHTML, youtubeId, live, liveHTML };
 })();

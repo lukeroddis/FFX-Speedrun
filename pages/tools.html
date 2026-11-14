@@ -13,19 +13,18 @@
 <body>
 <div class="page-head"><div class="wrap"><h1>Tools</h1><p>Tools for planning routes and keeping the notes up to date.</p></div></div>
 <main class="wrap">
-<div class="grid">
-  <a class="card" href="../tools/route-builder.html"><h3>Sphere Grid Route Builder</h3><p>Build a Sphere Grid route: moves, activations, unlocks and teleports for any character, with Sphere Levels and spheres counted. Export it for the notes, or use it for your own challenge runs.</p></a>
-  <a class="card" href="../tools/grid-editor.html"><h3>Sphere Grid Editor</h3><p>For contributors: edit the Sphere Grid data itself, the nodes and links that every grid on the site draws.</p></a>
-  <a class="card" href="https://github.com/HannibalSnekter/FFXSpeedrunMod/releases"><h3>FFX Speedrun Mod</h3><p>A program facilitating the speedrunning of FFX on PC. Used for the TrueRNG% category or for setting a seed for Any%.</p></a>
-  <a class="card" href="https://grayfox96.github.io/FFX-RNG-tracker/"><h3>FFX RNG Tracker</h3><p>A program to help track the RNG during the FFX speedrun, used in Any%.</p></a>
-</div>
+<div class="grid" id="tools"><p class="muted">Loading…</p></div>
+<p class="muted" style="margin-top:18px;font-size:.88rem">Made a tool for FFX runners? Add it to hub/tools.yml on GitHub.</p>
 </main>
 <script>
 (async () => {
   Hub.nav("tools");
   Hub.footer();
   const $ = id => document.getElementById(id), esc = Hub.esc;
-
+  // a card per tool from hub/tools.yml, crediting who made it
+  $("tools").innerHTML = (await Hub.tools()).map(t => `<div class="card"><h3><a href="${esc(t.link)}">${esc(t.name)}</a></h3>
+    <p>${esc(t.about || "")}</p>${Hub.byHTML(t)}<div class="foot"><a class="btn small primary" href="${esc(t.link)}">Open</a></div></div>`).join("")
+    || `<p class="muted">No tools yet.</p>`;
 })();
 </script>
 </body>

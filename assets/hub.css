@@ -1,4 +1,4 @@
-/* The hub pages: home, categories, tricks, leaderboards, community, tools.
+/* The hub pages: home, categories, skips, leaderboards, community, tools.
    A cleaner layout than the in-run notes, with the game's menus as accents:
    the blue gradient header, gold highlights and the hand cursor on hover. Light and dark themes. */
 :root {
@@ -52,6 +52,12 @@ h2.section a { font-size: .9rem; font-weight: 500; }
         box-shadow: var(--shadow); display: flex; flex-direction: column; gap: 8px; }
 .card h3 { margin: 0; font-size: 1.15rem; }
 .card p { margin: 0; color: var(--muted); font-size: .93rem; }
+.card p.by { font-size: .85rem; }
+.card p.difficulty { font-size: .85rem; display: flex; align-items: center; gap: 6px; }
+.stars { font-size: 1.05rem; letter-spacing: 1px; line-height: 1; }
+.stars .on { color: var(--gold); }
+.stars .off { color: var(--border); }
+.card p.by a { font-weight: 700; }
 .card .foot { margin-top: auto; padding-top: 8px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 a.card { color: inherit; text-decoration: none; transition: transform .12s ease, border-color .12s ease; }
 a.card:hover { transform: translateY(-2px); border-color: var(--accent); }

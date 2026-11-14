@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Final Fantasy X Speedrun</title>
-<meta name="description" content="A hub for the Final Fantasy X speedrun community: run notes, Sphere Grid routes, tricks and skips, leaderboards and the Discord.">
+<meta name="description" content="A hub for the Final Fantasy X speedrun community: run notes, Sphere Grid routes, skip videos, leaderboards and the Discord.">
 <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/hub.css">
 <script src="assets/notes-config.js"></script>
@@ -25,7 +25,7 @@
 <div class="page-head">
   <div class="wrap">
     <h1>Final Fantasy X Speedrun</h1>
-    <p>A home for the FFX speedrunning community: step-by-step run notes, Sphere Grid routes, the tricks and skips, and the current records.</p>
+    <p>A home for the FFX speedrunning community: step-by-step run notes, Sphere Grid routes, the skips, and the current records.</p>
     <div class="actions">
       <a class="btn primary" href="pages/notes.html?cat=any">Read the Any% notes</a>
       <a class="btn ghost" id="discordBtn" href="pages/community.html">Join the Discord</a>
@@ -42,10 +42,10 @@
       <p>Follow the beginner friendly Any% notes step by step.</p>
       <div class="foot"><span class="tag">Any%</span></div>
     </a>
-    <a class="card" href="pages/tricks.html">
+    <a class="card" href="pages/skips.html">
       <h3>Learn the skips</h3>
-      <p>Videos of the tricks and skips the routes use, with what each one does.</p>
-      <div class="foot"><span class="tag" id="trickCount">Tricks & Skips</span></div>
+      <p>Videos of the skips the routes use, with what each one does.</p>
+      <div class="foot"><span class="tag" id="skipCount">Skips</span></div>
     </a>
     <a class="card" href="pages/community.html">
       <h3>Ask the community</h3>
@@ -73,8 +73,8 @@
       <div class="card records" id="records"><p class="muted" style="padding:14px 16px;margin:0">Loading from speedrun.com…</p></div>
     </section>
     <section>
-      <h2 class="section">Tricks & skips <a href="pages/tricks.html">All →</a></h2>
-      <div class="grid" id="tricks" style="grid-template-columns:1fr"></div>
+      <h2 class="section">Skips <a href="pages/skips.html">All →</a></h2>
+      <div class="grid" id="skips" style="grid-template-columns:1fr"></div>
     </section>
   </div>
 </main>
@@ -110,11 +110,11 @@
     }).join("")}</table><div class="note">From speedrun.com, refreshed once a day.</div>`
     : `<p class="muted" style="padding:14px 16px;margin:0">No leaderboards set up.</p>`;
 
-  // the first few tricks
-  const tricks = await Hub.tricks();
-  $("trickCount").textContent = `${tricks.length} video${tricks.length === 1 ? "" : "s"}`;
-  $("tricks").innerHTML = tricks.slice(0, 2).map(t => `<div class="card">${Hub.videoHTML(t.video, t.name)}
-    <h3>${esc(t.name)}</h3><p>${esc(t.area || "")}</p></div>`).join("") || `<p class="muted">No tricks yet.</p>`;
+  // the first few skips
+  const skips = await Hub.skips();
+  $("skipCount").textContent = `${skips.length} video${skips.length === 1 ? "" : "s"}`;
+  $("skips").innerHTML = skips.slice(0, 2).map(t => `<div class="card">${Hub.videoHTML(t.video, t.name)}
+    <h3>${esc(t.name)}</h3><p>${esc(t.area || "")}</p>${Hub.starsHTML(t.difficulty)}${Hub.byHTML(t)}</div>`).join("") || `<p class="muted">No skips yet.</p>`;
 })();
 </script>
 </body>

@@ -1,0 +1,26 @@
+# The Tools page. Each entry:
+#   name     the tool's name
+#   link     where it lives (a page in this repository, or a full web address)
+#   about    a sentence or two on what it's for
+#   by       who made it (shown as "By …" on the card)
+#   by_url   optional: a link for them
+route-builder:
+  name: Sphere Grid Route Builder
+  link: tools/route-builder.html
+  about: Build a Sphere Grid route: moves, activations, unlocks and teleports for any character, with Sphere Levels and spheres counted. Export it for the notes, or use it for your own challenge runs.
+grid-editor:
+  name: Sphere Grid Editor
+  link: tools/grid-editor.html
+  about: For contributors: edit the Sphere Grid data itself, the nodes and links that every grid on the site draws.
+speedrun-mod:
+  name: FFX Speedrun Mod
+  link: https://github.com/HannibalSnekter/FFXSpeedrunMod/releases
+  about: A program facilitating the speedrunning of FFX on PC. Used for the TrueRNG% category or for setting a seed for Any%.
+  by: HannibalSnekter
+  by_url: https://github.com/HannibalSnekter
+rng-tracker:
+  name: FFX RNG Tracker
+  link: https://grayfox96.github.io/FFX-RNG-tracker/
+  about: A program to help track the RNG during the FFX speedrun, used in Any%.
+  by: grayfox96
+  by_url: https://github.com/grayfox96

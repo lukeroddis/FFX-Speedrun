@@ -2,31 +2,9 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tricks & Skips – Final Fantasy X Speedrun</title>
-<meta name="description" content="Videos of the tricks and skips used in Final Fantasy X speedruns.">
-<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../assets/hub.css">
-<script src="../assets/notes-config.js"></script>
-<script src="../assets/hub.js"></script>
+<title>Moved – Final Fantasy X Speedrun</title>
+<!-- Tricks & Skips is now Skips. This sends old links there. -->
+<script>location.replace("skips.html" + location.search + location.hash);</script>
 </head>
-<body>
-<div class="page-head"><div class="wrap"><h1>Tricks & Skips</h1><p>Videos of the tricks and skips the routes use. Know one that's missing? Add it to hub/tricks.yml on GitHub.</p></div></div>
-<main class="wrap">
-<div class="grid" id="tricks"><p class="muted">Loading…</p></div>
-</main>
-<script>
-(async () => {
-  Hub.nav("tricks");
-  Hub.footer();
-  const $ = id => document.getElementById(id), esc = Hub.esc;
-  const [tricks, cats] = await Promise.all([Hub.tricks(), Hub.categories()]);
-  const catName = id => cats.find(c => c.id === id)?.name || id;
-  $("tricks").innerHTML = tricks.map(t => `<div class="card" id="${esc(t.id)}">${Hub.videoHTML(t.video, t.name)}
-    <h3>${esc(t.name)}</h3>${t.area ? `<p><b>${esc(t.area)}</b></p>` : ""}${t.about ? `<p>${esc(t.about)}</p>` : ""}
-    <div class="foot">${t.categories.map(c => `<span class="tag">${esc(catName(c))}</span>`).join("")}</div></div>`).join("")
-    || `<p class="muted">No tricks yet.</p>`;
-})();
-</script>
-</body>
+<body><p>This page is now <a href="skips.html">Skips</a>.</p></body>
 </html>
