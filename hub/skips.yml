@@ -7,6 +7,42 @@
 #   difficulty  1 (easy) to 5 (hardest), shown as stars
 #   by          who made the video (shown as "By …" on the card)
 #   by_url      optional: a link for them, e.g. their YouTube or Twitch channel
+miihen-skip
+  name: Mi'ihen Skip
+  area: Mi'ihen Highroad
+  difficulty: 3
+  categories: [any]
+  video: https://www.youtube.com/watch?v=JEi5zc8o2KI
+  about: Speak to the Guy in Blue as you walk into the cutscene, giving you freedom of movement to exit the area.
+  by: Madhyama
+  by_url: https://www.youtube.com/@madhyama5016
+clasko-skip
+  name: Clasko Skip
+  area: Mushroom Rock Road
+  difficulty: 2
+  categories: [any]
+  video: https://www.youtube.com/watch?v=iqC-jN8SNd0
+  about: Speak to the green Crusader, who pushes you to the cutscene, allowing you to escape to Mushroom Rock Road.
+  by: Madhyama
+  by_url: https://www.youtube.com/@madhyama5016
+mrr-skip-HD
+  name: MRR Skip (AKA Terra Skip) [HD Remaster]
+  area: Mushroom Rock Road
+  difficulty: 4
+  categories: [any]
+  video: https://www.youtube.com/watch?v=qUdDNdDT4io
+  about: Stand in the right spot and speak to the green Crusader as he pushes you through the invisible walls.
+  by: MeMtb
+  by_url: https://www.youtube.com/@bleauh
+mrr-skip-PS2
+  name: MRR Skip (AKA Terra Skip) [PS2]
+  area: Mushroom Rock Road
+  difficulty: 4
+  categories: [any]
+  video: https://www.youtube.com/watch?v=70o5_P0kUNM
+  about: Stand in the right spot and speak to the green Crusader as he pushes you through the invisible walls.
+  by: AwesomeWaves
+  by_url: https://www.youtube.com/@awesomewaves
 djose-skip:
   name: Djose Skip [HD Remaster]
   area: Djose
@@ -25,3 +61,21 @@ guadosalam-skip:
   about: Stand outside the Potion Shop and talk to the male Guado, so that the female Guado pushes you into the shop door, giving you freedom of movement to exit the area.
   by: Flobberworm4
   by_url: https://www.youtube.com/@Flobberworm4
+jyscal-skip:
+  name: Jyscal Skip
+  area: Macalania Temple
+  difficulty: 2
+  categories: [any]
+  video: https://www.youtube.com/watch?v=xj-zFQJbJ9o
+  about: Speak to Tromell as you enter the cutscene, giving you freedom of movement to move to the next area without watching the Jyscal sphere.
+  by: Flobberworm4
+  by_url: https://www.youtube.com/@Flobberworm4
+sandragora-skip
+  name: Sandragora Skip
+  area: Bikanel Desert
+  difficulty: 1
+  categories: [any]
+  video: https://www.youtube.com/watch?v=dEOA1Cs1PfQ
+  about: Use Rikku to push you past the Sandragora, so that you can leave the area without fighting it.
+  by: Cereth
+  by_url: https://www.youtube.com/@Cereth
