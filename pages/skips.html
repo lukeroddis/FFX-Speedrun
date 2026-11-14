@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Skips – Final Fantasy X Speedrun</title>
-<meta name="description" content="Videos of the skips used in Final Fantasy X speedruns.">
+<meta name="description" content="Guides and videos for the skips used in Final Fantasy X speedruns, for PS2 and the HD Remaster.">
 <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/hub.css">
 <script src="../assets/notes-config.js"></script>
 <script src="../assets/hub.js"></script>
 </head>
 <body>
-<div class="page-head"><div class="wrap"><h1>Skips</h1><p>Guide to the skips used in Final Fantasy X speedruns.</p></div></div>
+<div class="page-head"><div class="wrap"><h1>Skips</h1><p>Guide to the skips used in Final Fantasy X speedruns. Each has its own page with the video and how to do it.</p></div></div>
 <main class="wrap">
 <div class="grid" id="skips"><p class="muted">Loading…</p></div>
 </main>
@@ -20,12 +20,8 @@
   Hub.nav("skips");
   Hub.footer();
   const $ = id => document.getElementById(id), esc = Hub.esc;
-  const [skips, cats] = await Promise.all([Hub.skips(), Hub.categories()]);
-  const catName = id => cats.find(c => c.id === id)?.name || id;
-  $("skips").innerHTML = skips.map(t => `<div class="card" id="${esc(t.id)}">${Hub.videoHTML(t.video, t.name)}
-    <h3>${esc(t.name)}</h3>${t.area ? `<p><b>${esc(t.area)}</b></p>` : ""}${Hub.starsHTML(t.difficulty)}${t.about ? `<p>${esc(t.about)}</p>` : ""}${Hub.byHTML(t)}
-    <div class="foot">${t.categories.map(c => `<span class="tag">${esc(catName(c))}</span>`).join("")}</div></div>`).join("")
-    || `<p class="muted">No skips yet.</p>`;
+  const skips = await Hub.skips();
+  $("skips").innerHTML = !skips ? Hub.notBuilt : skips.map(Hub.skipCardHTML).join("") || `<p class="muted">No skips yet.</p>`;
 })();
 </script>
 </body>

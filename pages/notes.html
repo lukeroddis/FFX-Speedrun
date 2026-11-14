@@ -262,6 +262,11 @@
   .err { padding: 30px; text-align: center; }
   [hidden] { display: none !important; }   /* lines hidden by the Show filter, even ones styled as flex */
 
+  /* links to skip pages */
+  a.skiplink { color: #9fdcff; font-weight: 700; text-decoration: none; border-bottom: 1px dotted #9fdcff; }
+  a.skiplink:hover { color: #fff; border-bottom-style: solid; }
+  a.skiplink span { font-size: .75em; }
+
   /* ---------- in-game names in the runner's game language ---------- */
   /* the game's name, big, with the notes' own name small underneath */
   .gt { display: inline-flex; flex-direction: column; align-items: center; vertical-align: middle; line-height: 1.15;
@@ -444,8 +449,18 @@ const terms = meta.terms.filter(t => TERM_INFO[t]);
 const names = Object.keys(meta.names).filter(n => n !== "Enemy");
 // names, terms and glossary names, longest first; a trailing "s" (plurals) is allowed
 const wordRe = new RegExp(`\\b(${[...terms, ...names, ...GLOSS.keys()].sort((a, b) => b.length - a.length).map(s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})(s?)\\b`, "g");
+/* Skip names in the notes link to the skip's page (in a new tab, so your place in the run stays put).
+   The names and aliases come from skips/index.json, made by the build from hub/skips/*.md. */
+const SKIPS = (await Hub.skips()) || [];
+const skipByName = new Map(SKIPS.flatMap(s => [s.name, ...(s.aliases || [])].map(n => [n.toLowerCase(), s])));
+const reEscape = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const skipRe = skipByName.size ? new RegExp(`(?<![\\w])(${[...skipByName.keys()].sort((a, b) => b.length - a.length).map(n => reEscape(esc(n))).join("|")})(?![\\w])`, "gi") : null;
+const linkSkips = html => skipRe ? html.replace(skipRe, m => {
+  const s = skipByName.get(m.toLowerCase());
+  return `<a class="skiplink" href="${esc(s.link)}" target="_blank" rel="noopener" title="How to do the ${esc(s.name)} (opens in a new tab)">${m}<span aria-hidden="true"> ▶</span></a>`;
+}) : html;
 function fmt(s) {
-  return esc(s)
+  return linkSkips(esc(s))
     .replace(wordRe, (all, w, plural) => {
       const g = GLOSS.get(w);
       if (g) return gameLang !== NOTES_LANG && g[gameLang]

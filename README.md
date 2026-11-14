@@ -11,12 +11,13 @@ A home for the **Final Fantasy X** speedrunning community, styled after the game
 
 > Status: work in progress.
 
-The site is published with GitHub Pages from the `main` branch, at <https://lukeroddis.github.io/FFX-Speedrun/>.
+The site is built and published to GitHub Pages by a GitHub Action (`.github/workflows/pages.yml`) on every push to `main`, at <https://lukeroddis.github.io/FFX-Speedrun/>. Search engines find every page through its `sitemap.xml`.
 
 ## Folder layout
 
 ```
 index.html          The home page
+_site/              The built site (made by the build script; not committed)
 .nojekyll           Tells GitHub Pages to serve files as they are (so the notes' .md files load raw)
 pages/              The hub's pages
   notes.html          The run notes (?cat=any&lang=en)
@@ -28,10 +29,10 @@ pages/              The hub's pages
 hub/                The hub's data
   links.yml           Discord, speedrun.com and GitHub links
   leaderboards.yml    Which speedrun.com boards to show, in order
-  skips.yml           The Skips videos, and who made them
+  skips/              One Markdown file per skip, each built into its own page (see the README inside)
   tools.yml           The Tools page, and who made each tool
   twitch.yml          What the Twitch live check looks for
-.github/            The Twitch live check: a scheduled GitHub Action and its script
+.github/            GitHub Actions: building and publishing the site (pages.yml, build-site.mjs) and the Twitch live check
 notes/
   categories.yml      The categories on the site: name, description, leaderboards, "coming soon"
   glossary.json       In-game names in every game language, shared by all categories
@@ -61,11 +62,17 @@ tools/
 
 ## Running it locally
 
-The pages load data files, so open them through a small local web server rather than by double-clicking. From this folder:
+The site is **built** before it's published: a script copies everything into `_site/` and adds a page for each skip, the skips list and a sitemap. To see it as it will be published, build it and serve `_site/`. From this folder:
 
 ```bash
-python -m http.server 8765
+node .github/scripts/build-site.mjs
 ```
+
+```bash
+python -m http.server 8765 -d _site
+```
+
+Run the build again after changing a skip. Serving this folder directly (`python -m http.server 8765`) also works for everything else, but the skips (the Skips page, skip pages and skip links in the notes) only exist in the built copy.
 
 Then open <http://localhost:8765/> for the home page, or go straight to:
 
@@ -82,7 +89,7 @@ Prototypes, for experimenting on their own (not linked from the hub):
 
 Everything on the hub pages comes from small files, so a pull request is all it takes to change them:
 
-- **A skip:** add an entry to `hub/skips.yml`, with its name, area, categories, difficulty (1 to 5 stars) and YouTube link, who made the video (`by`, plus an optional `by_url` link to their channel), and optionally a sentence on how it works. It appears on the Skips page, and the first ones on the home page.
+- **A skip:** add a Markdown file to `hub/skips/`, e.g. `hub/skips/clasko-skip.md`. It becomes its own page at `skips/clasko-skip/`, with its video (or a tab per version, PS2 and HD Remaster), who made it, its difficulty, and a written guide with images. It also appears on the Skips page, and its name links to it from the notes. `hub/skips/README.md` lists the fields and how to write the guide.
 - **A tool:** add an entry to `hub/tools.yml`, with its name, link, a short description, and who made it (`by` and an optional `by_url`).
 - **A leaderboard:** add a board to `hub/leaderboards.yml`, with its speedrun.com category ID and "Category" variable, from <https://www.speedrun.com/api/v1/games/ffx?embed=categories.variables>. Each visitor's browser reads the top runs from speedrun.com and keeps them for a day.
 - **A category:** add it to `notes/categories.yml` with a name, a short description and its leaderboards. Mark it `status: coming-soon` until it has notes.

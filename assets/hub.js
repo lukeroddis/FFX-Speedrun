@@ -73,10 +73,25 @@
   /* ---------- data ---------- */
   const yaml = async path => NotesConfig.parseYaml(await NotesConfig.fetchText(url(path)));
   const links = () => yaml("hub/links.yml").catch(() => ({}));
+  /* the skips, from skips/index.json, which the build makes from hub/skips/*.md (null when the site isn't built) */
   async function skips() {
-    const y = await yaml("hub/skips.yml").catch(() => ({}));
-    return Object.entries(y).map(([id, t]) => ({ id, ...t, categories: Array.isArray(t.categories) ? t.categories : [] }));
+    try { return (await NotesConfig.fetchJson(url("skips/index.json"))).map(s => ({ ...s, link: url(s.url) })); }
+    catch { return null; }
   }
+  /* a skip's card: its video's thumbnail and name link to its page */
+  function skipCardHTML(s) {
+    const v = s.versions.find(x => x.video) || s.versions[0] || {}, id = youtubeId(v.video);
+    const by = [...new Set(s.versions.map(x => x.by).filter(Boolean))];
+    const labels = s.versions.map(x => x.label).filter(Boolean);
+    return `<div class="card skipcard">
+      ${id ? `<a class="video" href="${esc(s.link)}" aria-label="${esc(s.name)}"><img src="https://i.ytimg.com/vi/${id}/hqdefault.jpg" alt="" loading="lazy"></a>` : ""}
+      <h3><a href="${esc(s.link)}">${esc(s.name)}</a></h3>
+      ${s.area ? `<p><b>${esc(s.area)}</b></p>` : ""}${starsHTML(s.difficulty)}
+      ${s.summary ? `<p>${esc(s.summary)}</p>` : ""}
+      ${by.length ? `<p class="by">Video${s.versions.length > 1 ? "s" : ""} by ${by.map(esc).join(" and ")}</p>` : ""}
+      <div class="foot">${labels.map(l => `<span class="tag">${esc(l)}</span>`).join("")}${(s.categoryNames || []).map(c => `<span class="tag soon">${esc(c)}</span>`).join("")}</div></div>`;
+  }
+  const notBuilt = `<p class="muted">The skips list is made when the site is built. Locally, run <code>node .github/scripts/build-site.mjs</code> and open the site from <code>_site/</code> (see README).</p>`;
   async function tools() {
     const y = await yaml("hub/tools.yml").catch(() => ({}));
     return Object.entries(y).map(([id, t]) => ({ id, ...t, link: /^https?:/.test(t.link || "") ? t.link : url(t.link || "") }));
@@ -192,5 +207,5 @@
     return `Updated ${ago(new Date(Math.min(...ats)).toISOString())} ago from speedrun.com · refreshes once a day`.replace("Updated 0 min ago", "Updated just now");
   }
 
-  window.Hub = { url, esc, nav, footer, links, skips, tools, byHTML, starsHTML, categories, notesUrl, boards, board, boardHTML, time, videoHTML, youtubeId, live, liveHTML, updatedText };
+  window.Hub = { url, esc, nav, footer, links, skips, skipCardHTML, notBuilt, tools, byHTML, starsHTML, categories, notesUrl, boards, board, boardHTML, time, videoHTML, youtubeId, live, liveHTML, updatedText };
 })();

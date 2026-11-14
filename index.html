@@ -111,10 +111,9 @@
     : `<p class="muted" style="padding:14px 16px;margin:0">No leaderboards set up.</p>`;
 
   // the first few skips
-  const skips = await Hub.skips();
-  $("skipCount").textContent = `${skips.length} video${skips.length === 1 ? "" : "s"}`;
-  $("skips").innerHTML = skips.slice(0, 2).map(t => `<div class="card">${Hub.videoHTML(t.video, t.name)}
-    <h3>${esc(t.name)}</h3><p>${esc(t.area || "")}</p>${Hub.starsHTML(t.difficulty)}${Hub.byHTML(t)}</div>`).join("") || `<p class="muted">No skips yet.</p>`;
+  const skips = await Hub.skips() || [];
+  $("skipCount").textContent = `${skips.length} skip${skips.length === 1 ? "" : "s"}`;
+  $("skips").innerHTML = skips.slice(0, 2).map(Hub.skipCardHTML).join("") || `<p class="muted">No skips yet.</p>`;
 })();
 </script>
 </body>
