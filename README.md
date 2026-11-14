@@ -8,9 +8,13 @@ Speedrunning notes for **Final Fantasy X**, rebuilt as a small website styled af
 
 > Status: early work in progress. The pages in `prototypes/` are mock-ups for the look and feel.
 
+The site is published with GitHub Pages from the `main` branch, at <https://lukeroddis.github.io/FFX-Speedrun/>.
+
 ## Folder layout
 
 ```
+index.html       The landing page, linking to everything below
+.nojekyll        Tells GitHub Pages to serve files as they are (so notes/*.md load raw)
 assets/          Shared code and styles for the site
   grid-icons.js    Sphere Grid node types, icons and character colours
   grid-layout.js   Shared link shapes and label positions
@@ -35,10 +39,10 @@ The pages load data files, so open them through a small local web server rather 
 python -m http.server 8765
 ```
 
-Then open:
+Then open <http://localhost:8765/> for the landing page, or go straight to:
 
 - Sphere Grid editor: <http://localhost:8765/tools/grid-editor.html>
-- Run notes mock-up (Besaid): <http://localhost:8765/prototypes/run.html>
+- Run notes: <http://localhost:8765/prototypes/run.html>
 - Battle mock-up: <http://localhost:8765/prototypes/sin-fin.html>
 - Sphere Grid route mock-up: <http://localhost:8765/prototypes/sphere-grid.html>
 

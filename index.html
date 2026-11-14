@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FFX Speedrun Notes</title>
+<meta name="description" content="Final Fantasy X speedrun notes, styled after the game's menus: step-by-step run notes, Sphere Grid routes and boss battles.">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-1: #4a4f86; --bg-2: #6a6fa8; --bg-3: #8c8fc4;
+    --text: #fff; --text-dim: #c9cbe8; --label: #e8e8ff; --gold: #ffd84a;
+    --shadow: 0 2px 0 rgba(0,0,0,.55), 0 0 4px rgba(0,0,0,.35);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100vh; color: var(--text);
+    font-family: "Ubuntu", "Segoe UI", sans-serif; font-weight: 500; text-shadow: var(--shadow);
+    background:
+      radial-gradient(ellipse at 15% 20%, rgba(255,255,255,.10), transparent 45%),
+      radial-gradient(ellipse at 85% 75%, rgba(20,20,60,.35), transparent 55%),
+      repeating-linear-gradient(115deg, rgba(255,255,255,.025) 0 2px, transparent 2px 9px),
+      linear-gradient(160deg, var(--bg-3), var(--bg-2) 40%, var(--bg-1));
+    background-attachment: fixed;
+    padding: 28px 16px 40px;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  .label { font-size: .78rem; font-weight: 700; letter-spacing: .08em; color: var(--label); margin: 0 0 2px 2px; }
+  .panel {
+    background: linear-gradient(90deg, rgba(30,30,70,.85), rgba(70,70,130,.55) 60%, rgba(70,70,130,.15));
+    border-top: 2px solid rgba(255,255,255,.25); border-bottom: 2px solid rgba(0,0,0,.35);
+    padding: 12px 18px 12px 40px;
+  }
+  header.panel h1 { margin: 0; font-size: 1.7rem; }
+  header.panel p { margin: 4px 0 0; color: var(--text-dim); font-size: .98rem; }
+
+  /* the game's main menu: a boxed list with the hand cursor on the hovered entry */
+  .menu {
+    margin: 22px 0; padding: 10px 0;
+    background: linear-gradient(180deg, rgba(60,62,110,.92), rgba(40,40,85,.92));
+    border: 2px solid #9fa2c8; border-radius: 6px; box-shadow: inset 0 0 0 2px #2a2a55, 0 4px 14px rgba(0,0,0,.3);
+  }
+  .menu a {
+    position: relative; display: block; padding: 10px 18px 10px 54px; color: var(--text); text-decoration: none;
+  }
+  .menu a b { display: block; font-size: 1.25rem; }
+  .menu a > span { display: block; margin-top: 2px; color: var(--text-dim); font-size: .9rem; line-height: 1.4; }
+  .menu a:hover, .menu a:focus-visible { background: linear-gradient(90deg, rgba(255,255,255,.2), rgba(255,255,255,.03)); outline: none; }
+  .menu a:hover::before, .menu a:focus-visible::before {
+    content: ""; position: absolute; left: 14px; top: 14px; width: 30px; height: 22px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 22'%3E%3Ccircle cx='8' cy='11' r='7' fill='%23f2a516' stroke='%237a4a00' stroke-width='1.2'/%3E%3Cpath d='M6 4 L29 11 L6 18 Z' fill='%23fff' stroke='%2355597a' stroke-width='1.2' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center / contain;
+    filter: drop-shadow(0 2px 2px rgba(0,0,0,.5)); animation: bob 1s ease-in-out infinite;
+  }
+  @keyframes bob { 50% { transform: translateX(-4px); } }
+  .menu .sep { margin: 6px 18px; border-top: 1px solid rgba(255,255,255,.15); }
+  .menu .tag { display: inline-block; margin-left: 8px; padding: 0 6px; border-radius: 3px; font-size: .68rem; font-weight: 700; letter-spacing: .06em;
+               vertical-align: 3px; color: #1b1b3b; text-shadow: none; background: #c9cbf0; }
+
+  footer { color: var(--text-dim); font-size: .82rem; line-height: 1.6; }
+  footer a { color: #fff; }
+  footer p { margin: 0 0 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="label">HELP</p>
+  <header class="panel">
+    <h1>FFX Speedrun Notes</h1>
+    <p>Final Fantasy X speedrun notes, styled after the game's own menus. Work in progress.</p>
+  </header>
+
+  <nav class="menu" aria-label="Pages">
+    <a href="prototypes/run.html"><b>Run Notes</b><span>The Any% run, step by step. Scroll the mouse wheel over the page to step through it without leaving the game. Route, game text and how much detail to show are set in the right-hand panel.</span></a>
+    <a href="prototypes/sphere-grid.html"><b>Sphere Grid</b><span>Sphere Grid routes played out move by move, teleports included.</span></a>
+    <a href="prototypes/sin-fin.html"><b>Battle: Sin Fin<span class="tag">MOCK-UP</span></b><span>An early mock-up of a boss battle as a turn-order list.</span></a>
+    <div class="sep"></div>
+    <a href="tools/grid-editor.html"><b>Sphere Grid Editor</b><span>For contributors: edit the grid data that the Sphere Grid pages draw.</span></a>
+    <a href="https://github.com/lukeroddis/FFX-Speedrun"><b>Contribute on GitHub</b><span>The notes are Markdown files. Spot a mistake or have a better strat? Open an issue or a pull request.</span></a>
+  </nav>
+
+  <footer>
+    <p>Final Fantasy X and the Sphere Grid are © Square Enix. This is an unofficial fan project, not affiliated with or endorsed by Square Enix.</p>
+    <p>The Sphere Grid layout was traced with reference to the Sphere Grid map by Zomgmeister.</p>
+  </footer>
+</div>
+</body>
+</html>
