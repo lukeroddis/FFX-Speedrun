@@ -85,7 +85,7 @@ Everything on the hub pages comes from small files, so a pull request is all it 
 - **A leaderboard:** add a board to `hub/leaderboards.yml`, with its speedrun.com category ID and "Category" variable, from <https://www.speedrun.com/api/v1/games/ffx?embed=categories.variables>. Each visitor's browser reads the top runs from speedrun.com and keeps them for a day.
 - **A category:** add it to `notes/categories.yml` with a name, a short description and its leaderboards. Mark it `status: coming-soon` until it has notes.
 - **A link:** change `hub/links.yml`.
-- **Streams:** `hub/twitch.yml` sets which Twitch categories to look in, the title words that mark a speedrun, and runners to always show (see below).
+- **Streams:** `hub/twitch.yml` sets which Twitch categories to look in, the title words that mark a speedrun, runners to always show, title words that leave a stream out (such as 24/7 reruns), and channels never to show (see below).
 
 ## Twitch live check
 
@@ -94,7 +94,7 @@ The Community page, and the home page when someone's live, show who's streaming 
 **How it works:** a GitHub Action (`.github/workflows/twitch-live.yml`) runs every 10 minutes:
 
 1. It asks Twitch for live streams in the categories in `hub/twitch.yml`.
-2. It keeps the speedruns: streams with the Speedrun tag, a speedrun word in the title (Any%, NSG, race…), or a runner from the list.
+2. It keeps the speedruns: streams with a speedrun word in the title (Any%, NSG, CSR, TAS, race…), or a runner from the list. Words only count at the start of a word, so *TAS* doesn't match *Fantasy*. Twitch's Speedrun tag isn't used, as streamers often leave it on when playing casually. It then removes titles with words like *24/7*, *rerun* or *watch party*, and any channel on the exclude list (for a banned player, say).
 3. It publishes the result as `live.json` on a separate `live-data` branch. That branch is a single commit, replaced each time, so `main`'s history stays clean.
 
 The site reads that file.

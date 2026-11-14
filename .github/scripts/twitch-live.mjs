@@ -22,6 +22,13 @@ export function parseYaml(src) {
 
 const list = v => (Array.isArray(v) ? v : []);
 
+/* Does a title contain this word? Any capitals, and a word that starts with a letter or digit must start a
+   word in the title: "TAS" matches "FFX TAS" but not "Fantasy", "race" matches "races" but not "embrace". */
+export function inTitle(title, word) {
+  const w = String(word).toLowerCase(), esc = w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp((/^[a-z0-9]/.test(w) ? "(^|[^a-z0-9])" : "") + esc).test(String(title).toLowerCase());
+}
+
 /* Everything that talks to Twitch. fetchFn is swappable so this can be tested without Twitch. */
 export async function collect({ cfg, clientId, clientSecret, fetchFn = fetch }) {
   const tokenRes = await fetchFn(`https://id.twitch.tv/oauth2/token?client_id=${encodeURIComponent(clientId)}&client_secret=${encodeURIComponent(clientSecret)}&grant_type=client_credentials`, { method: "POST" });
@@ -56,11 +63,13 @@ export async function collect({ cfg, clientId, clientSecret, fetchFn = fetch }) 
     for (const s of j.data) if (gameIds.has(s.game_id) && !streams.some(x => x.id === s.id)) streams.push(s);
   }
 
-  // keep the speedruns
-  const keywords = list(cfg.keywords).map(k => k.toLowerCase());
-  const isRun = s => runners.includes(s.user_login.toLowerCase())
-    || (s.tags || []).some(t => t.toLowerCase() === "speedrun")
-    || keywords.some(k => s.title.toLowerCase().includes(k));
+  // keep the speedruns, minus excluded channels and titles (24/7 reruns, watch parties).
+  // Tags aren't used: streamers often leave the Speedrun tag on when playing casually.
+  const keywords = list(cfg.keywords), badWords = list(cfg.exclude_titles);
+  const excluded = list(cfg.exclude).map(l => l.toLowerCase());
+  const isRun = s => !excluded.includes(s.user_login.toLowerCase())
+    && !badWords.some(w => inTitle(s.title, w))
+    && (runners.includes(s.user_login.toLowerCase()) || keywords.some(k => inTitle(s.title, k)));
   const live = streams.filter(isRun).sort((a, b) => b.viewer_count - a.viewer_count).map(s => ({
     login: s.user_login, name: s.user_name, title: s.title, game: s.game_name, viewers: s.viewer_count,
     started: s.started_at, language: s.language, thumbnail: s.thumbnail_url.replace("{width}", "440").replace("{height}", "248"),
@@ -78,4 +87,4 @@ async function main() {
   await writeFile("live-out/live.json", JSON.stringify(out, null, 2) + "\n");
   console.log(`${out.streams.length} live: ${out.streams.map(s => s.login).join(", ") || "nobody"}`);
 }
-if (import.meta.url === pathToFileURL(process.argv[1]).href) main().catch(e => { console.error(e.message); process.exit(1); });
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) main().catch(e => { console.error(e.message); process.exit(1); });
