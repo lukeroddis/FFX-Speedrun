@@ -101,7 +101,7 @@
     <button id="fit" title="F">Fit view</button>
   </div>
   <div class="group">
-    <button id="loadProject" title="Load sphere-grid/grid.json from this repository">Load project grid</button>
+    <button id="loadProject" title="Load sphere-grid/standard.json from this repository">Load project grid</button>
     <label class="btn">Import JSON<input type="file" id="importFile" accept=".json,application/json"></label>
     <button id="export">Export JSON</button>
     <button id="copy">Copy JSON</button>
@@ -535,8 +535,8 @@ function serialize() {   // one node / link per line → readable diffs in pull 
 $("export").onclick = () => {
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([serialize()], { type: "application/json" }));
-  a.download = "grid.json"; a.click(); URL.revokeObjectURL(a.href);
-  status("Exported grid.json. Replace sphere-grid/grid.json with it to update the project.");
+  a.download = PROJECT_GRID_FILE; a.click(); URL.revokeObjectURL(a.href);
+  status(`Exported ${PROJECT_GRID_FILE}. Replace sphere-grid/${PROJECT_GRID_FILE} with it to update the project.`);
 };
 $("copy").onclick = async () => {
   try { await navigator.clipboard.writeText(serialize()); status("JSON copied to clipboard."); }
@@ -706,11 +706,13 @@ $("radius").value = data.meta.nodeRadius; $("imgOpacity").value = img.opacity; $
 setTool("add"); panel(); render();
 if (data.nodes.length || img.src) requestAnimationFrame(fit);
 
-/* The repository's grid lives at ../sphere-grid/grid.json. Load it on first use
+/* The repository's grids live in ../sphere-grid/. Load it on first use
    (nothing saved in this browser yet), or on request via the "Load project grid" button. */
-const PROJECT_GRID = "../sphere-grid/grid.json";
+/* ?grid=standard (the default) picks sphere-grid/<grid>.json, so an Expert grid could be edited the same way */
+const PROJECT_GRID_FILE = (new URLSearchParams(location.search).get("grid") || "standard").replace(/[^\w-]/g, "") + ".json";
+const PROJECT_GRID = "../sphere-grid/" + PROJECT_GRID_FILE;
 async function loadProjectGrid(ask) {
-  if (ask && data.nodes.length && !confirm("Replace the grid in the editor with the project's grid.json? (Undo restores it.)")) return;
+  if (ask && data.nodes.length && !confirm("Replace the grid in the editor with the project's grid? (Undo restores it.)")) return;
   try {
     const d = await (await fetch(PROJECT_GRID, { cache: "no-store" })).json();
     commit(); data = { meta: { nodeRadius: 9, ...d.meta }, nodes: d.nodes, edges: d.edges }; sel = null;

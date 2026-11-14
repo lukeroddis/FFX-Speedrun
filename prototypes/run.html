@@ -355,6 +355,7 @@
 <script src="../assets/grid-icons.js"></script>
 <script src="../assets/grid-layout.js"></script>
 <script src="../assets/route-engine.js"></script>
+<script src="../assets/notes-config.js"></script>
 <script src="../assets/portraits.js"></script>
 <script>
 (async () => {
@@ -363,54 +364,56 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;",
 const store = { get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
 
 /* ================= LOAD ================= */
-/* notes/index.md holds the shared front matter and the list of areas; each area is its own file. */
-let index;
-try { index = await fetch("../notes/index.md").then(r => { if (!r.ok) throw r; return r.text(); }); }
-catch { $("notes").innerHTML = `<div class="box err">Couldn't load the notes. Open this page through a local server (see README).</div>`; return; }
-
-/* The front matter is a small YAML subset: "key: value", indented maps, [a, b] lists and # comments */
-function parseYaml(src) {
-  const root = {}, stack = [{ indent: -1, obj: root }];
-  for (const raw of src.split("\n")) {
-    if (!raw.trim() || raw.trim().startsWith("#")) continue;
-    const indent = raw.match(/^\s*/)[0].length, m = raw.trim().match(/^([^:]+?):\s*(.*)$/);
-    if (!m) continue;
-    while (stack.at(-1).indent >= indent) stack.pop();
-    const parent = stack.at(-1).obj, key = m[1].trim(), val = m[2].trim();
-    if (val === "") stack.push({ indent, obj: parent[key] = {} });
-    else parent[key] = /^\[.*\]$/.test(val) ? val.slice(1, -1).split(",").map(s => s.trim()).filter(Boolean) : val;
-  }
-  return root;
+/* notes/<category>/category.yml: settings shared by every language (toggles, targets, area order, grid).
+   notes/<category>/<language>/index.md: this language's wording (title, toggle labels, names, terms, area names).
+   Each area is its own file in the language folder; areas not translated yet are shown in English. */
+const { parseYaml } = NotesConfig;
+const P = NotesConfig.params();
+let CAT, langIndex, enIndex;
+try {
+  CAT = await NotesConfig.loadCategory(P.cat);
+} catch {
+  $("notes").innerHTML = `<div class="box err">Couldn't load the “${esc(P.cat)}” notes. Open this page through a local server (see README).</div>`; return;
 }
-function frontMatter(text) {
-  const m = text.match(/^---\n([\s\S]*?)\n---\n?/);
-  const y = m ? parseYaml(m[1]) : {};
-  // variants: { key: { name, id: label, ... } }. The old one-line form "blitz = win | loss" still works.
-  let vs = y.variants || {};
-  if (typeof vs === "string") {
-    const [k, opts] = vs.split("=").map(s => s.trim());
-    vs = { [k]: Object.fromEntries((opts || "").split("|").map(o => [o.trim(), o.trim()])) };
-  }
-  const variants = Object.entries(vs).map(([key, v]) => {
-    const { name, ...opts } = v;
-    return { key, name: name || key, options: Object.entries(opts).map(([id, label]) => ({ id, label })) };
-  });
-  const meta = { title: y.title, names: y.names || {}, terms: y.terms || [], overdrives: y.overdrives || [], variants, targets: y.targets || {} };
-  return { meta, body: m ? text.slice(m[0].length) : text };
-}
-const { meta, body: indexBody } = frontMatter(index.replace(/\r/g, ""));
+const NOTES_LANG = CAT.languages.includes(P.lang) ? P.lang : CAT.languages[0];
+const BASE_LANG = CAT.languages.includes("en") ? "en" : CAT.languages[0];   // where missing areas and wording come from
+const readIndex = async lang => {
+  try {
+    const text = (await NotesConfig.fetchText(NotesConfig.paths.notes(P.cat, lang, "index.md"))).replace(/\r/g, "");
+    const m = text.match(/^---\n([\s\S]*?)\n---\n?/);
+    return { y: m ? parseYaml(m[1]) : {}, body: m ? text.slice(m[0].length) : text };
+  } catch { return { y: {}, body: "" }; }
+};
+[langIndex, enIndex] = await Promise.all([readIndex(NOTES_LANG), NOTES_LANG === BASE_LANG ? null : readIndex(BASE_LANG)]);
+enIndex ||= langIndex;
+const pick = key => langIndex.y[key] ?? enIndex.y[key];
+/* toggles: which exist comes from category.yml, their wording from the language's index.md */
+const variants = Object.entries(CAT.variants).map(([key, ids]) => {
+  const words = langIndex.y.variants?.[key] || enIndex.y.variants?.[key] || {};
+  const list = Array.isArray(ids) ? ids : Object.keys(ids);
+  return { key, name: words.name || key, options: list.map(id => ({ id, label: words[id] || id })) };
+});
+const meta = { title: pick("title"), names: pick("names") || {}, terms: pick("terms") || [], overdrives: pick("overdrives") || [], variants, targets: CAT.targets };
 $("runTitle").textContent = meta.title || "FFX Notes";
-const areaList = [...indexBody.matchAll(/^- \[(.+?)\]\((.+?)\)/gm)].map(m => ({ name: m[1], file: m[2] }));
+/* area names from each index's "- [Name](file.md)" list; anchors without the number, unless two areas share a name */
+const namesIn = body => Object.fromEntries([...body.matchAll(/^- \[(.+?)\]\((.+?)\.md\)/gm)].map(m => [m[2], m[1]]));
+const langNames = namesIn(langIndex.body), enNames = namesIn(enIndex.body);
+const slugs = CAT.areas.map(id => id.replace(/^\d+-/, ""));
+const areaList = CAT.areas.map((id, i) => ({
+  id, file: id + ".md", name: langNames[id] || enNames[id] || slugs[i],
+  anchor: slugs.indexOf(slugs[i]) !== slugs.lastIndexOf(slugs[i]) ? id : slugs[i],
+}));
 await Promise.all(areaList.map(async a => {
-  try { const r = await fetch("../notes/" + a.file); if (r.ok) a.text = (await r.text()).replace(/\r/g, ""); } catch {}
+  for (const lang of NOTES_LANG === BASE_LANG ? [NOTES_LANG] : [NOTES_LANG, BASE_LANG]) {
+    try { a.text = (await NotesConfig.fetchText(NotesConfig.paths.notes(P.cat, lang, a.file))).replace(/\r/g, ""); a.lang = lang; return; } catch {}
+  }
 }));
 
 /* ================= GAME LANGUAGE ================= */
 /* notes/glossary.json: in-game names (items, abilities…) in each game language. The notes are written in
    NOTES_LANG; wherever one of its names appears, the page shows the name the runner's game uses. */
-const NOTES_LANG = "en";
 let glossary = { languages: { [NOTES_LANG]: "English" }, terms: {} };
-try { const r = await fetch("../notes/glossary.json"); if (r.ok) glossary = await r.json(); } catch {}
+try { glossary = await NotesConfig.fetchJson(NotesConfig.paths.glossary()); } catch {}
 const GLOSS = new Map();   // the name as written in the notes → its entry
 for (const t of Object.values(glossary.terms || {})) if (t[NOTES_LANG]) GLOSS.set(t[NOTES_LANG], t);
 let gameLang;
@@ -477,7 +480,7 @@ const condLabel = c => {
 function evalCond(conds, vars) {
   const open = [];
   for (const c of conds) {
-    if (!VARIANT[c.key]) { console.warn(`:::if ${c.key}=... isn't one of the variants in notes/index.md`); continue; }
+    if (!VARIANT[c.key]) { console.warn(`:::if ${c.key}=... isn't one of the variants in notes/${P.cat}/category.yml`); continue; }
     if (vars[c.key]) { if (!c.values.includes(vars[c.key])) return "drop"; }
     else open.push(c);
   }
@@ -584,7 +587,7 @@ function turnHTML(t, foe = "Enemy") {   // foe: the battle's title, shown in pla
   const a = t.text.match(ACTOR);
   if (a) {
     // Overdrives get the gold tag: either written as "Overdrive …" (the word is dropped, the tag says it)
-    // or starting with a name from the "overdrives:" list in notes/index.md
+    // or starting with a name from the "overdrives:" list in the language's index.md
     let text = a[2], od = false;
     const word = text.match(/^Overdrive\b[,:]?\s*/);
     if (word) { od = true; text = text.slice(word[0].length); }
@@ -635,7 +638,7 @@ function blockHTML(b) {
     if (!routes.length) routes = [{ name: "", label: "" }];
     inner = `<div class="sg"><div class="grids">${routes.map(r => `<div class="g">${r.label ? `<span class="vtag">${esc(r.label)}</span>` : ""}
       <svg data-route="${esc(r.name)}" aria-label="Sphere Grid moves"></svg>
-      <div class="gtools"><button class="replay">↻ Replay</button><span class="ginfo"></span>${r.name ? `<a href="sphere-grid.html?route=${encodeURIComponent(r.name)}" target="_blank">Open in the full grid ↗</a>` : ""}</div></div>`).join("")}</div>
+      <div class="gtools"><button class="replay">↻ Replay</button><span class="ginfo"></span>${r.name ? `<a href="sphere-grid.html?cat=${encodeURIComponent(P.cat)}&route=${encodeURIComponent(r.name)}" target="_blank">Open in the full grid ↗</a>` : ""}</div></div>`).join("")}</div>
       <div class="moves">${plainList(tree.children)}</div></div>`;
   } else inner = plainList(tree.children);
   return `<li class="block stop kind-${esc(b.type)}" data-drops="${drop}">${head}<div class="bbody">${intro}${inner}${drops}</div></li>`;
@@ -656,12 +659,14 @@ function stepHTML(it, n) {
 function areaHTML(a, vars) {
   const items = parseArea(applyVariants(a.text, vars));
   const html = itemsHTML(items, { n: 0 });
-  const id = a.file.replace(/^\d+-|\.md$/g, "");
+  const id = a.anchor;
   const all = flatItems(items);
+  // an area this language hasn't translated yet is shown from the English notes
+  const fallback = a.lang && a.lang !== NOTES_LANG ? `<span class="sum" style="display:inline">Not translated yet: shown in ${esc(glossary.languages?.[a.lang] || a.lang)}</span>` : "";
   const steps = all.filter(it => it.kind === "step").length, fights = all.filter(it => it.type === "battle").length;
   const sum = [`${steps} step${steps === 1 ? "" : "s"}`, fights ? `${fights} battle${fights === 1 ? "" : "s"}` : ""].filter(Boolean).join(" · ");
   return `<section class="area${collapsed.has(id) ? " collapsed" : ""}" id="${id}" data-name="${esc(a.name)}"><p class="label">LOCATION</p>
-    <div class="panel"><h2><button class="loc-toggle" aria-expanded="${!collapsed.has(id)}"><span class="chev">▾</span>${esc(a.name)}<span class="sum">${sum}</span></button></h2></div>
+    <div class="panel"><h2><button class="loc-toggle" aria-expanded="${!collapsed.has(id)}"><span class="chev">▾</span>${esc(a.name)}<span class="sum">${sum}</span>${fallback}</button></h2></div>
     <ol class="items">${html}</ol></section>`;
 }
 /* a labelled group (a variant not chosen yet) holds its own items */
@@ -709,12 +714,8 @@ function itemHTML(it, counter) {
 /* The route itself is played by assets/route-engine.js, the same engine as the Sphere Grid page.
    A route that says "after": "…" starts where that route ends, so each segment carries on from the last. */
 let gridData, ENGINE;
-const getGrid = () => gridData ||= fetch("../sphere-grid/grid.json").then(r => r.json()).then(g => { ENGINE = RouteEngine.create(g); return g; });
-const routeFiles = new Map();
-const loadRoute = name => {
-  if (!routeFiles.has(name)) routeFiles.set(name, fetch(`../sphere-grid/routes/${encodeURIComponent(name)}.json`).then(r => { if (!r.ok) throw r; return r.json(); }));
-  return routeFiles.get(name);
-};
+const getGrid = () => gridData ||= NotesConfig.loadGrid(CAT).then(g => { ENGINE = RouteEngine.create(g); return g; });
+const loadRoute = NotesConfig.routeLoader(P.cat);   // notes/<category>/sphere-grid/<name>.json
 async function mountGrid(svg) {
   const name = svg.dataset.route;
   if (!name) { svg.outerHTML = `<div class="gerr">No route linked yet.</div>`; return; }
@@ -817,7 +818,9 @@ function renderToggles() {
   const html = meta.variants.map(v => row(v.key, v.name,
       `<button data-v="" class="unset ${vars[v.key] ? "" : "on"}" title="Not known yet: show every option, labelled">?</button>` +
       v.options.map(o => btn(o.id, o.label, vars[v.key] === o.id)).join("")))
-    .join("") + row("game", "Game text", Object.entries(glossary.languages).map(([id, label]) => btn(id, label, id === gameLang)).join(""));
+    .join("")
+    + (CAT.languages.length > 1 ? row("notes", "Notes", CAT.languages.map(id => btn(id, glossary.languages?.[id] || id, id === NOTES_LANG)).join("")) : "")
+    + row("game", "Game text", Object.entries(glossary.languages).map(([id, label]) => btn(id, label, id === gameLang)).join(""));
   document.querySelectorAll(".var-host").forEach(h => { h.innerHTML = html; });
 }
 /* The SHOW controls: two presets, a chip per kind of block, and how many steps to keep */
@@ -850,6 +853,10 @@ function setGameLang(id) {
 document.addEventListener("click", e => {
   const b = e.target.closest(".var-host button"); if (!b) return;
   const k = b.closest(".vrow").dataset.k;
+  if (k === "notes") {   // another notes language: reload the page in it
+    const qs = new URLSearchParams(location.search); qs.set("lang", b.dataset.v);
+    location.search = qs.toString(); return;
+  }
   k === "game" ? setGameLang(b.dataset.v) : setVariant(k, b.dataset.v);
 });
 $("mRoute").onclick = () => {
@@ -890,7 +897,7 @@ function build() {
   };
   $("notes").innerHTML = areaList.filter(a => a.text).map(a => areaHTML(a, vars)).join("")
     || `<div class="box err">No area files found.</div>`;
-  $("areaNav").innerHTML = areaList.map(a => `<li><a href="#${a.file.replace(/^\d+-|\.md$/g, "")}" class="${a.text ? "" : "soon"}" title="${a.text ? "" : "Not migrated yet"}">${esc(a.name)}</a></li>`).join("");
+  $("areaNav").innerHTML = areaList.map(a => `<li><a href="#${a.anchor}" class="${a.text ? "" : "soon"}" title="${a.text ? "" : "Not migrated yet"}">${esc(a.name)}</a></li>`).join("");
   // every line, and the ones on screen; stepping only visits the visible ones
   allStops = [...document.querySelectorAll(".stop")];
   stops = allStops.filter(el => !el.closest("[hidden]"));

@@ -1,6 +1,6 @@
 /* Sphere Grid route engine, shared by the route player, the run notes page and the route builder.
 
-   RouteEngine.create(grid) → an engine for one grid.json. It plays a route file step by step and
+   RouteEngine.create(grid) → an engine for one grid file (sphere-grid/standard.json). It plays a route file step by step and
    reports what happened: every in-between state (for animation), moves, Sphere Levels, spheres used,
    and anything the game wouldn't allow.
 

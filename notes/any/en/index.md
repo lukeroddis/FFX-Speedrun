@@ -1,6 +1,6 @@
 ---
 title: FFX Any%
-# Route toggles. Each one shows in the page header; ":::if key=value" picks the notes for one option.
+# The wording of the route toggles. Which toggles and options exist is set in ../category.yml.
 variants:
   blitz:
     name: Blitzball
@@ -11,11 +11,7 @@ variants:
     return4: 4 Return
     return2: 2 Return + 2 Friend
     return0: 4 Friend
-# Numbers that depend on the route. "key=value" picks the value for that option.
-targets:
-  power-bonus:
-    blitz=win: 8
-    blitz=loss: 9
+# Character names as written in these notes, and their colour
 names:
   Lulu: purple
   Yuna: gray
@@ -34,7 +30,7 @@ terms: [SD, CS, Skippable CS, FMV, Skippable FMV, Overdrive, Touch the Save Sphe
 overdrives: [Spiral Cut, Slice & Dice, Energy Rain, Blitz Ace, Dragon Fang, Shooting Star, Banishing Blade, Tornado, Jump, Fire Breath, Seed Cannon, Self-Destruct, Thrust Kick, Stone Breath, Aqua Breath, Doom, White Wind, Bad Breath, Mighty Guard, Nova, Element Reels, Thunder Reels, Attack Reels, Status Reels, Aurochs Reels, Fury, Mix, Grand Summon, Energy Ray, Energy Blast, Hellfire, Thor's Hammer, Diamond Dust, Mega Flare, Eternal Break, Total Annihilation]
 ---
 
-The run, in order. Each area is its own file in this folder.
+The English notes. The order of the run is set in `../category.yml`; this list gives each area's name in English.
 
 - [Introduction](00-introduction.md)
 - [Zanarkand](01-zanarkand.md)

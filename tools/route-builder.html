@@ -139,6 +139,7 @@
   <aside class="side">
     <div class="box">
       <h2>ROUTE</h2>
+      <div class="row"><label for="cat">Category</label><select id="cat"></select></div>
       <div class="row"><label for="title">Title</label><input type="text" id="title" placeholder="Kilika: Tidus"></div>
       <div class="row"><label for="name">File name</label><input type="text" id="name" placeholder="kilika-tidus"></div>
       <div class="row"><label for="after">Continue from</label><input type="text" id="after" placeholder="a route's file name (optional)" list="known"><datalist id="known"></datalist></div>
@@ -175,16 +176,16 @@
     <div class="box">
       <h2>SHARE</h2>
       <div class="row">
-        <button id="export" title="Download the route file for sphere-grid/routes/">⬇ Export JSON</button>
+        <button id="export" title="Download the route file for the category's sphere-grid folder">⬇ Export JSON</button>
         <button id="copy">Copy JSON</button>
         <button id="copyLine" title="The line to put in a :::spheregrid block of the notes">Copy route: line</button>
       </div>
       <div class="row">
         <label class="btn" for="importFile">⬆ Import file</label><input type="file" id="importFile" accept=".json" hidden>
         <button id="paste">Paste JSON</button>
-        <button id="open" title="Open a route from sphere-grid/routes/ by its file name">Open by name</button>
+        <button id="open" title="Open a route from the category's sphere-grid folder by its file name">Open by name</button>
       </div>
-      <div class="help">Save the exported file in <code>sphere-grid/routes/</code>, then put <code>route: &lt;file name&gt;</code> in the notes' <code>:::spheregrid</code> block. Your work is also kept in this browser.</div>
+      <div class="help">Save the exported file in <code class="routesDir">notes/any/sphere-grid/</code>, then put <code>route: &lt;file name&gt;</code> in the notes' <code>:::spheregrid</code> block. Your work is also kept in this browser.</div>
     </div>
   </aside>
 </div>
@@ -198,6 +199,7 @@
 <script src="../assets/grid-icons.js"></script>
 <script src="../assets/grid-layout.js"></script>
 <script src="../assets/route-engine.js"></script>
+<script src="../assets/notes-config.js"></script>
 <script>
 (async () => {
 const $ = id => document.getElementById(id);
@@ -207,11 +209,20 @@ const TYPES = window.GRID_TYPES, CHARS = window.GRID_CHARACTERS, L = window.Grid
 const toast = msg => { $("toast").textContent = msg; $("toast").classList.add("show"); clearTimeout(toast.t); toast.t = setTimeout(() => $("toast").classList.remove("show"), 2600); };
 
 /* ================= LOAD ================= */
-let grid;
-try { grid = await fetch("../sphere-grid/grid.json").then(r => { if (!r.ok) throw r; return r.json(); }); }
-catch { document.querySelector(".layout").innerHTML = `<div class="box">Couldn't load the grid. Open this page through a local server (see README).</div>`; return; }
+/* The category (?cat=any) decides which grid to build on and where "Continue from" and "Open by name" look:
+   notes/<category>/sphere-grid/ */
+const CATEGORY = NotesConfig.params().cat;
+let grid, CAT;
+try { CAT = await NotesConfig.loadCategory(CATEGORY); grid = await NotesConfig.loadGrid(CAT); }
+catch { document.querySelector(".layout").innerHTML = `<div class="box">Couldn't load the “${esc(CATEGORY)}” category or its grid. Open this page through a local server (see README).</div>`; return; }
 const E = RouteEngine.create(grid), R = grid.meta.nodeRadius, { N } = E;
-const loadRoute = name => fetch(`../sphere-grid/routes/${encodeURIComponent(name)}.json`).then(r => { if (!r.ok) throw new Error(`No route called "${name}"`); return r.json(); });
+const loadRoute = NotesConfig.routeLoader(CATEGORY);
+{ // category picker: changing it reloads the builder for that category
+  const cats = await NotesConfig.loadCategories();
+  $("cat").innerHTML = Object.entries(cats).map(([id, label]) => `<option value="${esc(id)}" ${id === CATEGORY ? "selected" : ""}>${esc(label)}</option>`).join("");
+  $("cat").onchange = () => { const qs = new URLSearchParams(location.search); qs.set("cat", $("cat").value); location.search = qs.toString(); };
+  document.querySelectorAll(".routesDir").forEach(e => { e.textContent = `notes/${CATEGORY}/sphere-grid/`; });
+}
 const charName = c => CHARS[c]?.name || c, charColor = c => CHARS[c]?.color || "#888";
 const nodeName = E.nodeName;
 
@@ -565,7 +576,7 @@ $("paste").onclick = () => { $("pasteText").value = ""; $("pasteDlg").showModal(
 $("pasteCancel").onclick = () => $("pasteDlg").close();
 $("pasteOk").onclick = () => { try { load(JSON.parse($("pasteText").value)); $("pasteDlg").close(); } catch { toast("That isn't valid JSON"); } };
 $("open").onclick = async () => {
-  const name = prompt("Route file name (from sphere-grid/routes/):", route.name || "");
+  const name = prompt(`Route file name (from notes/${CATEGORY}/sphere-grid/):`, route.name || "");
   if (!name) return;
   try { load(await loadRoute(name.trim()), name.trim()); } catch (e) { toast(e.message); }
 };

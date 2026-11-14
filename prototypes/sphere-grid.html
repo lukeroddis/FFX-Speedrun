@@ -149,6 +149,7 @@
 <script src="../assets/grid-icons.js"></script>
 <script src="../assets/grid-layout.js"></script>
 <script src="../assets/route-engine.js"></script>
+<script src="../assets/notes-config.js"></script>
 <script>
 (async () => {
 const $ = id => document.getElementById(id);
@@ -159,9 +160,11 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;",
 /* ================= LOAD ================= */
 const routeName = new URLSearchParams(location.search).get("route") || "demo";
 let grid, route, ENGINE, START;
-const loadRoute = name => fetch(`../sphere-grid/routes/${encodeURIComponent(name)}.json`).then(r => { if (!r.ok) throw r; return r.json(); });
+/* ?cat=any&route=besaid-tidus: routes live in notes/<category>/sphere-grid/, and the category says which grid it uses */
+const { cat } = NotesConfig.params();
+const loadRoute = NotesConfig.routeLoader(cat);
 try {
-  grid = await fetch("../sphere-grid/grid.json").then(r => { if (!r.ok) throw r; return r.json(); });
+  grid = await NotesConfig.loadGrid(await NotesConfig.loadCategory(cat));
   ENGINE = RouteEngine.create(grid);
   ({ route, start: START } = await RouteEngine.resolve(ENGINE, routeName, loadRoute));   // "after" routes are played first
 } catch {

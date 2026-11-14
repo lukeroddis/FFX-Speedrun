@@ -13,20 +13,25 @@ The site is published with GitHub Pages from the `main` branch, at <https://luke
 ## Folder layout
 
 ```
-index.html       The landing page, linking to everything below
-.nojekyll        Tells GitHub Pages to serve files as they are (so notes/*.md load raw)
-assets/          Shared code and styles for the site
-  grid-icons.js    Sphere Grid node types, icons and character colours
-  grid-layout.js   Shared link shapes and label positions
-  route-engine.js  Plays Sphere Grid routes: moves, Sphere Levels, unlocks, teleports, spheres and rule checks
-  portraits.js     Shows character portraits on tiles when an image exists
-  portraits/       Character portrait images (see the README inside)
-battles/         One data file per boss fight (coming soon)
-notes/           The run notes: index.md (shared settings, area list) and one Markdown file per area
-prototypes/      Mock-ups: the run page, a CTB-style battle page and a Sphere Grid route player
+index.html          The landing page, linking to everything below
+.nojekyll           Tells GitHub Pages to serve files as they are (so the notes' .md files load raw)
+notes/
+  categories.yml      The categories on the site
+  glossary.json       In-game names in every game language, shared by all categories
+  any/                FFX Any%
+    category.yml        Shared by every language: grid, languages, route toggles, targets, area order
+    sphere-grid/        Sphere Grid route files (no language, so every language uses them)
+    en/                 The English notes: index.md (wording) and one Markdown file per area
 sphere-grid/
-  grid.json        The full Sphere Grid: 860 nodes, their types, values, names and links
-  routes/          Route files played by the Sphere Grid page (demo.json is an example)
+  standard.json       The Standard Sphere Grid: 860 nodes, their types, values, names and links
+assets/             Shared code and styles for the site
+  notes-config.js     Where everything lives: categories, languages, grids, routes
+  grid-icons.js       Sphere Grid node types, icons and character colours
+  grid-layout.js      Shared link shapes and label positions
+  route-engine.js     Plays Sphere Grid routes: moves, Sphere Levels, unlocks, teleports, spheres and rule checks
+  portraits.js        Shows character portraits on tiles when an image exists
+  portraits/          Character portrait images (see the README inside)
+prototypes/         The run page, a CTB-style battle mock-up and the Sphere Grid route player
 tools/
   route-builder.html  Build Sphere Grid routes by clicking, and export them as route files
   grid-editor.html The Sphere Grid editor (tracing, editing, label layout)
@@ -49,17 +54,49 @@ Then open <http://localhost:8765/> for the landing page, or go straight to:
 - Battle mock-up: <http://localhost:8765/prototypes/sin-fin.html>
 - Sphere Grid route mock-up: <http://localhost:8765/prototypes/sphere-grid.html>
 
+## Categories and languages
+
+Each category (a way of running the game) is a folder in `notes/`, and each language its notes are written in is a folder inside that:
+
+- **`notes/<category>/category.yml`** holds what's the same in every language:
+  - the grid the category uses (`grid: standard`);
+  - its languages;
+  - which route toggles exist (`blitz: [win, loss]`);
+  - the targets;
+  - the order of the areas.
+- **`notes/<category>/<language>/index.md`** holds that language's wording: the title, the toggle labels, character names and colours, terms, Overdrive names, and the name of each area.
+- **Area files** have the same name in every language, e.g. `03-besaid.md`. If a language hasn't translated an area yet, the page shows the English one, marked *Not translated yet*. So a translation can grow one area at a time.
+- **`notes/<category>/sphere-grid/`** holds the category's Sphere Grid routes. Routes have no language, so a fix there reaches every language at once.
+- **The glossary** of in-game names (`notes/glossary.json`) and the **grids** (`sphere-grid/`) belong to the game, so they're shared by every category.
+
+The run page picks these from its address: `run.html?cat=any&lang=en` (the defaults).
+
+- **To add a language:**
+  1. Copy `en/` to a new folder named with the language code (`fr`, `ja`, …).
+  2. Translate `index.md` and as many areas as you like.
+  3. Add the code to `languages:` in `category.yml`.
+
+  A **Notes** toggle then appears on the run page.
+- **To add a category:**
+  1. Make a new folder beside `any/` with its own `category.yml`, `sphere-grid/` and language folders.
+  2. List it in `notes/categories.yml`.
+- **To add another grid,** such as the Expert Sphere Grid:
+  1. Build it as `sphere-grid/expert.json` with the editor (`grid-editor.html?grid=expert`).
+  2. Set `grid: expert` in the category that uses it.
+
+  Everything else (routes, the builder, the run page) follows from that.
+
 ## Editing the Sphere Grid
 
-1. Open the editor. On first use it loads `sphere-grid/grid.json` from this repository; **Load project grid** reloads it at any time.
+1. Open the editor. On first use it loads `sphere-grid/standard.json` from this repository (`?grid=expert` would load `expert.json` instead); **Load project grid** reloads it at any time.
 2. Make your changes. Select mode (`V`) moves nodes and labels, `N` adds nodes, `C` connects them. Undo is `Ctrl+Z`.
-3. Your work autosaves in your browser only. To share it, click **Export JSON**, replace `sphere-grid/grid.json` with the downloaded `grid.json`, and open a pull request.
+3. Your work autosaves in your browser only. To share it, click **Export JSON**, replace `sphere-grid/standard.json` with the downloaded file, and open a pull request.
 
-`grid.json` stores one node or link per line, so a pull request shows exactly what changed.
+The grid file stores one node or link per line, so a pull request shows exactly what changed.
 
 ## Writing the notes
 
-The notes live in `notes/`, one Markdown file per area, listed in order in `notes/index.md`. They use the same format as the Speedrun Overlay notes: numbered steps, and blocks such as `:::battle Sin Fin | 2,000 HP … :::`, `:::spheregrid`, `:::trial` and `:::encounters`. The run page adds a few extra lines:
+The notes live in `notes/<category>/<language>/`, one Markdown file per area (see *Categories and languages* above). They use the same format as the Speedrun Overlay notes: numbered steps, and blocks such as `:::battle Sin Fin | 2,000 HP … :::`, `:::spheregrid`, `:::trial` and `:::encounters`. The run page adds a few extra lines:
 
 - **`party: Tidus, Wakka`** on its own line between steps: who's in the party from here on, for when the story adds or removes characters. It isn't shown in the notes; it only updates the Party panel, so runners don't think they need to do anything.
 - **`party: Tidus, Yuna, Kimahri`** inside a `:::battle` block: the party the game puts you in for that fight. The previous party comes back once the fight is over.
@@ -69,9 +106,17 @@ A **`**Formation:** Tidus, Yuna, Lulu`** anywhere in a step also sets the party,
 
 ### Route toggles
 
-Parts of the route depend on how the run goes. Each of these is a **variant**, declared in the front matter of `notes/index.md`, and each one gets a toggle in the page header:
+Parts of the route depend on how the run goes. Each of these is a **variant**, with a toggle in the right-hand panel. Which variants and options exist is set in `category.yml`, and each language's `index.md` gives them their wording:
 
 ```yaml
+# category.yml
+variants:
+  blitz: [win, loss]
+  spheres: [return4, return2, return0]
+```
+
+```yaml
+# en/index.md
 variants:
   blitz:
     name: Blitzball
@@ -92,7 +137,7 @@ Wrap the notes that only apply to some options in `:::if … :::`. This works ar
 
 Every toggle also has a **?** option, for "not known yet". It's the default, so before the Blitzball game, or before the sphere drop, every option's notes show with a small label such as *Blitzball: Loss*. The chosen options are remembered and also go into the page address (`run.html?blitz=loss&spheres=return2`), so a link opens the notes on the same route.
 
-Numbers that depend on the route go under `targets:`. The Power Sphere tracker reads `power-bonus` and shows a range, such as 8–9, until the variant is chosen:
+Numbers that depend on the route go under `targets:` in `category.yml`. The Power Sphere tracker reads `power-bonus` and shows a range, such as 8–9, until the variant is chosen:
 
 ```yaml
 targets:
@@ -101,7 +146,7 @@ targets:
     blitz=loss: 9
 ```
 
-Adding another variant needs no code: add it to `variants:` and use it in `:::if`.
+Adding another variant needs no code: add it to `variants:` in `category.yml`, give it wording in each `index.md`, and use it in `:::if`.
 
 ### Lighter views
 
@@ -133,18 +178,18 @@ Runners don't always play the game in the language they read. The **Game text** 
 
 The easiest way is the **route builder** (`tools/route-builder.html`):
 
-1. Give the route a title and file name. Under **Continue from**, name the route it follows on from, if any.
+1. Pick the category, then give the route a title and file name. Under **Continue from**, name the route it follows on from, if any.
 2. Pick a character and a tool, then click the grid:
    - **Move:** walk there. Hover to see the path, moves and Sphere Levels; Shift+click walks one node at a time.
    - **Activate** and **Unlock:** valid nodes are ringed.
    - **Teleport:** pick the sphere first.
    - **Place:** put a character anywhere before the route starts.
 3. The step list shows each step's moves, Sphere Levels, spheres and any rule problems. Steps can be reordered or deleted, and Ctrl+Z undoes. **▶ Play** previews the animation.
-4. **Export JSON** saves the file for `sphere-grid/routes/`, and **Copy route: line** gives the line for the notes. **Import**, **Paste JSON** and **Open by name** load an existing route to change it.
+4. **Export JSON** saves the file for the category's `sphere-grid/` folder (e.g. `notes/any/sphere-grid/`), and **Copy route: line** gives the line for the notes. **Import**, **Paste JSON** and **Open by name** load an existing route to change it.
 
 Route files can also be written by hand:
 
-Routes live in `sphere-grid/routes/` and refer to nodes by their ID from `grid.json` (hover a node in the route builder to see its ID). The Sphere Grid page, the run notes and the route builder all play routes with the same engine, `assets/route-engine.js`.
+Routes live in `notes/<category>/sphere-grid/` and refer to nodes by their ID in the category's grid (hover a node in the route builder to see its ID). The Sphere Grid page, the run notes and the route builder all play routes with the same engine, `assets/route-engine.js`.
 
 ```json
 {
@@ -159,7 +204,7 @@ Routes live in `sphere-grid/routes/` and refer to nodes by their ID from `grid.j
 }
 ```
 
-**Where everyone starts.** A route begins where the route named in `after` ends: same positions, with everything activated, walked and unlocked so far, so each segment of the run carries on from the last. Without `after`, everyone starts on their own starting node. `start` then puts characters on any node you like, for experiments or challenge runs.
+**Where everyone starts.** A route begins where the route named in `after` (from the same category) ends: same positions, with everything activated, walked and unlocked so far, so each segment of the run carries on from the last. Without `after`, everyone starts on their own starting node. `start` then puts characters on any node you like, for experiments or challenge runs.
 
 **Each step** is one character's turn in the menu, done in this order:
 
@@ -180,7 +225,7 @@ Routes live in `sphere-grid/routes/` and refer to nodes by their ID from `grid.j
 - **Sphere Levels:** counted per character. Each move onto a new link costs 1. Moving back along links the character has already walked costs 1 per 4, rounded up. Teleports, unlocks and activations cost none.
 - **Rule checks:** anything the game wouldn't allow shows as a ⚠ warning: a node out of reach, an already-activated node, a teleport its sphere can't make.
 
-Open a route with `prototypes/sphere-grid.html?route=<file name>`. Without `?route=` it plays `demo`.
+Open a route with `prototypes/sphere-grid.html?cat=any&route=<file name>`. Without `?route=` it plays `demo`.
 
 ## Credits
 

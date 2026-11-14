@@ -6,4 +6,4 @@ Put one image per character in this folder, and every turn-order tile, party box
 - **Shape:** wide, about 3:2, like the in-game turn-order portraits. The image fills the tile and is cropped from the centre if the shape doesn't match.
 - **Size:** around 96 × 64 pixels is plenty. The largest tile is 64 × 44, so twice that looks sharp on high-resolution screens. Keep files small, since they load on every page.
 
-The names come from the `names:` list in `notes/index.md`, so aeons such as Valefor and Ifrit can have portraits too.
+The names come from the `names:` list in each language's `index.md` (e.g. `notes/any/en/index.md`), so aeons such as Valefor and Ifrit can have portraits too.
