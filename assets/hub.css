@@ -86,8 +86,26 @@ a.card:hover::before {
 .board td.time { text-align: right; font-variant-numeric: tabular-nums; font-weight: 700; white-space: nowrap; }
 .board td.date { color: var(--muted); font-size: .82rem; white-space: nowrap; text-align: right; }
 .board .more { padding: 10px 16px 14px; font-size: .88rem; }
+/* the runner takes the room that's left, on one line, ending in "…" if it doesn't fit (the full name is on hover) */
+.board td.runner { width: 100%; max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.board td { padding-left: 10px; padding-right: 10px; }
+.board td:first-child { padding-left: 16px; }
+.board td:last-child { padding-right: 16px; }
+.board h3 a.board-link { color: inherit; text-decoration: none; }
+.board h3 a.board-link span { margin-left: 6px; font-size: .8em; color: var(--muted); }
+.board h3 a.board-link:hover { color: var(--accent); text-decoration: underline; }
+.board h3 a.board-link:hover span { color: var(--accent); }
+.board { padding-bottom: 6px; }
 @media (max-width: 480px) { .board td.date { display: none; } }
 .board .err { padding: 10px 16px 14px; color: var(--muted); font-size: .9rem; }
+.board.recent { margin-bottom: 16px; }
+.board.recent h3 { padding-bottom: 8px; }
+.board td .cat { display: block; color: var(--muted); font-size: .8rem; }
+.board.recent td.place { width: auto; white-space: nowrap; padding-right: 4px; }
+.board.recent .cat .d { display: none; }   /* the date, under the name on a phone instead of in its own column */
+@media (max-width: 480px) { .board.recent .cat .d { display: inline; } .board.recent td { padding-left: 12px; padding-right: 12px; } }
+.flag { width: 18px; height: 12px; object-fit: cover; border-radius: 2px; vertical-align: -1px; margin-right: 6px; box-shadow: 0 0 0 1px rgba(0,0,0,.15); }
+@media (min-width: 700px) { .board.recent.wide td .cat { display: inline; margin-left: .8em; font-size: .85rem; } }   /* full width: category beside the name */
 
 /* videos: a thumbnail until clicked, so pages stay light */
 .video { position: relative; aspect-ratio: 16 / 9; border-radius: 8px; overflow: hidden; background: #000; cursor: pointer; }

@@ -11,7 +11,7 @@ A home for the **Final Fantasy X** speedrunning community, styled after the game
 - **Area maps** that show the way to go and the chests worth opening.
 - **Sphere Grid routes**, animated on a recreated Sphere Grid, step by step.
 - **Skips:** a video library of the skips the routes use, with written guides and credit to whoever made each video.
-- **Leaderboards** from speedrun.com, and **who's live** on Twitch: watch streams on the site, side by side for a race, and share a link that opens them ready to play.
+- **Leaderboards** and the latest runs from speedrun.com, and **who's live** on Twitch: watch streams on the site, side by side for a race, and share a link that opens them ready to play.
 - **Tools** for building Sphere Grid routes and tracing maps.
 
 ## Contributing

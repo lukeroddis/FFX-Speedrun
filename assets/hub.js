@@ -118,18 +118,28 @@
   const notesUrl = (cat, lang) => url(`pages/notes.html?cat=${encodeURIComponent(cat)}${lang && lang !== "en" ? `&lang=${encodeURIComponent(lang)}` : ""}`);
 
   /* ---------- leaderboards from speedrun.com, kept for a day in this browser ---------- */
+  /* a runner from speedrun.com's API: name, profile link and country */
+  const person = p => p.rel === "guest" ? { name: p.name } : {
+    name: p.names?.international || p.name || "?", link: p.weblink,
+    country: p.location?.country?.code || "", countryName: p.location?.country?.names?.international || "",
+  };
+  /* a runner as HTML: their flag (speedrun.com's own images; a code like "gb/eng" is a region with its own)
+     and their name, linked to their profile */
+  const flagHTML = p => p.country ? `<img class="flag" src="https://www.speedrun.com/images/flags/${esc(p.country)}.png" alt="${esc(p.countryName)}" title="${esc(p.countryName)}" onerror="this.remove()">` : "";
+  const personHTML = p => flagHTML(p) + (p.link ? `<a href="${esc(p.link)}">${esc(p.name)}</a>` : esc(p.name));
+  const runDate = d => { const t = Date.parse(d); return isNaN(t) ? "" : new Date(t).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }); };
   const DAY = 24 * 60 * 60 * 1000;
   async function boards() {
     const y = await yaml("hub/leaderboards.yml");
     return Object.entries(y.boards || {}).map(([id, b]) => ({ id, game: y.game, ...b }));
   }
   async function board(b, top = 5) {
-    const key = `ffx-board-${b.id}-${top}`;
+    const key = `ffx-board-v2-${b.id}-${top}`;
     try { const c = JSON.parse(store.get(key, "null")); if (c && Date.now() - c.at < DAY) return { ...c.data, at: c.at }; } catch {}
     const vars = String(b.vars || "").split(",").map(s => s.trim()).filter(Boolean).map(v => { const [k, val] = v.split("="); return `var-${k}=${val}`; });
     const api = `https://www.speedrun.com/api/v1/leaderboards/${b.game}/category/${b.category}?${[...vars, `top=${top}`, "embed=players"].join("&")}`;
     const j = await fetch(api).then(r => { if (!r.ok) throw new Error(`speedrun.com answered ${r.status}`); return r.json(); });
-    const people = new Map((j.data.players?.data || []).map(p => [p.id, { name: p.names?.international || p.name, link: p.weblink }]));
+    const people = new Map((j.data.players?.data || []).map(p => [p.id, person(p)]));
     const data = {
       link: j.data.weblink,
       runs: j.data.runs.map(x => ({
@@ -141,19 +151,72 @@
     store.set(key, JSON.stringify({ at, data }));
     return { ...data, at };
   }
+  /* the newest runs in any category (full game only, not single levels), newest first by the date they were
+     run, as on speedrun.com, and kept for a day. A run its runner has since beaten in the same category and
+     subcategory is left out, as speedrun.com does. Each says its category with its subcategory
+     ("Cutscene Remover · True RNG") and the date it was run. */
+  async function recentRuns(count = 5) {
+    const game = (await yaml("hub/leaderboards.yml")).game;
+    const key = `ffx-recent-v3-${game}-${count}`;
+    try { const c = JSON.parse(store.get(key, "null")); if (c && Date.now() - c.at < DAY) return { ...c.data, at: c.at }; } catch {}
+    const get = u => fetch(`https://www.speedrun.com/api/v1/${u}`).then(r => { if (!r.ok) throw new Error(`speedrun.com answered ${r.status}`); return r.json(); });
+    const [runs, vars] = await Promise.all([
+      get(`runs?game=${game}&status=verified&orderby=date&direction=desc&max=50&embed=players,category`),
+      get(`games/${game}/variables`),
+    ]);
+    const subs = new Map(vars.data.filter(v => v["is-subcategory"]).map(v => [v.id, v.values.values]));
+    // the same runner(s), category and subcategory: one leaderboard entry
+    const entry = r => [(r.players?.data || []).map(p => p.id || p.name).sort().join("+"), r.category?.data?.id,
+      ...Object.entries(r.values || {}).filter(([k]) => subs.has(k)).sort().map(([k, v]) => `${k}=${v}`)].join("|");
+    // runs on the same day: the later submission first
+    const full = runs.data.filter(r => !r.level)
+      .sort((a, b) => (b.date || "").localeCompare(a.date || "") || (b.submitted || "").localeCompare(a.submitted || ""));
+    const best = new Map();
+    for (const r of full) { const k = entry(r); if (!best.has(k) || r.times.primary_t < best.get(k)) best.set(k, r.times.primary_t); }
+    const shown = full.filter(r => r.times.primary_t <= best.get(entry(r))).slice(0, count);
+    // each run's place: its category's board, with the subcategory picked (one request per board, not per run)
+    const boardOf = r => `category/${r.category?.data?.id}?${Object.entries(r.values || {}).filter(([k]) => subs.has(k)).map(([k, v]) => `var-${k}=${v}`).join("&")}`;
+    const places = new Map();
+    await Promise.all([...new Set(shown.map(boardOf))].map(b => get(`leaderboards/${game}/${b}`)
+      .then(j => j.data.runs.forEach(x => places.set(x.run.id, x.place))).catch(() => {})));
+    const data = {
+      runs: shown.map(r => ({
+        category: [r.category?.data?.name, ...Object.entries(r.values || {}).map(([k, v]) => subs.get(k)?.[v]?.label)].filter(Boolean).join(" · "),
+        time: r.times.primary_t, date: r.date || "", link: r.weblink, place: places.get(r.id) || 0,
+        players: (r.players?.data || []).map(person),
+      })),
+    };
+    const at = Date.now();
+    store.set(key, JSON.stringify({ at, data }));
+    return { ...data, at };
+  }
+  const ordinal = n => n + (n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] || "th");
+  /* opts.title: false leaves out the card's own heading (the home page has one above it);
+     opts.wide: a full-width card, with each run's category beside the runner rather than under them */
+  function recentHTML(data, { title = true, wide = false } = {}) {
+    const head = title ? `<h3>Recent runs</h3>` : "";
+    if (!data) return `<div class="card board recent${wide ? " wide" : ""}${title ? "" : " untitled"}">${head}<div class="err">Couldn't reach speedrun.com just now.</div></div>`;
+    if (!data.runs.length) return `<div class="card board recent${wide ? " wide" : ""}${title ? "" : " untitled"}">${head}<div class="err">No runs yet.</div></div>`;
+    return `<div class="card board recent${wide ? " wide" : ""}${title ? "" : " untitled"}">${head}<table>${data.runs.map(r => `<tr class="${r.place === 1 ? "first" : ""}">
+        <td class="place" title="${r.place ? `${ordinal(r.place)} on the leaderboard` : ""}">${r.place ? ordinal(r.place) : "–"}</td>
+        <td>${r.players.map(personHTML).join(", ")}<span class="cat">${esc(r.category)}<span class="d"> · ${esc(runDate(r.date))}</span></span></td>
+        <td class="time"><a href="${esc(r.link)}" title="See the run on speedrun.com">${time(r.time)}</a></td>
+        <td class="date" title="When it was run">${esc(runDate(r.date))}</td></tr>`).join("")}</table></div>`;
+  }
   function time(sec) {
     const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), s = Math.floor(sec % 60), ms = Math.round((sec % 1) * 1000);
     return (h ? `${h}:${String(m).padStart(2, "0")}` : `${m}`) + `:${String(s).padStart(2, "0")}` + (ms ? `.${String(ms).padStart(3, "0")}` : "");
   }
   /* a board as a card: name, top runs, link to the full board */
   function boardHTML(b, data, rows = 5) {
-    if (!data) return `<div class="card board"><h3>${esc(b.name)}</h3><div class="err">Couldn't reach speedrun.com just now.</div></div>`;
-    return `<div class="card board"><h3>${esc(b.name)}</h3><table>${data.runs.slice(0, rows).map(r => `<tr class="${r.place === 1 ? "first" : ""}">
+    // the title links to the full board on speedrun.com
+    const title = data?.link ? `<h3><a class="board-link" href="${esc(data.link)}" title="The full leaderboard on speedrun.com">${esc(b.name)}<span aria-hidden="true">↗</span></a></h3>` : `<h3>${esc(b.name)}</h3>`;
+    if (!data) return `<div class="card board">${title}<div class="err">Couldn't reach speedrun.com just now.</div></div>`;
+    return `<div class="card board">${title}<table>${data.runs.slice(0, rows).map(r => `<tr class="${r.place === 1 ? "first" : ""}">
         <td class="place">${r.place}</td>
-        <td>${r.players.map(p => p.link ? `<a href="${esc(p.link)}">${esc(p.name)}</a>` : esc(p.name)).join(", ")}</td>
+        <td class="runner" title="${esc(r.players.map(p => p.name).join(", "))}">${r.players.map(personHTML).join(", ")}</td>
         <td class="time">${r.video ? `<a href="${esc(r.video)}" title="Watch the run">${time(r.time)}</a>` : time(r.time)}</td>
-        <td class="date">${esc(r.date || "")}</td></tr>`).join("")}</table>
-      <div class="more"><a href="${esc(data.link)}">Full leaderboard on speedrun.com ↗</a></div></div>`;
+        <td class="date" title="When it was run">${esc(runDate(r.date))}</td></tr>`).join("")}</table></div>`;
   }
 
   /* ---------- who's live on Twitch: live.json from the Twitch live check ---------- */
@@ -282,5 +345,5 @@
     return `Updated ${ago(new Date(Math.min(...ats)).toISOString())} ago from speedrun.com · refreshes once a day`.replace("Updated 0 min ago", "Updated just now");
   }
 
-  window.Hub = { url, esc, nav, footer, links, skips, skipCardHTML, notBuilt, tools, byHTML, starsHTML, categories, notesUrl, boards, board, boardHTML, time, videoHTML, youtubeId, live, liveHTML, streamViewer, updatedText };
+  window.Hub = { url, esc, nav, footer, links, skips, skipCardHTML, notBuilt, tools, byHTML, starsHTML, categories, notesUrl, boards, board, boardHTML, personHTML, recentRuns, recentHTML, time, videoHTML, youtubeId, live, liveHTML, streamViewer, updatedText };
 })();
