@@ -14,7 +14,7 @@
 <script src="../assets/hub.js"></script>
 </head>
 <body>
-<div class="page-head"><div class="wrap"><h1>Notes</h1><p>Step-by-step notes for each category. One set of notes covers every version of a category, with toggles for the parts that differ.</p></div></div>
+<div class="page-head"><div class="wrap"><h1>Notes</h1><p>Step-by-step notes for each category. Filter the notes by category or language.</p></div></div>
 <main class="wrap">
 <div class="grid" id="cats"><p class="muted">Loading…</p></div>
 <h2 class="section">Contributing a translation</h2>
@@ -30,7 +30,7 @@
   const [cats, boards] = await Promise.all([Hub.categories(), Hub.boards().catch(() => [])]);
   const boardName = id => boards.find(b => b.id === id)?.name || id;
   $("cats").innerHTML = cats.map(c => `<div class="card"><h3>${esc(c.name)}</h3><p>${esc(c.about)}</p>
-    ${c.boards.length ? `<p style="font-size:.85rem">Leaderboards: ${c.boards.map(b => esc(boardName(b))).join(" · ")}</p>` : ""}
+    ${c.boards.length ? `<p style="font-size:.85rem">Categories: ${c.boards.map(b => esc(boardName(b))).join(" · ")}</p>` : ""}
     <div class="foot">${c.status === "coming-soon" ? `<span class="tag soon">Notes coming soon</span>`
       : c.languages.map(l => `<a class="btn small primary" href="${Hub.notesUrl(c.id, l)}">${esc(langNames[l] || l)} notes</a>`).join("")}</div></div>`).join("");
 })();

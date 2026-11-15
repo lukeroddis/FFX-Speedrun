@@ -29,3 +29,11 @@ boards:
     name: Cutscene Remover True RNG%
     category: 7dg14oxd
     vars: p85d1kvl=lr3edv2l
+  ps2-nemesis:
+    name: PS2 Nemesis%
+    category: 5dwjj7ek
+    vars: e8m70e86=5lmoxo41
+  pc-nemesis:
+    name: PC Nemesis%
+    category: zdnqrzqd
+    vars: ylqx078r=5le2566l

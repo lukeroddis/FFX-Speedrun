@@ -5,10 +5,15 @@
 #   status   "coming-soon" for a category without notes yet
 any:
   name: Any%
-  about: Beat the game as fast as possible. One set of notes covers PS2, HD Console, PC and Cutscene Remover runs, with the differences as toggles.
+  about: Beat the game as fast as possible.
   boards: [ps2-any, pc-any, csr-any, csr-truerng]
 nsg:
   name: No Sphere Grid
   about: Beat the game without using the Sphere Grid.
   boards: [pc-nsg, csr-nsg]
+  status: coming-soon
+nemesis:
+  name: Nemesis%
+  about: Beat the game after defeating Nemesis.
+  boards: [ps2-nemesis, pc-nemesis]
   status: coming-soon
