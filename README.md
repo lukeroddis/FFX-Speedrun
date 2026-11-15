@@ -1,18 +1,33 @@
 # Final Fantasy X Speedrun
 
-A home for the **Final Fantasy X** speedrunning community, styled after the game's own menus.
+A home for the **Final Fantasy X** speedrunning community.
 
 **Visit the site: <https://lukeroddis.github.io/FFX-Speedrun/>**
 
 ## What's on the site
 
-- **Run notes** for each category, stepped through line by line with the arrow keys. Toggles cover the parts of the route that differ (Blitzball win or loss, the sphere drop, your game version).
-- **Your game's language:** item names show as the game shows them, with their in-game icon. Read the notes in English while playing in Japanese, for example.
-- **Area maps** that show the way to go and the chests worth opening.
-- **Sphere Grid routes**, animated on a recreated Sphere Grid, step by step.
-- **Skips:** a video library of the skips the routes use, with written guides and credit to whoever made each video.
-- **Leaderboards** and the latest runs from speedrun.com, and **who's live** on Twitch: watch streams on the site, side by side for a race, and share a link that opens them ready to play.
-- **Tools** for building Sphere Grid routes and tracing maps.
+- **Run Notes** for each category, step through the notes with an FFX-inspired UI:
+
+<p align="center">
+  <img src=".github/media/battle.gif" alt="Battle Block" width="850">
+</p>
+
+- **Sphere Grid routes**, animated on a recreated Sphere Grid, step by step:
+
+<p align="center">
+  <img src=".github/media/sphere-grid.gif" alt="Sphere Grid Block" width="850">
+</p>
+
+- **Customise the Notes:** Filter and change the notes based on your category (PS2, PC, etc) and language, and key moments during the run (such as Blitzball win or loss):
+
+<p align="center">
+  <img src=".github/media/translations.gif" alt="Customisation" width="850">
+</p>
+
+- **Skips:** a library of the skips the speedrun uses, with written guides and credited videos.
+- **Leaderboards** and the latest runs pulled from speedrun.com.
+- **Who's live** on Twitch: watch streams on the site, side by side for a race, and share a link that opens them ready to play.
+- **Tools** highlighting third-party tools built by the Final Fantasy X speedrunning community, as well as in-house tools for building Sphere Grid routes and tracing maps.
 
 ## Contributing
 
@@ -41,7 +56,7 @@ The notes are Markdown files, one per area, in `notes/<category>/<language>/`. F
 
 The [developer guide](DEVELOPER_GUIDE.md#writing-the-notes) covers everything else: battles, route toggles, maps, the item-name glossary and Sphere Grid routes.
 
-### Adding a skip
+### Adding/Editing a skip
 
 Each skip is one Markdown file in `hub/skips/`, which becomes its own page on the site. Copy an existing one, such as `hub/skips/clasko-skip.md`, and change the details at the top:
 
