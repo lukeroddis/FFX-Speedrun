@@ -279,7 +279,30 @@ ${pages.map(p => `  <url><loc>${esc(site + p)}</loc><lastmod>${today}</lastmod><
 </urlset>
 `);
   await writeFile(join(OUT, "robots.txt"), `User-agent: *\nAllow: /\nSitemap: ${site}sitemap.xml\n`);
-  console.log(`Built ${OUT}/ with ${skips.length} skip pages: ${skips.map(s => s.id).join(", ")}`);
+  const stamp = await stampAssets();
+  console.log(`Built ${OUT}/ with ${skips.length} skip pages: ${skips.map(s => s.id).join(", ")} (scripts and styles stamped ?v=${stamp})`);
+}
+
+/* Browsers keep a site's scripts and styles for up to 10 minutes (GitHub Pages' cache setting), so right after an
+   update they could run an old script against new data. Every page's links to the site's own .js and .css files
+   get "?v=<commit>" added, a new address on every update, so browsers fetch the new files straight away. */
+async function stampAssets() {
+  const stamp = (process.env.GITHUB_SHA || "").slice(0, 7)
+    || await import("node:child_process").then(cp => cp.execSync("git rev-parse --short HEAD").toString().trim()).catch(() => "")
+    || Date.now().toString(36);
+  const local = u => !/^([a-z]+:|\/\/|#)/i.test(u) && !u.includes("?");
+  const walk = async dir => (await Promise.all((await readdir(dir, { withFileTypes: true })).map(e =>
+    e.isDirectory() ? walk(join(dir, e.name)) : [join(dir, e.name)]))).flat();
+  for (const file of await walk(OUT)) {
+    const isHtml = file.endsWith(".html"), isCss = file.endsWith(".css");
+    if (!isHtml && !isCss) continue;
+    const text = await readFile(file, "utf8");
+    const out = isHtml
+      ? text.replace(/(<(?:script|link)\b[^>]*?\s(?:src|href)=")([^"]+\.(?:js|css))"/gi, (m, a, u) => local(u) ? `${a}${u}?v=${stamp}"` : m)
+      : text.replace(/(@import\s+url\(\s*["']?)([^"')]+\.css)(["']?\s*\))/gi, (m, a, u, b) => local(u) ? `${a}${u}?v=${stamp}${b}` : m);
+    if (out !== text) await writeFile(file, out);
+  }
+  return stamp;
 }
 /* The glossary is split by language (notes/glossary/<lang>.yml), so a language's missing names don't show
    in one table. The build lists them instead, along with ids that aren't in terms.yml (usually a typo). */

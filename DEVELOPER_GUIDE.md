@@ -75,7 +75,7 @@ node .github/scripts/build-site.mjs
 python -m http.server 8765 -d _site
 ```
 
-Run the build again after changing a skip. Serving this folder directly (`python -m http.server 8765`) also works for everything else, but the skips (the Skips page, skip pages and skip links in the notes) only exist in the built copy.
+The build also adds `?v=<commit>` to every page's links to the site's own scripts and styles (`hub.js?v=b4a72be`), so after each update browsers fetch the new files instead of reusing cached ones for up to 10 minutes. Only the built copy changes; write links in the source files without it. Run the build again after changing a skip. Serving this folder directly (`python -m http.server 8765`) also works for everything else, but the skips (the Skips page, skip pages and skip links in the notes) only exist in the built copy.
 
 Then open <http://localhost:8765/> for the home page, or go straight to:
 
