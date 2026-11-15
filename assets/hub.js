@@ -92,7 +92,7 @@
       ${by.length ? `<p class="by">Video${s.versions.length > 1 ? "s" : ""} by ${by.map(esc).join(" and ")}</p>` : ""}
       <div class="foot">${labels.map(l => `<span class="tag">${esc(l)}</span>`).join("")}${(s.categoryNames || []).map(c => `<span class="tag soon">${esc(c)}</span>`).join("")}</div></div>`;
   }
-  const notBuilt = `<p class="muted">The skips list is made when the site is built. Locally, run <code>node .github/scripts/build-site.mjs</code> and open the site from <code>_site/</code> (see README).</p>`;
+  const notBuilt = `<p class="muted">The skips list is made when the site is built. Locally, run <code>node .github/scripts/build-site.mjs</code> and open the site from <code>_site/</code> (see DEVELOPER_GUIDE.md).</p>`;
   async function tools() {
     const y = await yaml("hub/tools.yml").catch(() => ({}));
     return Object.entries(y).map(([id, t]) => ({ id, ...t, link: /^https?:/.test(t.link || "") ? t.link : url(t.link || "") }));
@@ -168,17 +168,88 @@
     const m = Math.max(0, Math.round((Date.now() - new Date(iso)) / 60000));
     return m < 60 ? `${m} min` : `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m`;
   };
+  const staleHTML = data => data && Date.now() - new Date(data.updated) > 15 * 60000 ? `<p class="muted" style="font-size:.85rem">Last checked ${ago(data.updated)} ago.</p>` : "";
+  /* one stream's card. controls: the Community page's expand button. A stream named in a watch link that isn't
+     in the live list ({ login, offline: true }) gets a card that can still try to play it. */
+  function streamCardHTML(s, data, controls = false) {
+    const thumb = s.offline
+      ? `<span class="offline-note">Not in the live list right now. Click to try playing it anyway.</span>`
+      : `<img src="${esc(s.thumbnail)}?t=${Date.parse(data?.updated) || ""}" alt="" loading="lazy"><span class="tag live" style="position:absolute;left:8px;top:8px">LIVE</span>`;
+    const name = `<h3><a href="https://www.twitch.tv/${esc(s.login)}">${esc(s.name || s.login)}</a></h3>`;
+    return `<div class="card${s.watched ? " watched" : ""}">
+        <div class="video twitch${s.offline ? " offline" : ""}" data-ch="${esc(s.login)}" role="button" tabindex="0" aria-label="Watch ${esc(s.name || s.login)}">${thumb}</div>
+        ${controls ? `<div class="shead">${name}<button class="sbtn expand" aria-pressed="false" title="Make this stream full width">⤢</button></div>` : name}
+        ${s.offline ? "" : `<p>${esc(s.title)}</p>
+        <div class="foot"><span class="tag">${esc(s.viewers)} watching</span><span class="muted" style="font-size:.82rem">live for ${ago(s.started)} · ${esc(s.game)}</span></div>`}
+      </div>`;
+  }
   function liveHTML(data, max = 50) {
     if (!data) return `<p class="muted">The live check isn't running yet, so streams can't be listed here. Find runners in the Discord in the meantime.</p>`;
-    const stale = Date.now() - new Date(data.updated) > 30 * 60000 ? `<p class="muted" style="font-size:.85rem">Last checked ${ago(data.updated)} ago.</p>` : "";
-    if (!data.streams.length) return `<p class="muted">No one's streaming an FFX speedrun right now. Check back later, or ask in the Discord.</p>${stale}`;
-    return `<div class="grid">${data.streams.slice(0, max).map(s => `<div class="card">
-        <div class="video twitch" data-ch="${esc(s.login)}" role="button" tabindex="0" aria-label="Watch ${esc(s.name)}">
-          <img src="${esc(s.thumbnail)}?t=${Date.parse(data.updated) || ""}" alt="" loading="lazy"><span class="tag live" style="position:absolute;left:8px;top:8px">LIVE</span></div>
-        <h3><a href="https://www.twitch.tv/${esc(s.login)}">${esc(s.name)}</a></h3>
-        <p>${esc(s.title)}</p>
-        <div class="foot"><span class="tag">${esc(s.viewers)} watching</span><span class="muted" style="font-size:.82rem">live for ${ago(s.started)} · ${esc(s.game)}</span></div>
-      </div>`).join("")}</div>${stale}`;
+    if (!data.streams.length) return `<p class="muted">No one's streaming an FFX speedrun right now. Check back later, or ask in the Discord.</p>${staleHTML(data)}`;
+    return `<div class="grid streams">${data.streams.slice(0, max).map(s => streamCardHTML(s, data)).join("")}</div>${staleHTML(data)}`;
+  }
+
+  /* ---------- the Community page's stream viewer ----------
+     Everything liveHTML shows, plus:
+     - a layout picker (Auto, or 1–3 streams per row), remembered in this browser;
+     - an expand button on each stream, making it full width;
+     - while a stream plays, its card hides the title and viewer count, so videos sit closer together;
+     - a watch link: ?watch=runner1,runner2 puts those streams first, side by side, with a Play all button.
+       Streams playing can be shared as such a link with Copy watch link. */
+  const LOGIN = /^[a-z0-9_]{1,25}$/;
+  const LAYOUTS = ["auto", "1", "2", "3"];
+  async function streamViewer(el, data) {
+    const watch = [...new Set((new URLSearchParams(location.search).get("watch") || "").toLowerCase().split(",").map(s => s.trim()))]
+      .filter(l => LOGIN.test(l)).slice(0, 6);
+    if (!watch.length && !data?.streams?.length) { el.innerHTML = liveHTML(data); return; }
+    // channels the live check never lists (hub/twitch.yml "exclude") aren't shown from a watch link either
+    let excluded = [];
+    try { const t = await yaml("hub/twitch.yml"); excluded = (Array.isArray(t.exclude) ? t.exclude : []).map(l => l.toLowerCase()); } catch {}
+    const streams = data?.streams || [];
+    const watched = watch.filter(l => !excluded.includes(l))
+      .map(l => ({ ...(streams.find(s => s.login.toLowerCase() === l) || { login: l, offline: true }), watched: true }));
+    const rest = streams.filter(s => !watch.includes(s.login.toLowerCase()));
+    let layout = store.get("ffx-stream-layout", "auto");
+    if (watched.length > 1) layout = String(Math.min(watched.length, 3));   // a race: side by side
+    if (!LAYOUTS.includes(layout)) layout = "auto";
+
+    el.innerHTML = `<div class="stream-wide">
+      <div class="stream-bar">
+        <div class="seg" role="group" aria-label="Streams per row"><span>Layout</span>${LAYOUTS.map(l =>
+          `<button data-layout="${l}" aria-pressed="${l === layout}" title="${l === "auto" ? "Two per row, and the stream you play goes full width" : `${l} per row`}">${l === "auto" ? "Auto" : l}</button>`).join("")}</div>
+        ${watched.length ? `<button class="btn small primary" data-act="play">▶ Play ${watched.length > 1 ? "all" : "it"}</button>` : ""}
+        <button class="btn small plain" data-act="link" hidden>🔗 Copy watch link</button>
+        <span class="muted copied" hidden></span>
+      </div>
+      <div class="grid streams controls cols-${layout}">${[...watched, ...rest].map(s => streamCardHTML(s, data, true)).join("")}</div>
+    </div>${staleHTML(data)}`;
+
+    const grid = el.querySelector(".grid.streams"), linkBtn = el.querySelector('[data-act="link"]'), note = el.querySelector(".copied");
+    const setLayout = l => {
+      layout = l;
+      grid.className = `grid streams controls cols-${l}`;
+      el.querySelectorAll("[data-layout]").forEach(b => b.setAttribute("aria-pressed", b.dataset.layout === l));
+    };
+    const setExpanded = (card, on) => { card.classList.toggle("expanded", on); card.querySelector(".expand").setAttribute("aria-pressed", on); };
+    const playingLogins = () => [...grid.querySelectorAll(".video.playing")].map(v => v.dataset.ch);
+
+    el.addEventListener("click", e => {
+      const b = e.target.closest("button");
+      if (b?.dataset.layout) { setLayout(b.dataset.layout); store.set("ffx-stream-layout", b.dataset.layout); return; }
+      if (b?.classList.contains("expand")) { const c = b.closest(".card"); setExpanded(c, !c.classList.contains("expanded")); return; }
+      if (b?.dataset.act === "play") { grid.querySelectorAll(".card.watched .video:not(.playing)").forEach(playTwitch); return; }
+      if (b?.dataset.act === "link") {
+        const u = new URL(location.href);
+        u.search = `?watch=${playingLogins().join(",")}`;
+        const done = msg => { note.textContent = msg; note.hidden = false; };
+        navigator.clipboard?.writeText(u.href).then(() => done("Link copied"), () => done(u.href)) ?? done(u.href);
+      }
+    });
+    // started a stream: in Auto it goes full width; and the page can now offer a link to what's playing
+    el.addEventListener("twitch-play", e => {
+      if (layout === "auto") setExpanded(e.target.closest(".card"), true);
+      linkBtn.hidden = false; note.hidden = true;
+    });
   }
 
   /* ---------- YouTube: a thumbnail that becomes the player when clicked ---------- */
@@ -188,13 +259,16 @@
     if (!id) return link ? `<a href="${esc(link)}">Watch the video ↗</a>` : "";
     return `<div class="video" data-yt="${id}" role="button" tabindex="0" aria-label="Play ${esc(title)}"><img src="https://i.ytimg.com/vi/${id}/hqdefault.jpg" alt="" loading="lazy"></div>`;
   }
+  /* a Twitch thumbnail becomes the player. Twitch's player needs to know which site it's on. */
+  function playTwitch(t) {
+    if (t.classList.contains("playing")) return;
+    t.classList.add("playing");
+    t.innerHTML = `<iframe src="https://player.twitch.tv/?channel=${encodeURIComponent(t.dataset.ch)}&parent=${location.hostname}&autoplay=true" title="Twitch stream" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
+    t.dispatchEvent(new Event("twitch-play", { bubbles: true }));
+  }
   document.addEventListener("click", e => {
     const t = e.target.closest(".video[data-ch]");
-    if (t && !t.classList.contains("playing")) {   // Twitch's player needs to know which site it's on
-      t.classList.add("playing");
-      t.innerHTML = `<iframe src="https://player.twitch.tv/?channel=${encodeURIComponent(t.dataset.ch)}&parent=${location.hostname}&autoplay=true" title="Twitch stream" allowfullscreen></iframe>`;
-      return;
-    }
+    if (t) { playTwitch(t); return; }
     const v = e.target.closest(".video[data-yt]"); if (!v || v.classList.contains("playing")) return;
     v.classList.add("playing");
     v.innerHTML = `<iframe src="https://www.youtube-nocookie.com/embed/${v.dataset.yt}?autoplay=1" title="Video" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
@@ -208,5 +282,5 @@
     return `Updated ${ago(new Date(Math.min(...ats)).toISOString())} ago from speedrun.com · refreshes once a day`.replace("Updated 0 min ago", "Updated just now");
   }
 
-  window.Hub = { url, esc, nav, footer, links, skips, skipCardHTML, notBuilt, tools, byHTML, starsHTML, categories, notesUrl, boards, board, boardHTML, time, videoHTML, youtubeId, live, liveHTML, updatedText };
+  window.Hub = { url, esc, nav, footer, links, skips, skipCardHTML, notBuilt, tools, byHTML, starsHTML, categories, notesUrl, boards, board, boardHTML, time, videoHTML, youtubeId, live, liveHTML, streamViewer, updatedText };
 })();

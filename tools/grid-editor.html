@@ -721,7 +721,7 @@ async function loadProjectGrid(ask) {
     commit(); data = { meta: { nodeRadius: 9, ...d.meta }, nodes: d.nodes, edges: d.edges }; sel = null;
     $("radius").value = data.meta.nodeRadius; changed(`Loaded the project grid (${d.nodes.length} nodes).`); fit();
   } catch {
-    status("Couldn't load the project grid. Open the editor through a local server (see README), or use Import JSON.");
+    status("Couldn't load the project grid. Open the editor through a local server (see DEVELOPER_GUIDE.md), or use Import JSON.");
   }
 }
 $("loadProject").onclick = () => loadProjectGrid(true);

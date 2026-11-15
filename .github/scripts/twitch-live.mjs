@@ -1,5 +1,5 @@
 // Lists who's streaming FFX speedruns on Twitch right now, and writes live-out/live.json.
-// Run by .github/workflows/twitch-live.yml every 10 minutes. Settings: hub/twitch.yml.
+// Run by .github/workflows/twitch-live.yml every 5 minutes. Settings: hub/twitch.yml.
 // Needs TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET (a Twitch app's credentials, kept as repository secrets).
 import { readFile, mkdir, writeFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
@@ -79,7 +79,7 @@ export async function collect({ cfg, clientId, clientSecret, fetchFn = fetch }) 
 
 async function main() {
   const { TWITCH_CLIENT_ID: clientId, TWITCH_CLIENT_SECRET: clientSecret } = process.env;
-  if (!clientId || !clientSecret) throw new Error("TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET aren't set. Add them as repository secrets (see README).");
+  if (!clientId || !clientSecret) throw new Error("TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET aren't set. Add them as repository secrets (see DEVELOPER_GUIDE.md).");
   const cfg = parseYaml(await readFile("hub/twitch.yml", "utf8"));
   const out = await collect({ cfg, clientId, clientSecret });
   if (out.missing.length) console.warn(`Not found on Twitch: ${out.missing.join(", ")}. Check the names in hub/twitch.yml.`);

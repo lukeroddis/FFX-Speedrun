@@ -116,7 +116,7 @@
 <header class="panel">
   <h1>Sphere Grid Route Builder</h1>
   <a href="../index.html">← Home</a>
-  <a href="../README.md#writing-a-sphere-grid-route">Route format</a>
+  <a href="https://github.com/lukeroddis/FFX-Speedrun/blob/main/DEVELOPER_GUIDE.md#writing-a-sphere-grid-route">Route format</a>
 </header>
 
 <div class="layout">
@@ -217,7 +217,7 @@ const toast = msg => { $("toast").textContent = msg; $("toast").classList.add("s
 const CATEGORY = NotesConfig.params().cat;
 let grid, CAT;
 try { CAT = await NotesConfig.loadCategory(CATEGORY); grid = await NotesConfig.loadGrid(CAT); }
-catch { document.querySelector(".layout").innerHTML = `<div class="box">Couldn't load the “${esc(CATEGORY)}” category or its grid. Open this page through a local server (see README).</div>`; return; }
+catch { document.querySelector(".layout").innerHTML = `<div class="box">Couldn't load the “${esc(CATEGORY)}” category or its grid. Open this page through a local server (see DEVELOPER_GUIDE.md).</div>`; return; }
 const E = RouteEngine.create(grid), R = grid.meta.nodeRadius, { N } = E;
 const loadRoute = NotesConfig.routeLoader(CATEGORY);
 { // category picker: changing it reloads the builder for that category

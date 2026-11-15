@@ -8,7 +8,7 @@ games: [Final Fantasy X, Final Fantasy X HD Remaster]
 # A stream counts as a speedrun when its title contains one of these (any capitals). A word only counts
 # at the start of a word in the title, so "tas" matches "FFX TAS" but not "Fantasy".
 # (Twitch's Speedrun tag isn't used: streamers often leave it on when playing casually.)
-keywords: [speedrun, any%, nsg, no sphere grid, csr, cutscene remover, race, tas]
+keywords: [speedrun, any%, nsg, no sphere grid, csr, cutscene remover, race, tas, practice, penance%, nemesis%, truerng, true rng, rta]
 
 # Runners to always show when they're streaming one of the games above, whatever the title says
 # (Twitch login names, e.g. [runner1, runner2])

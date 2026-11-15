@@ -175,7 +175,7 @@ try {
   ({ route, start: START } = await RouteEngine.resolve(ENGINE, routeName, loadRoute));   // "after" routes are played first
 } catch {
   $("routeTitle").textContent = "";
-  document.querySelector(".layout").innerHTML = `<div class="box error">Couldn't load the grid or route “${esc(routeName || "demo.json")}”.<br>Open this page through a local server (see README).</div>`;
+  document.querySelector(".layout").innerHTML = `<div class="box error">Couldn't load the grid or route “${esc(routeName || "demo.json")}”.<br>Open this page through a local server (see DEVELOPER_GUIDE.md).</div>`;
   return;
 }
 $("routeTitle").textContent = route.title + (route.note ? ` · ${route.note}` : "");

@@ -382,7 +382,7 @@ let CAT, langIndex, enIndex;
 try {
   CAT = await NotesConfig.loadCategory(P.cat);
 } catch {
-  $("notes").innerHTML = `<div class="box err">Couldn't load the “${esc(P.cat)}” notes. Open this page through a local server (see README).</div>`; return;
+  $("notes").innerHTML = `<div class="box err">Couldn't load the “${esc(P.cat)}” notes. Open this page through a local server (see DEVELOPER_GUIDE.md).</div>`; return;
 }
 const NOTES_LANG = CAT.languages.includes(P.lang) ? P.lang : CAT.languages[0];
 const BASE_LANG = CAT.languages.includes("en") ? "en" : CAT.languages[0];   // where missing areas and wording come from

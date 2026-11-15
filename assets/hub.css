@@ -98,6 +98,47 @@ a.card:hover::before {
 .video iframe { width: 100%; height: 100%; border: 0; display: block; }
 .video.playing::after { display: none; }
 
+/* live streams: at most two side by side, so a wider window gives bigger videos rather than more, smaller
+   ones; and the stream you start playing takes the full width */
+.grid.streams { grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); }
+.grid.streams:not(.controls) .card:has(.video.playing) { grid-column: 1 / -1; }
+
+/* the Community page's viewer (Hub.streamViewer): wider than the page's text, so a big window gives big videos */
+.stream-wide { width: min(1600px, calc(100vw - 48px)); position: relative; left: 50%; transform: translateX(-50%); }
+.stream-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 12px; }
+.stream-bar .copied { font-size: .85rem; overflow-wrap: anywhere; }
+.stream-bar [hidden] { display: none; }
+.grid.streams.cols-auto { grid-template-columns: repeat(auto-fill, minmax(min(100%, 560px), 1fr)); }   /* two per row at most */
+.seg { display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface); }
+.seg span { padding: 5px 10px; font-size: .8rem; font-weight: 700; color: var(--muted); }
+.seg button { font: inherit; font-size: .85rem; font-weight: 700; padding: 5px 12px; border: 0; border-left: 1px solid var(--border);
+              background: transparent; color: var(--text); cursor: pointer; }
+.seg button:hover { background: var(--surface-2); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--surface); }
+.grid.streams.cols-1 { grid-template-columns: minmax(0, 1fr); }
+.grid.streams.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.grid.streams.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.grid.streams .card.expanded { grid-column: 1 / -1; }
+.grid.streams .card.watched { border-color: var(--gold); }
+.shead { display: flex; align-items: center; gap: 8px; }
+.shead h3 { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sbtn { font: inherit; font-size: 1rem; line-height: 1; padding: 4px 8px; border-radius: 6px; cursor: pointer;
+        border: 1px solid var(--border); background: var(--surface-2); color: var(--text); }
+.sbtn:hover { border-color: var(--accent); }
+.sbtn[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+/* playing: only the video and the name bar, so videos sit closer together */
+.grid.streams.controls .card:has(.video.playing) { padding: 8px 8px 6px; gap: 6px; }
+.grid.streams.controls .card:has(.video.playing) > p,
+.grid.streams.controls .card:has(.video.playing) > .foot { display: none; }
+.grid.streams.controls .card:has(.video.playing) .shead h3 { font-size: .95rem; }
+.video.offline { background: linear-gradient(135deg, #1d2058, #34397e); }
+.video .offline-note { position: absolute; left: 0; right: 0; bottom: 10px; text-align: center; color: #dfe1ff; font-size: .85rem; padding: 0 12px; }
+/* a phone only has room for one stream per row */
+@media (max-width: 700px) {
+  .grid.streams.controls { grid-template-columns: minmax(0, 1fr); }
+  .stream-bar .seg { display: none; }
+}
+
 /* language picker on category cards */
 .langs { display: flex; flex-wrap: wrap; gap: 6px; }
 
