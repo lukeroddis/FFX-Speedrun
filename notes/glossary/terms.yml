@@ -15,6 +15,7 @@ languages:
   ko: 한국어
 
 terms:
+# Spheres
   power-sphere:
     type: item
     icon: sphere-red
@@ -28,6 +29,7 @@ terms:
     type: item
     icon: sphere-red
 
+# Special spheres
   hp-sphere:
     type: item
     icon: sphere-purple
@@ -41,6 +43,7 @@ terms:
     type: item
     icon: sphere-purple
 
+# Usables
   arctic-wind:
     type: item
     icon: weapon
@@ -57,6 +60,7 @@ terms:
     type: item
     icon: weapon
 
+# Healing items
   potion:
     type: item
     icon: potion-blue
@@ -73,7 +77,38 @@ terms:
     type: item
     icon: potion-orange
 
-  # equipment picked up on the way
+# Tidus equipment
+  brotherhood:
+    type: equipment
+    icon: weapon
+  ice-brand:
+    type: equipment
+    icon: weapon
+  stunning-steel:
+    type: equipment
+    icon: weapon
+  lightning-steel:
+    type: equipment
+    icon: weapon
+  sonic-steel:
+    type: equipment
+    icon: weapon
+
+# Auron equipment
+  shimmering-blade:
+    type: equipment
+    icon: weapon
+
+# Wakka equipment
+  official-ball:
+    type: equipment
+    icon: weapon
   scout:
+    type: equipment
+    icon: weapon
+  ice-ball:
+    type: equipment
+    icon: weapon
+  thunder-ball:
     type: equipment
     icon: weapon
