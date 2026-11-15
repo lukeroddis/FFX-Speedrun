@@ -1,0 +1,8 @@
+{
+  "title": "Luca: Tidus",
+  "after": "kilika-tidus",
+  "steps": [
+    {"character":"tidus","move":"n207"},
+    {"character":"tidus","move":"n258","activate":["n258","n223","n213"]}
+  ]
+}
