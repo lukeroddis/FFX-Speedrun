@@ -12,10 +12,20 @@
 <link rel="stylesheet" href="../assets/hub.css">
 <script src="../assets/notes-config.js"></script>
 <script src="../assets/hub.js"></script>
+<style>
+  .card.featured { border-color: var(--gold); box-shadow: var(--shadow), inset 0 3px 0 var(--gold); }
+  .grid.featured { grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); }
+</style>
 </head>
 <body>
-<div class="page-head"><div class="wrap"><h1>Tools</h1><p>Tools for planning routes and keeping the notes up to date.</p></div></div>
+<div class="page-head"><div class="wrap"><h1>Tools</h1><p>Tools used when speedrunning FFX, as well as tools for planning routes and keeping the notes up to date.</p></div></div>
 <main class="wrap">
+<section id="featuredSec" hidden>
+  <h2 class="section" style="margin-top:0">Featured</h2>
+  <p class="muted" style="margin:-6px 0 14px">New to running FFX? Some categories need these installed.</p>
+  <div class="grid featured" id="featured"></div>
+</section>
+<h2 class="section" id="moreHead" hidden>More tools</h2>
 <div class="grid" id="tools"><p class="muted">Loading…</p></div>
 <p class="muted" style="margin-top:18px;font-size:.88rem">Made a tool for FFX runners? Add it to hub/tools.yml on GitHub.</p>
 </main>
@@ -24,10 +34,18 @@
   Hub.nav("tools");
   Hub.footer();
   const $ = id => document.getElementById(id), esc = Hub.esc;
-  // a card per tool from hub/tools.yml, crediting who made it
-  $("tools").innerHTML = (await Hub.tools()).map(t => `<div class="card"><h3><a href="${esc(t.link)}">${esc(t.name)}</a></h3>
-    <p>${esc(t.about || "")}</p>${Hub.byHTML(t)}<div class="foot"><a class="btn small primary" href="${esc(t.link)}">Open</a></div></div>`).join("")
-    || `<p class="muted">No tools yet.</p>`;
+  // a card per tool from hub/tools.yml, crediting who made it; featured ones first, in their own section
+  const card = t => {
+    const away = !t.link.startsWith(Hub.url(""));   // another site: say so on the button
+    const tags = (Array.isArray(t.for) ? t.for : []).map(c => `<span class="tag">${esc(c)}</span>`).join("");
+    return `<div class="card${t.featured ? " featured" : ""}"><h3><a href="${esc(t.link)}">${esc(t.name)}</a></h3>
+      <p>${esc(t.about || "")}</p>${Hub.byHTML(t)}
+      <div class="foot"><a class="btn small primary" href="${esc(t.link)}">${away ? "Open ↗" : "Open"}</a>${tags}</div></div>`;
+  };
+  const all = (await Hub.tools()).map(t => ({ ...t, featured: /^(yes|true)$/i.test(String(t.featured || "")) }));
+  const featured = all.filter(t => t.featured), rest = all.filter(t => !t.featured);
+  if (featured.length) { $("featured").innerHTML = featured.map(card).join(""); $("featuredSec").hidden = false; $("moreHead").hidden = !rest.length; }
+  $("tools").innerHTML = rest.map(card).join("") || (featured.length ? "" : `<p class="muted">No tools yet.</p>`);
 })();
 </script>
 </body>

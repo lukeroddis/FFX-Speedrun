@@ -8,6 +8,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="../assets/logo/icon-192.png">
 <link rel="apple-touch-icon" href="../assets/logo/apple-touch-icon.png">
 <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/theme.css">
 <link rel="stylesheet" href="../assets/ingame.css">
 <style>
   :root {
@@ -20,22 +21,19 @@
   }
   * { box-sizing: border-box; }
   html, body { margin: 0; }
+  /* the page is the site's own background (light or dark); the menus on it keep the game's look */
   body {
-    min-height: 100vh; color: var(--text);
+    min-height: 100vh; color: var(--page-text);
     font-family: "Ubuntu", "Segoe UI", sans-serif; font-weight: 500; letter-spacing: .01em;
-    text-shadow: var(--shadow);
-    background:
-      radial-gradient(ellipse at 15% 20%, rgba(255,255,255,.10), transparent 45%),
-      radial-gradient(ellipse at 85% 75%, rgba(20,20,60,.35), transparent 55%),
-      repeating-linear-gradient(115deg, rgba(255,255,255,.025) 0 2px, transparent 2px 9px),
-      linear-gradient(160deg, var(--bg-3), var(--bg-2) 40%, var(--bg-1));
-    background-attachment: fixed;
+    background: var(--bg);
     padding: 20px 16px 50vh;
   }
+  .box, .panel, .block, .mbar, nav.areas, button { color: var(--text); text-shadow: var(--shadow); }
+  .label { color: var(--page-muted) !important; text-shadow: none; }
   .wrap { max-width: 1300px; margin: 0 auto; }
   .label { font-size: .78rem; font-weight: 700; letter-spacing: .08em; color: var(--label); margin: 0 0 2px 2px; }
   .panel {
-    background: linear-gradient(90deg, rgba(30,30,70,.85), rgba(70,70,130,.55) 60%, rgba(70,70,130,.15));
+    background: linear-gradient(90deg, var(--head-1), var(--head-2)); border-radius: 6px;
     border-top: 2px solid rgba(255,255,255,.25); border-bottom: 2px solid rgba(0,0,0,.35);
     padding: 10px 18px 10px 40px;
   }
@@ -82,13 +80,18 @@
     body.nav-open .scrim { display: block; }
   }
   @media (max-width: 720px) { .layout { grid-template-columns: 1fr; } .tracker { display: none; } }
+  /* no Areas column (hidden, or a drawer on narrower screens): the notes start at the page's edge, so they
+     make room for the hand cursor beside them */
+  body.nav-collapsed #notes { padding-left: 22px; }
+  @media (max-width: 1050px) { #notes { padding-left: 22px; } }
 
   /* ---------- phone summary bar: pinned to the top, stands in for the right-hand panels ---------- */
   .mbar { display: none; }
   @media (max-width: 720px) {
-    /* room on the left so the hand cursor stays on screen */
-    #notes { padding-left: 22px; }
-    .stop.current::after { left: -25px; width: 22px; height: 17px; }
+    /* the hand cursor mostly overlaps the left edge of the line it points at, so the notes keep the width;
+       a thin strip on the left keeps its tip on screen as it bobs */
+    #notes, body.nav-collapsed #notes { padding-left: 6px; }
+    #notes .stop.current::after { left: -8px; width: 20px; height: 15px; top: 11px; z-index: 2; }
     .mbar {
       display: grid; gap: 6px; position: sticky; top: 52px; z-index: 10; margin: 0 -16px 12px; padding: 8px 12px;
       background: linear-gradient(180deg, rgba(44,46,98,.97), rgba(34,34,78,.97));
@@ -149,8 +152,8 @@
   @keyframes bob { 50% { transform: translateX(-4px); } }
 
   /* numbered steps */
-  .step { display: flex; gap: 12px; padding: 8px 12px; border-radius: 3px; line-height: 1.45; background: rgba(20,20,60,.25); }
-  .step.current { background: linear-gradient(90deg, rgba(255,255,255,.22), rgba(255,255,255,.05)); box-shadow: inset 3px 0 0 var(--gold); }
+  .step { display: flex; gap: 12px; padding: 8px 12px; border-radius: 3px; line-height: 1.45; background: var(--box); color: var(--text); text-shadow: var(--shadow); }
+  .step.current { background: linear-gradient(90deg, rgba(255,255,255,.22), rgba(255,255,255,.05)), var(--box); box-shadow: inset 3px 0 0 var(--gold); }
   .step .num { flex: 0 0 auto; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
                font-size: .78rem; font-weight: 700; background: #1d1d45; border: 2px solid #9fa2c8; margin-top: -1px; }
   .step .body { flex: 1; min-width: 0; }

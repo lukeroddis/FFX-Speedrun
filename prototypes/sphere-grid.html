@@ -8,6 +8,8 @@
 <link rel="icon" type="image/png" sizes="192x192" href="../assets/logo/icon-192.png">
 <link rel="apple-touch-icon" href="../assets/logo/apple-touch-icon.png">
 <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/theme.css">
+<script src="../assets/hub.js"></script>
 <style>
   :root {
     --bg-1: #4a4f86; --bg-2: #6a6fa8; --bg-3: #8c8fc4;
@@ -18,19 +20,19 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; }
   body {
-    min-height: 100vh; color: var(--text);
-    font-family: "Ubuntu", "Segoe UI", sans-serif; font-weight: 500; text-shadow: var(--shadow);
-    background:
-      radial-gradient(ellipse at 15% 20%, rgba(255,255,255,.10), transparent 45%),
-      repeating-linear-gradient(115deg, rgba(255,255,255,.025) 0 2px, transparent 2px 9px),
-      linear-gradient(160deg, var(--bg-3), var(--bg-2) 40%, var(--bg-1));
-    background-attachment: fixed;
+    min-height: 100vh; color: var(--page-text);
+    font-family: "Ubuntu", "Segoe UI", sans-serif; font-weight: 500;
+    background: var(--bg);
+    
     padding: 20px 16px 32px;
   }
+  /* the page is the site's own background (light or dark, from theme.css); the menus on it keep the game's look */
+  .panel, .box, .frame, aside, header:not(.site-nav), dialog { color: var(--text); text-shadow: var(--shadow); }
+  .site-nav { margin: -20px -16px 18px; }
   .wrap { max-width: 1400px; margin: 0 auto; }
   .label { font-size: .8rem; font-weight: 700; letter-spacing: .08em; color: var(--label); margin: 0 0 2px 2px; }
   .panel {
-    background: linear-gradient(90deg, rgba(30,30,70,.85), rgba(70,70,130,.55) 60%, rgba(70,70,130,.15));
+    background: linear-gradient(90deg, var(--head-1), var(--head-2)); border-radius: 6px;
     border-top: 2px solid rgba(255,255,255,.25); border-bottom: 2px solid rgba(0,0,0,.35);
     padding: 10px 18px 10px 40px; margin-bottom: 18px;
   }
@@ -105,6 +107,7 @@
 </style>
 </head>
 <body>
+<script>Hub.nav("notes");</script>
 <div class="wrap">
   <p class="label">HELP</p>
   <header class="panel"><h1>Sphere Grid <span id="routeTitle">Loading…</span></h1></header>

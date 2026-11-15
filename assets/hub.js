@@ -35,7 +35,9 @@
   .site-nav .links a.here { color: #fff; background: rgba(255,255,255,.14); box-shadow: inset 0 -2px 0 #ffd84a; }
   .site-nav button { font: inherit; color: #fff; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.25); border-radius: 6px;
                      padding: 4px 9px; cursor: pointer; font-size: .9rem; }
-  .site-nav button:hover { background: rgba(255,255,255,.2); }
+  .site-nav button:hover { background: rgba(255,255,255,.2); filter: none; }
+  /* the in-game pages style every button their own way; the bar's buttons keep the bar's look */
+  .site-nav button { flex: none; width: auto; box-shadow: none; text-shadow: none; line-height: normal; }
   .site-nav .menu-btn { display: none; }
   @media (max-width: 820px) {
     .site-nav .menu-btn { display: inline-block; margin-left: auto; }
