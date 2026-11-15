@@ -9,6 +9,7 @@
 <link rel="apple-touch-icon" href="../assets/logo/apple-touch-icon.png">
 <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/theme.css">
+<script src="../assets/hub.js"></script>   <!-- early: it sets light or dark before the page draws -->
 <link rel="stylesheet" href="../assets/ingame.css">
 <style>
   :root {
@@ -79,7 +80,7 @@
     body.nav-open nav.areas { transform: none; }
     body.nav-open .scrim { display: block; }
   }
-  @media (max-width: 720px) { .layout { grid-template-columns: 1fr; } .tracker { display: none; } }
+  @media (max-width: 720px) { .layout, body.nav-collapsed .layout { grid-template-columns: 1fr; } .tracker { display: none; } }
   /* no Areas column (hidden, or a drawer on narrower screens): the notes start at the page's edge, so they
      make room for the hand cursor beside them */
   body.nav-collapsed #notes { padding-left: 22px; }
@@ -303,6 +304,71 @@
   li.vitem > ul { border-left: 2px dashed #9fdcff; margin-top: 3px; }
   .sg .grids { display: grid; gap: 10px; }
   .sg .g .vtag { margin-bottom: 4px; }
+
+  /* ---------- light mode: the notes as clean cards, like the rest of the site ----------
+     Dark mode keeps the game's menus. In light mode the boxes become white cards with dark text, like notes in a
+     document. The blue strips stay (the page header, each Location, and every block's title bar), so the game's
+     look carries through, and colours made for dark blue get darker versions that read on white.
+     (hub.js sets data-mode to "light" or "dark", whatever the theme switch or the device says.) */
+  :root[data-mode="light"] {
+    --box: #fff; --text: #1d2140; --text-dim: #5b6185; --label: #4a4f86; --gold: #c9940a;
+    --shadow: none; --line: #a3a8b0;
+  }
+  :root[data-mode="light"] .box, :root[data-mode="light"] .block, :root[data-mode="light"] .step {
+    border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(20,24,60,.05), 0 3px 12px rgba(20,24,60,.05);
+  }
+  :root[data-mode="light"] .box h2 { color: var(--muted); }
+  /* the blue strips keep white text */
+  :root[data-mode="light"] .panel, :root[data-mode="light"] .block > .bhead { color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,.35); }
+  :root[data-mode="light"] .block > .bhead { background: linear-gradient(90deg, var(--head-1), var(--head-2)); border-bottom: 0; }
+  :root[data-mode="light"] .bhead .kind { color: #c9cbe8; }
+  :root[data-mode="light"] .kind-battle .bhead .kind { color: #ffb3c9; }
+  :root[data-mode="light"] .kind-spheregrid .bhead .kind { color: #b5e6ff; }
+  :root[data-mode="light"] .kind-trial .bhead .kind { color: #ffe9a0; }
+  :root[data-mode="light"] .kind-encounters .bhead .kind { color: #ffc9e4; }
+  :root[data-mode="light"] .bhead .hp { color: #9ff5c0; }
+  /* the line you're on: a pale gold wash and a gold edge, instead of a glow */
+  :root[data-mode="light"] .step.current { background: linear-gradient(90deg, #fff4cf, #fff 70%); box-shadow: inset 3px 0 0 var(--gold), 0 3px 12px rgba(20,24,60,.06); }
+  :root[data-mode="light"] .block.current { box-shadow: 0 0 0 2px var(--gold), 0 4px 16px rgba(201,148,10,.22); }
+  :root[data-mode="light"] .turn.current, :root[data-mode="light"] ol.trial > li.current { background: linear-gradient(90deg, #fff4cf, rgba(255,244,207,0)); }
+  :root[data-mode="light"] .turn.current .tile { box-shadow: 0 0 0 2px var(--gold); }
+  :root[data-mode="light"] .step .num { background: var(--accent-soft); border-color: #b9bde6; color: var(--accent); }
+  :root[data-mode="light"] ol.trial > li::before { background: #fff4cf; color: #6b4a00; }
+  :root[data-mode="light"] .block .drops { background: #fff8dc; }
+  /* names and terms: darker versions of their colours */
+  :root[data-mode="light"] .nm { color: color-mix(in srgb, var(--c) 58%, #14163a); text-shadow: none; }
+  :root[data-mode="light"] abbr.term { background: var(--accent-soft); border-color: #cfd3f0; }
+  :root[data-mode="light"] abbr.term.cs { color: #1f6fb8; } :root[data-mode="light"] abbr.term.sd { color: #8a5d00; }
+  :root[data-mode="light"] abbr.term.fmv { color: #a8327a; } :root[data-mode="light"] abbr.term.save { color: #1d7a42; }
+  :root[data-mode="light"] a.skiplink { color: #1f6fb8; border-bottom-color: #1f6fb8; }
+  :root[data-mode="light"] a.skiplink:hover { color: var(--accent); }
+  :root[data-mode="light"] .sg .gwarn { color: var(--danger); }
+  :root[data-mode="light"] .sg svg { border-color: var(--border); }
+  /* things drawn on their own colour keep white text */
+  :root[data-mode="light"] .enc .foe, :root[data-mode="light"] .tile { color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,.5); }
+  :root[data-mode="light"] .party .member.empty .tile, :root[data-mode="light"] .mbar .mparty .tile.empty { background: var(--accent-soft); border-color: #b9bde6; }
+  :root[data-mode="light"] .vgroup, :root[data-mode="light"] .branch.vbranch { border-left-color: #5fb4e8; }
+  :root[data-mode="light"] li.vitem > ul { border-left-color: #5fb4e8; }
+  /* buttons: the site's plain buttons; the chosen option stays gold */
+  :root[data-mode="light"] button { background: var(--surface-2); border-color: var(--border); color: var(--text); box-shadow: none; }
+  :root[data-mode="light"] button:hover { filter: none; background: var(--accent-soft); }
+  :root[data-mode="light"] button.on { background: linear-gradient(180deg, #ffe58a, #e6b52a); border-color: #d9a514; color: #2a1d00; }
+  :root[data-mode="light"] button.unset.on { background: #c9cbe8; border-color: #9fa2c8; color: #1b1b3b; }
+  :root[data-mode="light"] .panel button { background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.35); color: #fff; }
+  :root[data-mode="light"] .panel button:hover { background: rgba(255,255,255,.24); }
+  :root[data-mode="light"] .panel button.on { background: linear-gradient(180deg, #ffe58a, #e6b52a); color: #2a1d00; }
+  :root[data-mode="light"] .panel .loc-toggle { background: none; border: 0; }   /* a Location's title: a button drawn as text */
+  :root[data-mode="light"] kbd { background: var(--surface-2); border-color: var(--border); }
+  /* the Areas menu and the phone bar */
+  :root[data-mode="light"] nav.areas a:hover { background: var(--accent-soft); }
+  :root[data-mode="light"] nav.areas a.here { background: linear-gradient(90deg, #fff4cf, rgba(255,244,207,0)); }
+  :root[data-mode="light"] nav.areas a.soon { color: #a3a7c7; }
+  @media (max-width: 720px) {
+    :root[data-mode="light"] .mbar { background: rgba(255,255,255,.97); border-bottom: 1px solid var(--border); box-shadow: 0 4px 12px rgba(20,24,60,.08); }
+    :root[data-mode="light"] .mbar .ps b { color: var(--text); }
+    :root[data-mode="light"] .mbar .mroute { border-top-color: var(--border); }
+  }
+  :root[data-mode="light"] .mroute .show-host { border-top-color: var(--border); }
 </style>
 </head>
 <body>
@@ -366,7 +432,6 @@
 <script src="../assets/route-engine.js"></script>
 <script src="../assets/notes-config.js"></script>
 <script src="../assets/notes-map.js"></script>
-<script src="../assets/hub.js"></script>
 <script src="../assets/portraits.js"></script>
 <script>
 (async () => {

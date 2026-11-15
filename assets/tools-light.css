@@ -1,0 +1,66 @@
+/* Light mode for the tools and the Sphere Grid player (route builder, map editor, grid editor, sphere-grid.html):
+   white cards with dark text, like the rest of the site and the notes. Dark mode keeps the game's menus.
+   The blue strips stay (each page's header), with white text. Colours made for dark blue get darker versions.
+   hub.js sets data-mode="light" or "dark" on <html>, whatever the theme switch or the device says. */
+
+:root[data-mode="light"] {
+  --box: #fff; --text: #1d2140; --text-dim: #5b6185; --label: #4a4f86; --gold: #c9940a; --shadow: none;
+}
+
+/* cards: the boxes, the drawing frames, dialogs, and the grid editor's side panel */
+:root[data-mode="light"] .box, :root[data-mode="light"] .frame {
+  background: #fff; border: 1px solid var(--border); box-shadow: 0 1px 2px rgba(20,24,60,.05), 0 3px 12px rgba(20,24,60,.05);
+}
+:root[data-mode="light"] .box h2 { color: var(--muted); }
+:root[data-mode="light"] dialog { background: #fff; color: var(--text); border: 1px solid var(--border); text-shadow: none; }
+:root[data-mode="light"] #canvasWrap ~ aside { background: var(--surface-2); border-left-color: var(--border); }   /* the grid editor's side panel */
+:root[data-mode="light"] .label { color: var(--page-muted); }
+
+/* the blue strips (page headers) keep white text */
+:root[data-mode="light"] .panel, :root[data-mode="light"] header:not(.site-nav) { color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,.35); }
+:root[data-mode="light"] .panel a, :root[data-mode="light"] .panel span { color: #dfe1ff; }
+
+/* buttons: the site's plain buttons; the chosen one stays gold */
+:root[data-mode="light"] button, :root[data-mode="light"] .btn {
+  background: var(--surface-2); border-color: var(--border); color: var(--text); text-shadow: none; box-shadow: none;
+}
+:root[data-mode="light"] button:hover, :root[data-mode="light"] .btn:hover { filter: none; background: var(--accent-soft); }
+:root[data-mode="light"] button.on { background: linear-gradient(180deg, #ffe58a, #e6b52a); border-color: #d9a514; color: #2a1d00; }
+:root[data-mode="light"] button:disabled { background: var(--surface-2); }
+/* the route builder's character buttons keep their coloured edge */
+:root[data-mode="light"] .chars button { border-left-color: var(--c); }
+/* on a blue strip: see-through buttons */
+:root[data-mode="light"] .panel button, :root[data-mode="light"] header:not(.site-nav) button,
+:root[data-mode="light"] .panel .btn, :root[data-mode="light"] header:not(.site-nav) .btn {
+  background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.35); color: #fff;
+}
+:root[data-mode="light"] .panel button:hover, :root[data-mode="light"] header:not(.site-nav) button:hover,
+:root[data-mode="light"] header:not(.site-nav) .btn:hover { background: rgba(255,255,255,.24); }
+:root[data-mode="light"] .panel button.on, :root[data-mode="light"] header:not(.site-nav) button.on {
+  background: linear-gradient(180deg, #ffe58a, #e6b52a); border-color: #d9a514; color: #2a1d00;
+}
+
+/* text boxes and lists to pick from */
+:root[data-mode="light"] input[type=text], :root[data-mode="light"] input[type=number], :root[data-mode="light"] select,
+:root[data-mode="light"] textarea, :root[data-mode="light"] label.f input, :root[data-mode="light"] label.f select {
+  background: #fff; color: var(--text); border-color: var(--border);
+}
+:root[data-mode="light"] kbd { background: var(--surface-2); border-color: var(--border); color: var(--text); }
+
+/* route steps (route builder and player): pale rows, the chosen one in gold */
+:root[data-mode="light"] .step { background: var(--surface-2); }
+:root[data-mode="light"] .step.sel, :root[data-mode="light"] .step.current {
+  background: linear-gradient(90deg, #fff4cf, rgba(255,244,207,.35)); box-shadow: inset 3px 0 0 var(--gold);
+}
+:root[data-mode="light"] .step .n { background: #fff; color: var(--text); }
+:root[data-mode="light"] .who, :root[data-mode="light"] .step .who { color: color-mix(in srgb, var(--c) 58%, #14163a); text-shadow: none; }
+:root[data-mode="light"] .bad, :root[data-mode="light"] .step .bad, :root[data-mode="light"] .step .problem,
+:root[data-mode="light"] .gwarn { color: var(--danger); }
+
+/* things drawn on their own dark colour keep white text: the route builder's hints and messages over the grid */
+:root[data-mode="light"] .hint, :root[data-mode="light"] .frame .toast { color: #fff; }
+:root[data-mode="light"] .hint .bad { color: #ffb3b3; }
+
+/* the grid editor's status bar, and the player's error message */
+:root[data-mode="light"] footer { background: var(--surface-2); color: var(--muted); border-top-color: var(--border); }
+:root[data-mode="light"] .error { color: var(--text); }

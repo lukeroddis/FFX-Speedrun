@@ -42,6 +42,7 @@ sphere-grid/
   standard.json       The Standard Sphere Grid: 860 nodes, their types, values, names and links
 assets/             Shared code and styles for the site
   theme.css           The site's colours, light and dark, shared by every page (the notes and tools too)
+  tools-light.css     Light mode for the tools and the Sphere Grid player: white cards, like the notes in light mode
   hub.js, hub.css     The site's navigation bar and theme switch (on every page), footer and hub data
   notes-config.js     Where everything lives: categories, languages, grids, routes
   grid-icons.js       Sphere Grid node types, icons and character colours

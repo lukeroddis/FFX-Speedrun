@@ -18,8 +18,16 @@
   ];
 
   /* ---------- theme: light, dark, or the device's setting ---------- */
-  const applyTheme = t => { if (t === "light" || t === "dark") document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme; };
+  /* data-theme is the choice (missing for Auto); data-mode is what the page actually is, light or dark, so pages
+     can style either one simply (the notes' light-mode cards use :root[data-mode="light"]) */
+  const darkDevice = matchMedia("(prefers-color-scheme: dark)");
+  const applyTheme = t => {
+    const root = document.documentElement;
+    if (t === "light" || t === "dark") root.dataset.theme = t; else delete root.dataset.theme;
+    root.dataset.mode = t === "light" || t === "dark" ? t : darkDevice.matches ? "dark" : "light";
+  };
   applyTheme(store.get("ffx-theme", ""));
+  darkDevice.addEventListener("change", () => applyTheme(store.get("ffx-theme", "")));
 
   /* ---------- navigation bar ---------- */
   const NAV_CSS = `
