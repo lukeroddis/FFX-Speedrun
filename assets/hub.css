@@ -148,3 +148,6 @@ a.card:hover::before {
 .site-foot { border-top: 1px solid var(--border); padding: 22px 0 34px; color: var(--muted); font-size: .85rem; }
 .site-foot .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 24px; }
 .site-foot a { color: var(--muted); }
+
+/* anything marked hidden stays hidden, even where a rule above gives it a display (such as .grid or .two) */
+[hidden] { display: none !important; }
