@@ -799,7 +799,7 @@ function blockHTML(b) {
     if (!routes.length) routes = [{ name: "", label: "" }];
     inner = `<div class="sg"><div class="grids">${routes.map(r => `<div class="g">${r.label ? `<span class="vtag">${esc(r.label)}</span>` : ""}
       <svg data-route="${esc(r.name)}" aria-label="Sphere Grid moves"></svg>
-      <div class="gtools"><button class="replay">↻ Replay</button><span class="ginfo"></span>${r.name ? `<a href="../prototypes/sphere-grid.html?cat=${encodeURIComponent(P.cat)}&route=${encodeURIComponent(r.name)}" target="_blank">Open in the full grid ↗</a>` : ""}</div></div>`).join("")}</div>
+      <div class="gtools"><button class="replay">↻ Replay</button><span class="ginfo"></span>${r.name ? `<a href="sphere-grid.html?cat=${encodeURIComponent(P.cat)}&route=${encodeURIComponent(r.name)}" target="_blank">Open in the full grid ↗</a>` : ""}</div></div>`).join("")}</div>
       <div class="moves">${plainList(tree.children)}</div></div>`;
   } else inner = plainList(tree.children);
   return `<li class="block stop kind-${esc(b.type)}" data-drops="${drop}">${head}<div class="bbody">${intro}${inner}${drops}</div></li>`;

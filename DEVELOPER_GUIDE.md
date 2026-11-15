@@ -21,6 +21,7 @@ pages/              The hub's pages
   leaderboards.html   Top runs from speedrun.com
   community.html      Discord, speedrun.com, streams, contributing
   tools.html          The route builder and grid editor
+  sphere-grid.html    The Sphere Grid route player, opened from the notes' grids (?cat=any&route=besaid-tidus)
   legal.html          Privacy and legal: what the site stores, the services it uses, other people's content
 hub/                The hub's data
   links.yml           Discord, speedrun.com and GitHub links
@@ -41,6 +42,7 @@ notes/
     en/                 The English notes: index.md (wording) and one Markdown file per area
 sphere-grid/
   standard.json       The Standard Sphere Grid: 860 nodes, their types, values, names and links
+  demo.json           An example route the route player shows when it's opened without one
 assets/             Shared code and styles for the site
   theme.css           The site's colours, light and dark, shared by every page (the notes and tools too)
   fonts/              The Ubuntu font, served from the site rather than Google Fonts (and its licence, UFL.txt)
@@ -55,10 +57,6 @@ assets/             Shared code and styles for the site
   logo/               The logo and browser icons, with the full-size originals they're made from
   portraits.js        Shows character portraits on tiles when an image exists
   portraits/          Character portrait images (see the README inside)
-prototypes/         Pages kept for trying changes in isolation (not linked from the hub):
-  sphere-grid.html    the Sphere Grid route player (also opened from the notes' grids)
-  sin-fin.html        the original CTB-style battle mock-up
-  demo.json           an example route the player shows when no route is given
 tools/
   route-builder.html  Build Sphere Grid routes by clicking, and export them as route files
   map-editor.html     Trace area maps over a screenshot, and save them as map files
@@ -82,14 +80,11 @@ The build also adds `?v=<commit>` to every page's links to the site's own script
 
 Then open <http://localhost:8765/> for the home page, or go straight to:
 
-- Run notes: <http://localhost:8765/pages/notes.html> (the old `prototypes/run.html` address forwards here)
+- Run notes: <http://localhost:8765/pages/notes.html>
+- Sphere Grid route player: <http://localhost:8765/pages/sphere-grid.html> (plays `sphere-grid/demo.json`; add `?route=besaid-tidus` for a real route)
 - Sphere Grid route builder: <http://localhost:8765/tools/route-builder.html>
 - Sphere Grid editor: <http://localhost:8765/tools/grid-editor.html>
-
-Prototypes, for experimenting on their own (not linked from the hub):
-
-- Sphere Grid route player: <http://localhost:8765/prototypes/sphere-grid.html> (plays `demo.json`; add `?route=besaid-tidus` for a real route)
-- Battle mock-up: <http://localhost:8765/prototypes/sin-fin.html>
+- Map Editor: <http://localhost:8765/tools/map-editor.html>
 
 ## The hub's content
 
@@ -403,4 +398,4 @@ Routes live in `notes/<category>/sphere-grid/` and refer to nodes by their ID in
 - **Sphere Levels:** counted per character. Each move onto a new link costs 1. Moving back along links the character has already walked costs 1 per 4, rounded up. Teleports, unlocks and activations cost none.
 - **Rule checks:** anything the game wouldn't allow shows as a ⚠ warning: a node out of reach, an already-activated node, a teleport its sphere can't make.
 
-Open a route with `prototypes/sphere-grid.html?cat=any&route=<file name>`. Without `?route=` it plays `prototypes/demo.json`, an example route.
+Open a route with `pages/sphere-grid.html?cat=any&route=<file name>`. Without `?route=` it plays `sphere-grid/demo.json`, an example route.
