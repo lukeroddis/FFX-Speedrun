@@ -31,14 +31,16 @@
 <div class="page-head"><div class="wrap"><h1>Privacy and legal</h1><p>What this site stores, the other services it uses, and who is responsible for the content it shows.</p></div></div>
 <main class="wrap"><div class="legal">
 
-<p>This is an unofficial, non-commercial fan site, made by the community for Final Fantasy X speedrunners. It has no accounts, no adverts and no analytics.</p>
+<p>This is an unofficial, non-commercial fan site: a personal project for my own Final Fantasy X speedrunning, which anyone is welcome to use. It has no accounts, no adverts and no analytics.</p>
+
+<h2 id="made-with-ai">Made with AI</h2>
+<p>I built this site with help from Claude, an AI assistant made by Anthropic. Claude wrote much of the code and some of the text, working from my directions, and I review what goes in. Notes, skips and route contributions are my own, with credit given for video content.</p>
 
 <h2 id="what-the-site-stores">What the site stores</h2>
 <p>The site sets no cookies and doesn't track you. It does remember a few things in your browser's local storage, so the site works the way you left it:</p>
 <ul>
-  <li>your settings: light or dark theme, the notes' route choices, game text language, what to show, and the Skips and streams layouts;</li>
+  <li>your settings: light or dark theme, the notes' route choices, game text language, what to show, and the Skips layout;</li>
   <li>where you are in the notes, and the Power Sphere count;</li>
-  <li>leaderboards and recent runs from speedrun.com, kept for a day so the pages load quickly;</li>
   <li>your work in the Route Builder, Map Editor and Sphere Grid Editor, including any reference image you load.</li>
 </ul>
 <p>All of it stays on your device and is never sent to this site or anyone else. Clearing this site's data in your browser removes it.</p>
@@ -48,28 +50,25 @@
 <table>
   <thead><tr><th>Service</th><th>What for</th></tr></thead>
   <tbody>
-    <tr><td>GitHub Pages</td><td>Hosts the site, and the list of who's live. <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub's privacy statement</a></td></tr>
-    <tr><td>speedrun.com</td><td>Leaderboards, recent runs and runners' flags. <a href="https://www.speedrun.com/pages/privacy-policy">speedrun.com's privacy policy</a></td></tr>
+    <tr><td>GitHub Pages</td><td>Hosts the site. <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub's privacy statement</a></td></tr>
     <tr><td>YouTube</td><td>Skip video thumbnails. The video player only loads when you click to play, and uses YouTube's privacy-enhanced mode. <a href="https://policies.google.com/privacy">Google's privacy policy</a></td></tr>
-    <tr><td>Twitch</td><td>Live stream thumbnails. The stream player only loads when you click to watch, and Twitch may then set its own cookies. <a href="https://www.twitch.tv/p/legal/privacy-notice/">Twitch's privacy notice</a></td></tr>
   </tbody>
 </table>
-<p>Links to other sites, such as the Discord or a tool's download page, take you to that site, where its own policies apply.</p>
+<p>Links to other sites, such as a tool's download page, take you to that site, where its own policies apply.</p>
 
 <h2 id="other-peoples-content">Other people's content</h2>
-<p>The site brings together content made by others. It doesn't create, check or endorse it, and isn't responsible for it:</p>
+<p>The site includes content made by others. It doesn't create, check or endorse it, and isn't responsible for it:</p>
 <ul>
-  <li><b>Live streams</b> are found automatically on Twitch from their titles. What happens on a stream is the streamer's responsibility, under Twitch's rules.</li>
   <li><b>Videos</b> are embedded from YouTube and belong to the people who made them, who are credited on each page.</li>
   <li><b>Tools and downloads</b> on other sites, such as the FFX Speedrun Mod, are made and maintained by their authors. Listing a tool isn't a guarantee or endorsement, and you use it at your own risk.</li>
-  <li><b>Notes and guides</b> are written by the community and offered as they are, without any guarantee they're complete or correct.</li>
+  <li><b>Notes and guides</b> are offered as they are, without any guarantee they're complete or correct.</li>
 </ul>
 
 <h2 id="reporting-a-problem">Reporting a problem</h2>
-<p>If something on the site, or something it links to or shows, is inappropriate, wrong, or yours and you'd like it taken down, please <a href="https://github.com/lukeroddis/FFX-Speedrun/issues">open an issue on GitHub</a> or get in touch on the <a id="discord" href="community.html">Discord</a>. Reported streams, videos and links are reviewed and removed where appropriate. A channel can be kept off the live list for good.</p>
+<p>If something on the site, or something it links to or shows, is inappropriate, wrong, or yours and you'd like it taken down, please <a href="https://github.com/lukeroddis/FFX-Speedrun/issues">open an issue on GitHub</a>. Reported videos and links are reviewed and removed where appropriate.</p>
 
 <h2 id="copyright-and-trademarks">Copyright and trademarks</h2>
-<p>Final Fantasy X, character names, logos, and related imagery are registered trademarks and copyright material of Square Enix Co., Ltd. This is an unofficial, community-driven speedrunning resource and fan site. It is not affiliated with, endorsed by, or sponsored by Square Enix.</p>
+<p>Final Fantasy X, character names, logos, and related imagery are registered trademarks and copyright material of Square Enix Co., Ltd. This is an unofficial, personal speedrunning resource and fan site. It is not affiliated with, endorsed by, or sponsored by Square Enix.</p>
 <p>Videos, maps and other material based on someone else's work are credited to their makers. The Ubuntu font is used under the <a href="../assets/fonts/UFL.txt">Ubuntu Font Licence</a>.</p>
 
 <h2 id="licences">Licences</h2>
@@ -86,8 +85,6 @@
 (async () => {
   Hub.nav("");
   Hub.footer();
-  const links = await Hub.links();
-  if (links.discord) document.getElementById("discord").href = links.discord;
 })();
 </script>
 </body>

@@ -3,39 +3,30 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Community – Final Fantasy X Speedrun</title>
+<title>Live streams – Final Fantasy X Speedrun</title>
 <link rel="icon" type="image/png" sizes="32x32" href="../assets/logo/icon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="../assets/logo/icon-192.png">
 <link rel="apple-touch-icon" href="../assets/logo/apple-touch-icon.png">
-<meta name="description" content="The Final Fantasy X speedrun community: Discord, streams and resources.">
+<meta name="description" content="Final Fantasy X speedruns live on Twitch.">
+<meta name="robots" content="noindex">
 <link rel="stylesheet" href="../assets/hub.css">
 <script src="../assets/notes-config.js"></script>
 <script src="../assets/hub.js"></script>
 </head>
 <body>
-<div class="page-head"><div class="wrap"><h1>Community</h1><p>Discover new runners and join the community.</p></div></div>
+<div class="page-head"><div class="wrap"><h1>Live streams</h1><p>FFX speedruns live on Twitch.</p></div></div>
 <main class="wrap">
-<div class="grid">
-  <div class="card"><h3>Discord</h3><p>The heart of the community: questions, route discussion, and more. Everyone's welcome, from first-timers to record holders.</p>
-    <div class="foot"><a class="btn small primary" id="discord" href="#">Join the Discord</a></div></div>
-  <div class="card"><h3>speedrun.com</h3><p>The official leaderboards, category rules and run submissions.</p>
-    <div class="foot"><a class="btn small plain" id="src" href="#">speedrun.com/ffx ↗</a></div></div>
-  <div class="card"><h3>Contribute</h3><p>Help build the FFX speedrun community. Spot a mistake or have a better strat? Open an issue or a pull request.</p>
-    <div class="foot"><a class="btn small plain" id="gh" href="#">GitHub ↗</a></div></div>
-</div>
+<p class="muted" style="font-size:.88rem">Only shown when the site runs locally. It's switched off on the public site.</p>
 <h2 class="section">Live now</h2>
 <p class="muted" style="margin-top:-6px">FFX speedruns live on Twitch, updated every 5 minutes. Click a stream to watch it here, and pick a layout to watch several side by side.<br>Streams are found automatically and aren't checked by this site. <a href="legal.html#reporting-a-problem">Report a stream</a>.</p>
 <div id="live"><p class="muted">Checking…</p></div>
 </main>
 <script>
 (async () => {
+  if (!Hub.requireLocal()) return;
   Hub.nav("community");
   Hub.footer();
-  const $ = id => document.getElementById(id), esc = Hub.esc;
-  const links = await Hub.links();
-  if (links.discord) $("discord").href = links.discord;
-  if (links.speedrun) $("src").href = links.speedrun;
-  if (links.github) $("gh").href = links.github;
+  const $ = id => document.getElementById(id);
   await Hub.streamViewer($("live"), await Hub.live());
 })();
 </script>

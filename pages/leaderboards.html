@@ -8,6 +8,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="../assets/logo/icon-192.png">
 <link rel="apple-touch-icon" href="../assets/logo/apple-touch-icon.png">
 <meta name="description" content="The current top Final Fantasy X speedruns, from speedrun.com.">
+<meta name="robots" content="noindex">
 <link rel="stylesheet" href="../assets/hub.css">
 <script src="../assets/notes-config.js"></script>
 <script src="../assets/hub.js"></script>
@@ -15,6 +16,7 @@
 <body>
 <div class="page-head"><div class="wrap"><h1>Leaderboards</h1><p>The latest runs, and the top runs in the most popular categories, from speedrun.com. Refreshed once a day.</p></div></div>
 <main class="wrap">
+<p class="muted" style="font-size:.88rem">Only shown when the site runs locally. It's switched off on the public site.</p>
 <p class="muted" id="updated" style="margin:-8px 0 14px;font-size:.88rem"></p>
 <div id="recent"></div>
 <div class="grid" id="boards" style="grid-template-columns:repeat(auto-fill,minmax(min(100%,420px),1fr))"><p class="muted">Loading from speedrun.com…</p></div>
@@ -22,6 +24,7 @@
 </main>
 <script>
 (async () => {
+  if (!Hub.requireLocal()) return;
   Hub.nav("boards");
   Hub.footer();
   const $ = id => document.getElementById(id), esc = Hub.esc;

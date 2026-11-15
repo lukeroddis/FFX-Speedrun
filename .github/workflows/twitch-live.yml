@@ -1,15 +1,12 @@
-# Every 5 minutes (started by cron-job.org): ask Twitch who's streaming FFX speedruns, and publish the list as live.json on the
-# "live-data" branch. The site reads it from there, so the main branch's history isn't filled with updates.
-# Needs two repository secrets, TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET (see DEVELOPER_GUIDE.md: "Twitch live check").
+# Ask Twitch who's streaming FFX speedruns, and publish the list as live.json on the "live-data" branch.
+# Switched off: the public site no longer shows live streams, so this only runs by hand (the Run workflow button
+# on the Actions tab), for trying the Streams page locally. To switch it back on, restore the schedule below and
+# the cron-job.org job (see DEVELOPER_GUIDE.md: "Twitch live check").
+# Needs two repository secrets, TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET.
 name: Twitch live check
 
 on:
-  # cron-job.org starts a run every 5 minutes through workflow_dispatch (see DEVELOPER_GUIDE.md: "Twitch live
-  # check"), as GitHub's own schedule is often delayed by hours. This one is only a backup: every 10 minutes,
-  # at 4, 14, 24… past the hour, since GitHub most often delays runs at the top of the hour.
-  schedule:
-    - cron: "4-59/10 * * * *"
-  # also the Run workflow button on the Actions tab
+  # was: schedule: - cron: "4-59/10 * * * *"
   workflow_dispatch:
 
 permissions:

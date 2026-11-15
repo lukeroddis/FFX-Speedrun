@@ -18,17 +18,17 @@ pages/              The hub's pages
   notes.html          The run notes (?cat=any&lang=en)
   categories.html     Every category and its languages
   skips.html          The Skips library
-  leaderboards.html   Top runs from speedrun.com
-  community.html      Discord, speedrun.com, streams, contributing
+  leaderboards.html   Top runs from speedrun.com (local only)
+  community.html      Live streams from Twitch (local only)
   tools.html          The route builder and grid editor
   sphere-grid.html    The Sphere Grid route player, opened from the notes' grids (?cat=any&route=besaid-tidus)
   legal.html          Privacy and legal: what the site stores, the services it uses, other people's content
 hub/                The hub's data
-  links.yml           Discord, speedrun.com and GitHub links
-  leaderboards.yml    Which speedrun.com boards to show, in order
+  links.yml           speedrun.com and GitHub links, and where live.json is
+  leaderboards.yml    Which speedrun.com boards to show, in order (local only)
   skips/              One Markdown file per skip, each built into its own page (see the README inside)
   tools.yml           The Tools page, and who made each tool
-  twitch.yml          What the Twitch live check looks for
+  twitch.yml          What the Twitch live check looks for (local only)
 .github/            GitHub Actions: building and publishing the site (pages.yml, build-site.mjs) and the Twitch live check
 notes/
   categories.yml      The categories on the site: name, description, leaderboards, "coming soon"
@@ -88,6 +88,17 @@ Then open <http://localhost:8765/> for the home page, or go straight to:
 
 ## The hub's content
 
+### Leaderboards and live streams: local only
+
+The leaderboards (speedrun.com) and live streams (Twitch) are switched off on the public site, but their code is kept. `assets/hub.js` checks whether the site is running locally (`localhost`, `127.0.0.1`, `[::1]` or a file opened from disk) and exposes it as `Hub.local`:
+
+- **On the public site:** the Leaderboards and Streams links are left out of the navigation bar, the home page skips the World records, Recent runs and Streaming now sections, nothing is fetched from speedrun.com or Twitch (`Hub.board`, `Hub.recentRuns` and `Hub.live` refuse to run), and `pages/leaderboards.html` and `pages/community.html` send you to the home page. They're also left out of the sitemap.
+- **Locally:** everything works as before.
+
+To bring them back on the public site, remove the `LOCAL` checks in `assets/hub.js` and `index.html`, the `Hub.requireLocal()` lines in the two pages, and put the pages back in the sitemap list in `build-site.mjs`. For streams, also switch the Twitch live check back on (below).
+
+### Editing the content
+
 Everything on the hub pages comes from small files, so a pull request is all it takes to change them:
 
 - **A skip:** add a Markdown file to `hub/skips/`, e.g. `hub/skips/clasko-skip.md`. It becomes its own page at `skips/clasko-skip/`, with its video (or a tab per version, PS2 and HD Remaster), who made it, its difficulty, and a written guide with images. It also appears on the Skips page, and its name links to it from the notes. `hub/skips/README.md` lists the fields and how to write the guide.
@@ -99,7 +110,9 @@ Everything on the hub pages comes from small files, so a pull request is all it 
 
 ## Twitch live check
 
-The Community page, and the home page when someone's live, show who's streaming FFX speedruns on Twitch.
+**Switched off.** The workflow's schedule has been removed and the cron-job.org job is no longer used, so the check only runs from **Actions → Twitch live check → Run workflow**. Run it by hand to get a fresh `live.json` when trying the Streams page locally. To switch it back on, restore the `schedule:` in `.github/workflows/twitch-live.yml` and set up cron-job.org again as described below.
+
+The Streams page (`pages/community.html`), and the home page when someone's live, show who's streaming FFX speedruns on Twitch. Both only do this when the site runs locally.
 
 **How it works:** a GitHub Action (`.github/workflows/twitch-live.yml`) runs every 5 minutes, started by [cron-job.org](https://cron-job.org):
 
@@ -110,12 +123,12 @@ The Community page, and the home page when someone's live, show who's streaming 
 
 ### Watching streams on the site
 
-The home page shows the top 3 streams; the Community page (`Hub.streamViewer` in `assets/hub.js`) shows them all, and plays them on the page:
+The home page shows the top 3 streams; the Streams page (`Hub.streamViewer` in `assets/hub.js`) shows them all, and plays them on the page:
 
 - **Layout:** *Auto* (two per row, and the stream you start goes full width), or 1, 2 or 3 streams per row. The choice is remembered in the visitor's browser. Phones always show one per row.
 - **⤢** on a stream makes it full width, and again shrinks it back.
 - A playing stream hides its title and viewer count, so videos sit closer together.
-- **Watch links:** `pages/community.html?watch=runner1,runner2` (Twitch login names, up to 6) puts those streams first, side by side, with a **▶ Play all** button. Handy to post in Discord for a race. A runner who isn't in the live list (their title has no keyword, say) still gets a card that tries to play them. Channels in `exclude` are never shown. Once streams are playing, **Copy watch link** gives a link to the ones playing.
+- **Watch links:** `pages/community.html?watch=runner1,runner2` (Twitch login names, up to 6) puts those streams first, side by side, with a **▶ Play all** button. A runner who isn't in the live list (their title has no keyword, say) still gets a card that tries to play them. Channels in `exclude` are never shown. Once streams are playing, **Copy watch link** gives a link to the ones playing.
 
 ### Setting it up
 

@@ -1,7 +1,7 @@
-# Community links shown around the site.
+# Links used around the site.
 site: https://lukeroddis.github.io/FFX-Speedrun/
-discord: https://discord.com/invite/X3qXHWG
 speedrun: https://www.speedrun.com/ffx
 github: https://github.com/lukeroddis/FFX-Speedrun
-# Who's live on Twitch: written every 5 minutes by the Twitch live check (.github/workflows/twitch-live.yml)
+# Who's live on Twitch: written by the Twitch live check (.github/workflows/twitch-live.yml), which is now only run by hand.
+# The site only reads it when running locally.
 live: https://raw.githubusercontent.com/lukeroddis/FFX-Speedrun/live-data/live.json

@@ -8,14 +8,22 @@
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const store = { get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
 
+  /* The leaderboards (speedrun.com) and live streams (Twitch) are switched off on the public site. Their code is
+     kept, and they still work when the site runs locally (localhost, or a file opened straight from disk). */
+  const LOCAL = ["localhost", "127.0.0.1", "[::1]", ""].includes(location.hostname);
+  const localOnly = what => { throw new Error(`${what} only run when the site runs locally`); };
+  /* a page that only works locally: on the public site it sends you to the home page */
+  const requireLocal = () => { if (!LOCAL) location.replace(url("")); return LOCAL; };
+
+  // [id, label, link, local only]
   const SECTIONS = [
     ["home", "Home", ""],
     ["notes", "Notes", "pages/categories.html"],
     ["skips", "Skips", "pages/skips.html"],
-    ["boards", "Leaderboards", "pages/leaderboards.html"],
-    ["community", "Community", "pages/community.html"],
+    ["boards", "Leaderboards", "pages/leaderboards.html", true],
+    ["community", "Streams", "pages/community.html", true],
     ["tools", "Tools", "pages/tools.html"],
-  ];
+  ].filter(s => LOCAL || !s[3]);
 
   /* ---------- theme: light, dark, or the device's setting ---------- */
   /* data-theme is the choice (missing for Auto); data-mode is what the page actually is, light or dark, so pages
@@ -76,8 +84,9 @@
   function footer() {
     const f = document.createElement("footer");
     f.className = "site-foot";
-    f.innerHTML = `<div class="wrap"><span>Final Fantasy X, character names, logos, and related imagery are registered trademarks and copyright material of Square Enix Co., Ltd. This is an unofficial, community-driven speedrunning resource and fan site. It is not affiliated with, endorsed by, or sponsored by Square Enix.</span>
-      <span><a href="${url("pages/legal.html")}">Privacy and legal</a> · <a href="https://github.com/lukeroddis/FFX-Speedrun">Contribute on GitHub</a></span></div>`;
+    f.innerHTML = `<div class="wrap"><span>Final Fantasy X, character names, logos, and related imagery are registered trademarks and copyright material of Square Enix Co., Ltd. This is an unofficial, personal speedrunning resource and fan site. It is not affiliated with, endorsed by, or sponsored by Square Enix.</span>
+      <span>A personal project, built with help from Claude, an AI assistant. <a href="${url("pages/legal.html#made-with-ai")}">More about this</a></span>
+      <span><a href="${url("pages/legal.html")}">Privacy and legal</a> · <a href="https://github.com/lukeroddis/FFX-Speedrun">On GitHub</a></span></div>`;
     document.body.appendChild(f);
   }
 
@@ -144,6 +153,7 @@
     return Object.entries(y.boards || {}).map(([id, b]) => ({ id, game: y.game, ...b }));
   }
   async function board(b, top = 5) {
+    if (!LOCAL) localOnly("Leaderboards");
     const key = `ffx-board-v2-${b.id}-${top}`;
     try { const c = JSON.parse(store.get(key, "null")); if (c && Date.now() - c.at < DAY) return { ...c.data, at: c.at }; } catch {}
     const vars = String(b.vars || "").split(",").map(s => s.trim()).filter(Boolean).map(v => { const [k, val] = v.split("="); return `var-${k}=${val}`; });
@@ -166,6 +176,7 @@
      subcategory is left out, as speedrun.com does. Each says its category with its subcategory
      ("Cutscene Remover · True RNG") and the date it was run. */
   async function recentRuns(count = 5) {
+    if (!LOCAL) localOnly("Leaderboards");
     const game = (await yaml("hub/leaderboards.yml")).game;
     const key = `ffx-recent-v3-${game}-${count}`;
     try { const c = JSON.parse(store.get(key, "null")); if (c && Date.now() - c.at < DAY) return { ...c.data, at: c.at }; } catch {}
@@ -232,6 +243,7 @@
   /* ---------- who's live on Twitch: live.json from the Twitch live check ---------- */
   /* → { updated, streams: [...] }, or null when the check isn't running yet. ?live=<file> reads another file (for testing). */
   async function live() {
+    if (!LOCAL) return null;
     const test = new URLSearchParams(location.search).get("live");
     const src = test ? url(test) : (await links()).live;
     if (!src) return null;
@@ -257,8 +269,8 @@
       </div>`;
   }
   function liveHTML(data, max = 50) {
-    if (!data) return `<p class="muted">The live check isn't running yet, so streams can't be listed here. Find runners in the Discord in the meantime.</p>`;
-    if (!data.streams.length) return `<p class="muted">No one's streaming an FFX speedrun right now. Check back later, or ask in the Discord.</p>${staleHTML(data)}`;
+    if (!data) return `<p class="muted">The live check isn't running yet, so streams can't be listed here.</p>`;
+    if (!data.streams.length) return `<p class="muted">No one's streaming an FFX speedrun right now. Check back later.</p>${staleHTML(data)}`;
     return `<div class="grid streams">${data.streams.slice(0, max).map(s => streamCardHTML(s, data)).join("")}</div>${staleHTML(data)}`;
   }
 
@@ -355,5 +367,5 @@
     return `Updated ${ago(new Date(Math.min(...ats)).toISOString())} ago from speedrun.com · refreshes once a day`.replace("Updated 0 min ago", "Updated just now");
   }
 
-  window.Hub = { url, esc, nav, footer, links, skips, skipCardHTML, notBuilt, tools, byHTML, starsHTML, categories, notesUrl, boards, board, boardHTML, personHTML, recentRuns, recentHTML, time, videoHTML, youtubeId, live, liveHTML, streamViewer, updatedText };
+  window.Hub = { url, esc, local: LOCAL, requireLocal, nav, footer, links, skips, skipCardHTML, notBuilt, tools, byHTML, starsHTML, categories, notesUrl, boards, board, boardHTML, personHTML, recentRuns, recentHTML, time, videoHTML, youtubeId, live, liveHTML, streamViewer, updatedText };
 })();

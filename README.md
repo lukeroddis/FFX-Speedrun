@@ -1,6 +1,10 @@
 # Final Fantasy X Speedrun
 
-A home for the **Final Fantasy X** speedrunning community.
+My personal toolkit for speedrunning **Final Fantasy X**: run notes, skip guides and tools.
+
+This is a personal project, built for my own runs. You're welcome to use it, and contributions are welcome too.
+
+> **Made with AI:** I built this site with help from Claude, an AI assistant made by Anthropic. Claude wrote much of the code and some of the text, working from my directions, and I review what goes in. Notes, skips and route contributions are my own, with credit given for video content.
 
 **Visit the site: <https://lukeroddis.github.io/FFX-Speedrun/>**
 
@@ -25,9 +29,9 @@ A home for the **Final Fantasy X** speedrunning community.
 </p>
 
 - **Skips:** a library of the skips the speedrun uses, with written guides and credited videos.
-- **Leaderboards** and the latest runs pulled from speedrun.com.
-- **Who's live** on Twitch: watch streams on the site, side by side for a race, and share a link that opens them ready to play.
-- **Tools** highlighting third-party tools built by the Final Fantasy X speedrunning community, as well as in-house tools for building Sphere Grid routes and tracing maps.
+- **Tools:** third-party tools used for FFX speedruns, and the site's own tools for building Sphere Grid routes and tracing maps.
+
+The code for leaderboards (from speedrun.com) and live streams (from Twitch) is still here, but it's switched off on the public site and only works when you run the site locally.
 
 ## Contributing
 
@@ -81,15 +85,15 @@ The written guide, in Markdown.
 
 | To change… | Edit |
 |---|---|
-| The Discord, speedrun.com or GitHub links | `hub/links.yml` |
-| Which streams count as speedruns (title keywords, runners to always show, titles to leave out) | `hub/twitch.yml` |
-| The leaderboards shown | `hub/leaderboards.yml` |
+| The speedrun.com and GitHub links | `hub/links.yml` |
+| Which streams count as speedruns (local only) | `hub/twitch.yml` |
+| The leaderboards shown (local only) | `hub/leaderboards.yml` |
 | The Tools page | `hub/tools.yml` |
 | The categories | `notes/categories.yml` |
 
 ## For developers
 
-The [developer guide](DEVELOPER_GUIDE.md) has the folder layout, how to run the site locally, every file format, and how the Twitch live check is set up.
+The [developer guide](DEVELOPER_GUIDE.md) has the folder layout, how to run the site locally, every file format, and how the (now switched off) Twitch live check is set up.
 
 ## Licence
 
@@ -97,6 +101,6 @@ The notes, guides and route data are under [CC BY-SA 4.0](https://creativecommon
 
 ## Credits
 
-- **Final Fantasy X**, character names, logos, and related imagery are registered trademarks and copyright material of Square Enix Co., Ltd. This is an unofficial, community-driven speedrunning resource and fan site. It is not affiliated with, endorsed by, or sponsored by Square Enix.
+- **Final Fantasy X**, character names, logos, and related imagery are registered trademarks and copyright material of Square Enix Co., Ltd. This is an unofficial, personal speedrunning resource and fan site. It is not affiliated with, endorsed by, or sponsored by Square Enix.
 - The Sphere Grid layout was traced with reference to the Sphere Grid map by **Zomgmeister**.
 - Skip videos are credited on each skip's page.

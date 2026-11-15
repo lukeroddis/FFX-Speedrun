@@ -268,8 +268,8 @@ async function main() {
   // the list the Skips page, home page and notes read
   await writeFile(join(OUT, "skips", "index.json"), JSON.stringify(skips.map(({ body, ...s }) => ({ ...s, url: `skips/${s.id}/` })), null, 2));
 
-  // search engines: every page worth finding
-  const pages = ["", "pages/notes.html?cat=any", "pages/categories.html", "pages/skips.html", "pages/leaderboards.html", "pages/community.html", "pages/tools.html", "pages/legal.html",
+  // search engines: every page worth finding (not the leaderboards or streams, which only work locally)
+  const pages = ["", "pages/notes.html?cat=any", "pages/categories.html", "pages/skips.html", "pages/tools.html", "pages/legal.html",
     ...skips.map(s => `skips/${s.id}/`)];
   const today = new Date().toISOString().slice(0, 10);
   await writeFile(join(OUT, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>
