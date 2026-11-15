@@ -1165,7 +1165,21 @@ function go(i, quiet) {
     const blk = svg.closest(".stop"), j = stops.indexOf(blk);
     if (j === cur && !quiet) svg.play?.(); else if (j < cur) svg.showEnd?.(); else svg.showStart?.();
   });
-  if (!quiet) stops[cur].scrollIntoView({ block: "center", behavior: "smooth" });
+  if (!quiet) follow(stops[cur]);
+}
+
+/* Keep the current line in view without moving the page on every step: the page stays still while the line is
+   comfortably on screen, and only scrolls once it reaches the bottom quarter (or goes above the top, stepping back).
+   It then moves once, so the line sits a quarter of the way down, leaving room for the lines that follow.
+   A line taller than that room (a Sphere Grid, a map) lines up with the top instead. */
+function follow(el) {
+  const bars = [document.querySelector(".site-nav"), document.querySelector(".mbar")]   // pinned at the top
+    .map(b => b && getComputedStyle(b).display !== "none" ? b.getBoundingClientRect().bottom : 0);
+  const top = Math.max(0, ...bars) + 8, view = innerHeight - top;
+  const r = el.getBoundingClientRect();
+  if (r.top >= top && r.bottom <= top + view * .75) return;   // comfortably in view: stay still
+  const target = r.height > view * .7 ? top : top + view * .25;
+  window.scrollBy({ top: r.top - target, behavior: "smooth" });
 }
 
 function showBonus() {
