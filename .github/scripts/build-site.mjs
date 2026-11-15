@@ -78,8 +78,22 @@ function versionsOf(meta) {
   // "versions: [pc]": a skip for some versions only, with one video (or none) for all of them
   if (Array.isArray(meta.versions))
     return [{ key: meta.versions.join(" "), label: meta.versions.map(k => VERSION_LABEL[k] || k).join(" and "), video: meta.video || "", by: meta.by || "", by_url: meta.by_url || "" }];
-  if (meta.versions && typeof meta.versions === "object")
-    return Object.entries(meta.versions).map(([key, v]) => ({ key, label: VERSION_LABEL[key] || key, video: v.video || "", by: v.by || "", by_url: v.by_url || "" }));
+  // one entry per version; versions listed with nothing under them share the next video (hd:, pc:, csr: video…),
+  // so they become one tab, e.g. "HD Remaster, PC and Cutscene Remover" with key "hd pc csr"
+  if (meta.versions && typeof meta.versions === "object") {
+    const groups = [];
+    let waiting = [];
+    for (const [key, v] of Object.entries(meta.versions)) {
+      waiting.push(key);
+      if (v && typeof v === "object" && v.video) { groups.push({ keys: waiting, v }); waiting = []; }
+    }
+    if (waiting.length) groups.push({ keys: waiting, v: {} });   // left over: no video for these
+    const and = l => l.length > 1 ? `${l.slice(0, -1).join(", ")} and ${l.at(-1)}` : l[0];
+    return groups.map(({ keys, v }) => ({
+      key: keys.join(" "), label: and(keys.map(k => VERSION_LABEL[k] || k)), labels: keys.map(k => VERSION_LABEL[k] || k),
+      video: v.video || "", by: v.by || "", by_url: v.by_url || "",
+    }));
+  }
   return [{ key: "", label: "", video: meta.video || "", by: meta.by || "", by_url: meta.by_url || "" }];
 }
 async function readSkips(notesAreas, categoryNames) {
@@ -116,7 +130,8 @@ function skipPage(s, site) {
   const description = s.summary || `How to do the ${s.name} in Final Fantasy X speedruns.`;
   const tabs = s.versions.length > 1
     ? `<div class="vtabs" role="tablist" aria-label="Version">${s.versions.map(v => `<button role="tab" data-v="${esc(v.key)}">${esc(v.label)}</button>`).join("")}</div>`
-    : s.versions[0].label ? `<p class="vonly">${esc(s.versions[0].label)} only</p>` : "";
+    // one tab: say which versions, unless it's all of them
+    : s.versions[0].label && !["ps2", "hd", "pc", "csr"].every(k => s.versions[0].key.split(" ").includes(k)) ? `<p class="vonly">${esc(s.versions[0].label)} only</p>` : "";
   const videos = s.versions.map(v => {
     const id = youtubeId(v.video);
     return `<div class="vblock" data-version="${esc(v.key)}">
@@ -172,7 +187,9 @@ ${thumb ? `<meta property="og:image" content="${thumb}">\n<meta name="twitter:ca
   /* only the chosen version's video and text show */
   body[data-version] .vblock[data-version]:not([data-version=""]),
   body[data-version] .vtext { display: none; }
-${s.versions.filter(v => v.key).map(v => `  body[data-version="${v.key}"] .vblock[data-version="${v.key}"]:not([data-version=""]), body[data-version="${v.key}"] .vtext[data-version~="${v.key}"] { display: block; }`).join("\n")}
+${s.versions.filter(v => v.key).map(v => `  ${[`body[data-version="${v.key}"] .vblock[data-version="${v.key}"]:not([data-version=""])`,
+    // the guide's ":::if version=hd" text shows on any tab that includes that version (a tab can be "hd pc csr")
+    ...v.key.split(" ").map(k => `body[data-version="${v.key}"] .vtext[data-version~="${k}"]`)].join(", ")} { display: block; }`).join("\n")}
 </style>
 </head>
 <body${s.versions.length > 1 ? ` data-version="${esc(s.versions[0].key)}"` : s.versions[0].key ? ` data-version="${esc(s.versions[0].key)}"` : ""}>

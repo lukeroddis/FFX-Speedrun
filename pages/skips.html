@@ -12,10 +12,20 @@
 <link rel="stylesheet" href="../assets/hub.css">
 <script src="../assets/notes-config.js"></script>
 <script src="../assets/hub.js"></script>
+<style>
+  .skip-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-bottom: 16px; }
+  .skip-filter .seg { flex-wrap: wrap; }
+  .skip-filter #count { font-size: .88rem; }
+  .card.off, .skip-filter[hidden] { display: none; }
+</style>
 </head>
 <body>
 <div class="page-head"><div class="wrap"><h1>Skips</h1><p>A library of skip tutorials for Final Fantasy X speedruns, with videos and detailed explanations and imagery.</p></div></div>
 <main class="wrap">
+<div class="skip-filter" id="filter" hidden>
+  <div class="seg" role="group" aria-label="Show skips for this version" id="versionSeg"><span>Version</span></div>
+  <span class="muted" id="count"></span>
+</div>
 <div class="grid" id="skips"><p class="muted">Loading…</p></div>
 </main>
 <script>
@@ -25,6 +35,43 @@
   const $ = id => document.getElementById(id), esc = Hub.esc;
   const skips = await Hub.skips();
   $("skips").innerHTML = !skips ? Hub.notBuilt : skips.map(Hub.skipCardHTML).join("") || `<p class="muted">No skips yet.</p>`;
+  if (!skips?.length) return;
+
+  /* Version filter: hides skips that aren't done on that version. A skip's versions are the keys under
+     "versions:" in its file; a skip without any works on every version. */
+  const ORDER = ["ps2", "hd", "pc", "csr"];
+  const keysOf = s => s.versions.flatMap(v => (v.key || "").split(" ")).filter(Boolean);
+  const labels = {};
+  for (const s of skips) for (const v of s.versions) if (v.key && !v.key.includes(" ")) labels[v.key] = v.label;
+  for (const s of skips) for (const v of s.versions) for (const k of (v.key || "").split(" ").filter(Boolean)) labels[k] ||= k.toUpperCase();
+  const versions = Object.keys(labels).sort((a, b) => (ORDER.indexOf(a) + 1 || 99) - (ORDER.indexOf(b) + 1 || 99));
+  if (versions.length < 2) return;
+  const cards = [...$("skips").children];
+  const store = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} } };
+  // start on: the address (?version=pc), then the last choice here, then the version picked in the notes
+  const fromNotes = { console: "hd" }[store.get("ffx-var-version")] || store.get("ffx-var-version");
+  let chosen = [new URLSearchParams(location.search).get("version"), store.get("ffx-skip-version"), fromNotes]
+    .find(v => v === "all" || versions.includes(v)) || "all";
+  $("versionSeg").insertAdjacentHTML("beforeend", ["all", ...versions].map(k =>
+    `<button data-v="${k}">${k === "all" ? "All" : esc(labels[k])}</button>`).join(""));
+  const apply = () => {
+    let shown = 0;
+    skips.forEach((s, i) => {
+      const keys = keysOf(s), on = chosen === "all" || !keys.length || keys.includes(chosen);
+      cards[i]?.classList.toggle("off", !on); shown += on;
+    });
+    $("versionSeg").querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", b.dataset.v === chosen));
+    $("count").textContent = chosen === "all" ? `${skips.length} skips` : `${shown} of ${skips.length} skips`;
+    const u = new URL(location.href);
+    if (chosen === "all") u.searchParams.delete("version"); else u.searchParams.set("version", chosen);
+    history.replaceState(null, "", u);
+  };
+  $("versionSeg").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    chosen = b.dataset.v; store.set("ffx-skip-version", chosen); apply();
+  });
+  $("filter").hidden = false;
+  apply();
 })();
 </script>
 </body>

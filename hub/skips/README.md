@@ -17,6 +17,8 @@ Start a new skip by copying one of these files. The part between the `---` lines
 | `versions` | Instead, one set of `video`, `by` and `by_url` per version (`hd`, `ps2`), when the versions differ. The page shows a tab for each. |
 | `versions: [pc]` | For a skip that only exists on some versions (e.g. PC), with one `video` for all of them. The page says "PC only". |
 
+The versions (`ps2`, `hd`, `pc`, `csr`) also drive the **Version** filter on the Skips page: a skip only shows for the versions listed in its file, and a skip without `versions` shows for every version.
+
 Below the details, write the guide in Markdown:
 
 - **Headings:** start a line with `## ` for a heading.

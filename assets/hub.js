@@ -85,7 +85,7 @@
   function skipCardHTML(s) {
     const v = s.versions.find(x => x.video) || s.versions[0] || {}, id = youtubeId(v.video);
     const by = [...new Set(s.versions.map(x => x.by).filter(Boolean))];
-    const labels = s.versions.map(x => x.label).filter(Boolean);
+    const labels = s.versions.flatMap(x => x.labels || [x.label]).filter(Boolean);   // a tag per version, also for a shared tab
     return `<div class="card skipcard">
       ${id ? `<a class="video" href="${esc(s.link)}" aria-label="${esc(s.name)}"><img src="https://i.ytimg.com/vi/${id}/hqdefault.jpg" alt="" loading="lazy"></a>` : ""}
       <h3><a href="${esc(s.link)}">${esc(s.name)}</a></h3>
