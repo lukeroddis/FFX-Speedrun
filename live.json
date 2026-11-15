@@ -1,0 +1,40 @@
+{
+  "updated": "2026-11-15T22:35:16.124Z",
+  "games": [
+    "FINAL FANTASY X",
+    "Final Fantasy X HD Remaster"
+  ],
+  "missing": [],
+  "streams": [
+    {
+      "login": "angieyuna",
+      "name": "AngieYuna",
+      "title": "FFX PS2 Any% Runs :>",
+      "game": "FINAL FANTASY X",
+      "viewers": 66,
+      "started": "2026-11-15T20:09:43Z",
+      "language": "en",
+      "thumbnail": "https://static-cdn.jtvnw.net/previews-ttv/live_user_angieyuna-440x248.jpg"
+    },
+    {
+      "login": "nameornickname",
+      "name": "NameorNickname",
+      "title": "FFX True RNG speedrun",
+      "game": "Final Fantasy X HD Remaster",
+      "viewers": 32,
+      "started": "2026-11-15T19:40:36Z",
+      "language": "fr",
+      "thumbnail": "https://static-cdn.jtvnw.net/previews-ttv/live_user_nameornickname-440x248.jpg"
+    },
+    {
+      "login": "coderwilson",
+      "name": "coderwilson",
+      "title": "FFX TAS - Actually attempting Plat route again!",
+      "game": "Final Fantasy X HD Remaster",
+      "viewers": 2,
+      "started": "2026-11-15T15:03:04Z",
+      "language": "en",
+      "thumbnail": "https://static-cdn.jtvnw.net/previews-ttv/live_user_coderwilson-440x248.jpg"
+    }
+  ]
+}
