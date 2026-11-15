@@ -139,6 +139,9 @@ function skipPage(s, site) {
 <meta property="og:url" content="${esc(url)}">
 ${thumb ? `<meta property="og:image" content="${thumb}">\n<meta name="twitter:card" content="summary_large_image">` : ""}
 <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" sizes="32x32" href="${R}assets/logo/icon-32.png">
+<link rel="icon" type="image/png" sizes="192x192" href="${R}assets/logo/icon-192.png">
+<link rel="apple-touch-icon" href="${R}assets/logo/apple-touch-icon.png">
 <link rel="stylesheet" href="${R}assets/hub.css">
 <script src="${R}assets/notes-config.js"></script>
 <script src="${R}assets/hub.js"></script>

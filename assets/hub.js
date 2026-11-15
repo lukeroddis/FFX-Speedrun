@@ -28,6 +28,7 @@
   .site-nav .in { max-width: 1120px; margin: 0 auto; padding: 0 16px; display: flex; align-items: center; gap: 6px; min-height: 52px; }
   .site-nav .brand { color: #fff; text-decoration: none; font-weight: 700; font-size: 1.05rem; margin-right: 12px; white-space: nowrap; letter-spacing: .01em; }
   .site-nav .brand span { color: #ffd84a; }
+  .site-nav .brand img { display: block; height: 40px; width: auto; }
   .site-nav .links { display: flex; align-items: center; gap: 2px; flex: 1; }
   .site-nav .links a { position: relative; color: #dfe1ff; text-decoration: none; padding: 7px 11px; border-radius: 6px; font-size: .93rem; font-weight: 500; white-space: nowrap; }
   .site-nav .links a:hover { background: rgba(255,255,255,.1); color: #fff; }
@@ -51,7 +52,7 @@
     const mode = () => store.get("ffx-theme", "");
     const themeLabel = () => ({ light: "☀ Light", dark: "☾ Dark" })[mode()] || "◐ Auto";
     bar.innerHTML = `<div class="in">
-      <a class="brand" href="${url("")}">FFX <span>Speedrun</span></a>
+      <a class="brand" href="${url("")}"><img src="${url("assets/logo/logo-small.png")}" srcset="${url("assets/logo/logo-small.png")} 1x, ${url("assets/logo/logo-small@2x.png")} 2x, ${url("assets/logo/logo-small@3x.png")} 3x" alt="FFX Speedrun" width="109" height="40"></a>
       <nav class="links" aria-label="Site">${SECTIONS.map(([id, label, href]) => `<a href="${url(href)}" class="${id === active ? "here" : ""}">${esc(label)}</a>`).join("")}</nav>
       <button class="theme" title="Light, dark, or your device's setting">${themeLabel()}</button>
       <button class="menu-btn" aria-label="Menu">☰</button></div>`;
