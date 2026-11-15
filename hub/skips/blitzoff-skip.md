@@ -3,7 +3,7 @@ name: Blitzoff Skip
 area: Luca
 notes: luca
 categories: [any]
-versions: [ps2, hd, pc]
+versions: [ps2, hd, pc, csr]
 difficulty: 3
 summary: Time scoring in Blitzball at just the right moment so you skip the scoreboard and match resuming.
 ---
