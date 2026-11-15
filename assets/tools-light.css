@@ -19,6 +19,7 @@
 /* the blue strips (page headers) keep white text */
 :root[data-mode="light"] .panel, :root[data-mode="light"] header:not(.site-nav) { color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,.35); }
 :root[data-mode="light"] .panel a, :root[data-mode="light"] .panel span { color: #dfe1ff; }
+:root[data-mode="light"] .panel, :root[data-mode="light"] header:not(.site-nav) { --text-dim: #c9cbe8; --label: #dfe1ff; }   /* dim text on the strips stays light */
 
 /* buttons: the site's plain buttons; the chosen one stays gold */
 :root[data-mode="light"] button, :root[data-mode="light"] .btn {
