@@ -21,6 +21,7 @@ pages/              The hub's pages
   leaderboards.html   Top runs from speedrun.com
   community.html      Discord, speedrun.com, streams, contributing
   tools.html          The route builder and grid editor
+  legal.html          Privacy and legal: what the site stores, the services it uses, other people's content
 hub/                The hub's data
   links.yml           Discord, speedrun.com and GitHub links
   leaderboards.yml    Which speedrun.com boards to show, in order
@@ -42,6 +43,7 @@ sphere-grid/
   standard.json       The Standard Sphere Grid: 860 nodes, their types, values, names and links
 assets/             Shared code and styles for the site
   theme.css           The site's colours, light and dark, shared by every page (the notes and tools too)
+  fonts/              The Ubuntu font, served from the site rather than Google Fonts (and its licence, UFL.txt)
   tools-light.css     Light mode for the tools and the Sphere Grid player: white cards, like the notes in light mode
   hub.js, hub.css     The site's navigation bar and theme switch (on every page), footer and hub data
   notes-config.js     Where everything lives: categories, languages, grids, routes

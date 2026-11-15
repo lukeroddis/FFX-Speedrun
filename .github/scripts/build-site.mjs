@@ -153,7 +153,6 @@ function skipPage(s, site) {
 <meta property="og:description" content="${esc(description)}">
 <meta property="og:url" content="${esc(url)}">
 ${thumb ? `<meta property="og:image" content="${thumb}">\n<meta name="twitter:card" content="summary_large_image">` : ""}
-<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="icon" type="image/png" sizes="32x32" href="${R}assets/logo/icon-32.png">
 <link rel="icon" type="image/png" sizes="192x192" href="${R}assets/logo/icon-192.png">
 <link rel="apple-touch-icon" href="${R}assets/logo/apple-touch-icon.png">
@@ -270,7 +269,7 @@ async function main() {
   await writeFile(join(OUT, "skips", "index.json"), JSON.stringify(skips.map(({ body, ...s }) => ({ ...s, url: `skips/${s.id}/` })), null, 2));
 
   // search engines: every page worth finding
-  const pages = ["", "pages/notes.html?cat=any", "pages/categories.html", "pages/skips.html", "pages/leaderboards.html", "pages/community.html", "pages/tools.html",
+  const pages = ["", "pages/notes.html?cat=any", "pages/categories.html", "pages/skips.html", "pages/leaderboards.html", "pages/community.html", "pages/tools.html", "pages/legal.html",
     ...skips.map(s => `skips/${s.id}/`)];
   const today = new Date().toISOString().slice(0, 10);
   await writeFile(join(OUT, "sitemap.xml"), `<?xml version="1.0" encoding="UTF-8"?>

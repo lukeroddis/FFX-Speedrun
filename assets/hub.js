@@ -77,7 +77,7 @@
     const f = document.createElement("footer");
     f.className = "site-foot";
     f.innerHTML = `<div class="wrap"><span>Final Fantasy X, character names, logos, and related imagery are registered trademarks and copyright material of Square Enix Co., Ltd. This is an unofficial, community-driven speedrunning resource and fan site. It is not affiliated with, endorsed by, or sponsored by Square Enix.</span>
-      <span><a href="https://github.com/lukeroddis/FFX-Speedrun">Contribute on GitHub</a></span></div>`;
+      <span><a href="${url("pages/legal.html")}">Privacy and legal</a> · <a href="https://github.com/lukeroddis/FFX-Speedrun">Contribute on GitHub</a></span></div>`;
     document.body.appendChild(f);
   }
 

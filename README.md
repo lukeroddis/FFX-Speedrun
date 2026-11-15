@@ -76,6 +76,10 @@ The written guide, in Markdown.
 
 The [developer guide](DEVELOPER_GUIDE.md) has the folder layout, how to run the site locally, every file format, and how the Twitch live check is set up.
 
+## Licence
+
+The notes, guides and route data are under [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/), and the code is under the [MIT licence](LICENSE). By contributing, you agree to license your changes the same way. [LICENSE-CONTENT.md](LICENSE-CONTENT.md) says which files each covers, and what neither covers (Square Enix's material, others' videos, the font).
+
 ## Credits
 
 - **Final Fantasy X**, character names, logos, and related imagery are registered trademarks and copyright material of Square Enix Co., Ltd. This is an unofficial, community-driven speedrunning resource and fan site. It is not affiliated with, endorsed by, or sponsored by Square Enix.

@@ -1,6 +1,7 @@
 /* The site's colours, light and dark, shared by every page: the hub pages (through hub.css), the notes,
    the tools and the Sphere Grid player. The theme follows the device, or the switch in the navigation bar
    (hub.js sets data-theme="light" or "dark" on <html>). */
+@import url("fonts/ubuntu.css");   /* the site's font, served from here rather than Google Fonts */
 :root {
   --bg: #eef0f8; --surface: #ffffff; --surface-2: #f5f6fc; --text: #1d2140; --muted: #5b6185; --border: #d9dcef;
   --accent: #2f4fb5; --accent-soft: #e4e9fb; --gold: #d9a514; --gold-soft: #fff4cf; --danger: #b3263a; --live: #d6293b;
