@@ -3,6 +3,7 @@ name: Clasko Skip
 area: Mushroom Rock Road
 notes: mushroom-rock-road
 categories: [any]
+versions: [ps2, hd, pc]
 difficulty: 2
 summary: Speak to the green Crusader, who pushes you to the cutscene, allowing you to escape to Mushroom Rock Road.
 video: https://www.youtube.com/watch?v=iqC-jN8SNd0

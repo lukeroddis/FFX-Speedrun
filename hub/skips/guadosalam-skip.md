@@ -3,6 +3,7 @@ name: Guadosalam Skip
 area: Guadosalam
 notes: guadosalam
 categories: [any]
+versions: [ps2, hd, pc]
 difficulty: 2
 summary: Stand outside the Potion Shop and talk to one Guado, so that the other pushes you into the shop door, giving you freedom of movement to exit the area.
 versions:

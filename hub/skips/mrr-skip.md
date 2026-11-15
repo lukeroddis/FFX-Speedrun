@@ -4,6 +4,7 @@ aliases: [Terra Skip, MRR (AKA Terra) Skip]
 area: Mushroom Rock Road
 notes: mushroom-rock-road
 categories: [any]
+versions: [ps2, hd, pc]
 difficulty: 4
 summary: Stand in the right spot and speak to the green Crusader as he pushes you through the invisible walls.
 versions:

@@ -3,8 +3,8 @@ name: FMV Storage Skip
 area: Zanarkand
 notes: 01-zanarkand
 categories: [any]
-summary: On PC, carry an FMV skip over to a later FMV, so it's spent on a longer FMV and saves more time.
 versions: [pc]
+summary: On PC, carry an FMV skip over to a later FMV, so it's spent on a longer FMV and saves more time.
 ---
 ## What it does
 
