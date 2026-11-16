@@ -315,6 +315,29 @@ The **Version** toggle (PS2 · HD Console · PC · Cutscene Remover, which is PC
 
 Adding another variant needs no code: add it to `variants:` in `category.yml`, give it wording in each `index.md`, and use it in `:::if`.
 
+### Optional steps and reused blocks
+
+Some steps depend on luck rather than a route choice, so they aren't toggles. Wrap them in `:::optional <when> … :::`. They show as one folded line labelled **OPTIONAL**, followed by the text after `:::optional`. Click it to open the dashed gold frame. While it's folded, ▲/▼ steps past its lines. Each page visit starts with every optional group folded. Steps inside are numbered as usual, and `:::if` works inside too.
+
+To repeat a block without writing it twice, use `:::use <name>` on its own line. It has no closing `:::`. It shows the block in that area that has an `id: <name>` line or, failing that, a `route: <name>` line. The copy doesn't count that block's Power Spheres or party changes again, and leaves out its intro text, so the original can say when to skip it:
+
+```markdown
+5. Touch the save sphere.
+
+:::optional If Tidus already has 5 Sphere Levels: get Haste early
+:::use luca-tidus
+:::
+
+…
+
+:::spheregrid
+Skip if you got Haste early at the save sphere.
+* Tidus:
+  * Move ↓ ↘ ↘
+route: luca-tidus
+:::
+```
+
 ### Lighter views
 
 The **Show** box lets a runner hide what they no longer need. **Full notes** shows everything, for a first run. **Menus only** keeps battles, sphere grids, shops, equips and encounters, and only the *key* steps. Each kind of block can also be switched on or off by itself, and steps can be All, Key only or None.

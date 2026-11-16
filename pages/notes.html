@@ -303,6 +303,19 @@
   .vgroup { list-style: none; border-left: 3px solid #9fdcff; padding: 2px 0 2px 10px; }
   .vgroup > .items { margin-top: 8px; }
   .branch.vbranch { border-left-color: #9fdcff; }
+  /* ":::optional <when>": steps only some runners do, in a dashed gold frame */
+  .optional { list-style: none; border: 2px dashed rgba(255,216,74,.55); border-radius: 4px; padding: 6px 8px; }
+  .optional > .ohead { all: unset; cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; width: 100%; }
+  .optional > .ohead:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+  .optional > .ohead .chev { display: inline-block; font-size: .85rem; color: var(--gold); transition: rotate .2s ease; }
+  .optional.folded > .ohead .chev { rotate: -90deg; }
+  .optional > .ohead .vtag { background: var(--gold); color: #3a2a00; }
+  .optional > .ohead .when { font-style: italic; color: var(--gold); font-size: .92rem; }
+  .optional > .ohead .hint { margin-left: auto; font-size: .78rem; color: var(--text-dim); }
+  .optional > .items { margin-top: 8px; }
+  .optional.folded > .items { display: none; }
+  /* ":::use name": the same block shown again here */
+  .block .bref { display: block; font-size: .78rem; color: var(--text-dim); margin: 0 0 6px; }
   .branch.vbranch > p { font-style: normal; color: inherit; }
   li.vitem { list-style: none; margin-left: -18px; }
   li.vitem > ul { border-left: 2px dashed #9fdcff; margin-top: 3px; }
@@ -631,6 +644,7 @@ function applyVariants(text, vars) {
   const sink = () => [...stack].reverse().find(f => f.lines).lines;
   for (const line of text.split("\n")) {
     const open = line.match(/^:::(\w+)\s*(.*)$/);
+    if (open && open[1] === "use") { sink().push(line); continue; }   // one line, no closing ":::"
     if (open && open[1] === "if") {
       stack.push({ isIf: true, lines: [], decision: evalCond(parseCond(open[2]), vars), inBlock: stack.some(f => f.block) });
       continue;
@@ -654,7 +668,7 @@ function applyVariants(text, vars) {
       }
       continue;
     }
-    if (open) stack.push({ block: true });
+    if (open) stack.push({ block: open[1] !== "optional" });   // an optional group holds steps, like the page itself
     sink().push(line);
   }
   return root.lines;
@@ -685,10 +699,11 @@ function parseArea(lines) {
     const line = lines[i];
     if (!line.trim() || /^# /.test(line)) continue;
     const open = line.match(/^:::(\w+)\s*(.*)$/);
+    if (open && open[1] === "use") { items.push({ kind: "use", name: open[2].trim() }); continue; }
     if (open) {
       const inner = []; let depth = 1;
       for (i++; i < lines.length; i++) {
-        if (/^:::\w/.test(lines[i])) depth++;
+        if (/^:::(?!use\b)\w/.test(lines[i])) depth++;
         else if (lines[i].trim() === ":::" && --depth === 0) break;
         inner.push(lines[i]);
       }
@@ -743,7 +758,7 @@ const dropsOf = s => [...s.matchAll(/guaranteed (\d+) power spheres?/gi)].reduce
 
 function blockHTML(b) {
   // directive lines aren't shown; old Sphere Grid images inside blocks are left out (the live grid replaces them)
-  const tree = parseList(b.lines.filter(l => !/^\s*(route|party|split):/.test(l) && !/^\s*!\[/.test(l)));
+  const tree = parseList(b.lines.filter(l => !/^\s*(route|party|split|id):/.test(l) && !/^\s*!\[/.test(l)));
   // a battle that starts with a set party (e.g. "party: Tidus, Yuna, Kimahri")
   const setParty = (b.lines.find(l => /^party:/.test(l)) || "").replace(/^party:\s*/, "").split(",").map(s => s.trim()).filter(Boolean);
   const before = tree.paras.filter(p => p.after === 0 && !/guaranteed/i.test(p.text));
@@ -821,9 +836,9 @@ function stepHTML(it, n) {
 }
 function areaHTML(a, vars) {
   const items = parseArea(applyVariants(a.text, vars));
-  const html = itemsHTML(items, { n: 0 });
-  const id = a.anchor;
   const all = flatItems(items);
+  const id = a.anchor;
+  const html = itemsHTML(items, { n: 0, area: id, blocks: all.filter(it => it.kind === "block") });
   // an area this language hasn't translated yet is shown from the English notes
   const fallback = a.lang && a.lang !== NOTES_LANG ? `<span class="sum" style="display:inline">Not translated yet: shown in ${esc(glossary.languages?.[a.lang] || a.lang)}</span>` : "";
   const steps = all.filter(it => it.kind === "step").length, fights = all.filter(it => it.type === "battle").length;
@@ -832,8 +847,14 @@ function areaHTML(a, vars) {
     <div class="panel"><h2><button class="loc-toggle" aria-expanded="${!collapsed.has(id)}"><span class="chev">▾</span>${esc(a.name)}<span class="sum">${sum}</span>${fallback}</button></h2></div>
     <ol class="items">${html}</ol></section>`;
 }
-/* a labelled group (a variant not chosen yet) holds its own items */
-const flatItems = items => items.flatMap(it => it.type === "vgroup" ? flatItems(parseArea(it.lines)) : [it]);
+/* a labelled group (a variant not chosen yet) or an optional group holds its own items */
+const GROUPS = ["vgroup", "optional"];
+const flatItems = items => items.flatMap(it => GROUPS.includes(it.type) ? flatItems(parseArea(it.lines)) : [it]);
+/* ":::use name" finds the block in the same area with "id: name", or else "route: name" */
+const blockNamed = (blocks, name) => {
+  const has = key => b => b.lines.some(l => l.trim().replace(/\s*\|.*$/, "") === `${key}: ${name}`);
+  return blocks.find(has("id")) || blocks.find(has("route"));
+};
 /* ---- Show filter: which kinds of content are on screen ----
    Hidden items are still drawn (with "hidden"), so Power Sphere drops and party changes in them still count. */
 const SHOW_KINDS = [
@@ -857,12 +878,34 @@ function visible(it) {
 }
 const hide = (html, on) => on ? html : html.replace(/^<li/, "<li hidden");
 function itemsHTML(items, counter) {
-  return items.map(it => it.type === "vgroup" ? vgroupHTML(it, counter) : hide(itemHTML(it, counter), visible(it))).join("");
+  return items.map(it => {
+    if (GROUPS.includes(it.type)) return groupHTML(it, counter);
+    if (it.kind === "use") return useHTML(it, counter);
+    return hide(itemHTML(it, counter), visible(it));
+  }).join("");
 }
-function vgroupHTML(it, counter) {
+function groupHTML(it, counter) {
   const inner = parseArea(it.lines);
-  return hide(`<li class="vgroup"><span class="vtag">${esc(it.title)}</span><ol class="items">${itemsHTML(inner, counter)}</ol></li>`,
-              inner.some(x => x.kind !== "party" && visible(x)));
+  const shown = inner.some(x => x.kind !== "party" && visible(x.kind === "use" ? blockNamed(counter.blocks, x.name) || x : x));
+  if (it.type !== "optional")
+    return hide(`<li class="vgroup"><span class="vtag">${esc(it.title)}</span><ol class="items">${itemsHTML(inner, counter)}</ol></li>`, shown);
+  // folded until opened; its lines are skipped by ▲/▼ while folded
+  const key = `${counter.area}:${counter.opt = (counter.opt || 0) + 1}`, open = optOpen.has(key);
+  const head = `<button class="ohead" aria-expanded="${open}"><span class="chev">▾</span><span class="vtag">OPTIONAL</span>${it.title ? `<span class="when">${fmt(it.title)}</span>` : ""}<span class="hint">${open ? "Hide" : "Show"}</span></button>`;
+  return hide(`<li class="optional${open ? "" : " folded"}" data-opt="${esc(key)}">${head}<ol class="items">${itemsHTML(inner, counter)}</ol></li>`, shown);
+}
+/* The same block again, drawn in full. Its Power Spheres and party changes count only where it's written. */
+function useHTML(it, counter) {
+  const b = blockNamed(counter.blocks, it.name);
+  if (!b) {
+    console.warn(`:::use ${it.name}: no block in this area has "id: ${it.name}" or "route: ${it.name}"`);
+    return `<li class="step"><div class="body" style="color:var(--text-dim)">[No block called “${esc(it.name)}” in this area]</div></li>`;
+  }
+  const html = blockHTML(b)
+    .replace(/ data-(drops|start-party|party|swap|summon)="[^"]*"/g, "")
+    .replace(/<p class="intro">.*?<\/p>/g, "")   // the original's intro is often "Skip if you did this earlier"
+    .replace(/(<div class="bbody">)/, `$1<span class="bref"></span>`);
+  return hide(html, visible(b));
 }
 function itemHTML(it, counter) {
   return (
@@ -1051,6 +1094,10 @@ function setCollapsed(id, on) {
   sec.querySelector(".loc-toggle").setAttribute("aria-expanded", String(!on));
 }
 let stops = [], allStops = [], cur = 0, bonus = +store.get("ffx-bonus", 0) || 0;
+/* the lines ▲/▼ visit: not hidden by the Show filter, and not in a folded optional group */
+const stepTo = el => !el.closest("[hidden], .optional.folded");
+/* Optional groups opened on this visit ("area:n"). Not remembered between visits: each run starts folded. */
+const optOpen = new Set();
 
 function build() {
   // Changing a toggle adds or removes lines, so remember the current line by its area and text, not its number
@@ -1063,13 +1110,13 @@ function build() {
   $("areaNav").innerHTML = areaList.map(a => `<li><a href="#${a.anchor}" class="${a.text ? "" : "soon"}" title="${a.text ? "" : "Not migrated yet"}">${esc(a.name)}</a></li>`).join("");
   // every line, and the ones on screen; stepping only visits the visible ones
   allStops = [...document.querySelectorAll(".stop")];
-  stops = allStops.filter(el => !el.closest("[hidden]"));
+  stops = allStops.filter(stepTo);
   // a "party:" line isn't a stop itself; it takes effect at the next line you step to
   for (const m of document.querySelectorAll(".party-mark")) {
     const next = allStops.find(el => m.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING);
     if (next) next.dataset.setParty = m.dataset.party;
   }
-  stops.forEach((el, i) => { el.dataset.key = i; el.addEventListener("click", e => { e.stopPropagation(); go(i); }); });
+  allStops.forEach(el => el.addEventListener("click", e => { e.stopPropagation(); const i = stops.indexOf(el); if (i >= 0) go(i); }));
   document.querySelectorAll(".sg svg").forEach(mountGrid);
   renderToggles();
   renderShow();
@@ -1232,6 +1279,21 @@ $("notes").addEventListener("click", e => {
   const t = e.target.closest(".loc-toggle"); if (!t) return;
   const id = t.closest(".area").id;
   setCollapsed(id, !collapsed.has(id));
+});
+
+/* Folding an optional group: click its header. Its lines join or leave the ▲/▼ stepping, and the cursor
+   stays on the line it was on (or the next one after the group, if that line was just folded away). */
+$("notes").addEventListener("click", e => {
+  const t = e.target.closest(".optional > .ohead"); if (!t) return;
+  const g = t.parentElement, open = g.classList.toggle("folded") === false;
+  open ? optOpen.add(g.dataset.opt) : optOpen.delete(g.dataset.opt);
+  t.setAttribute("aria-expanded", String(open));
+  t.querySelector(".hint").textContent = open ? "Hide" : "Show";
+  const was = stops[cur];
+  stops = allStops.filter(stepTo);
+  let at = stops.indexOf(was);
+  if (at < 0) at = stops.findIndex(s => was.compareDocumentPosition(s) & Node.DOCUMENT_POSITION_FOLLOWING);
+  go(at < 0 ? stops.length - 1 : at, true);
 });
 
 /* A map: click to see it full width, and click again to shrink it. (Capture, so it runs before the click
