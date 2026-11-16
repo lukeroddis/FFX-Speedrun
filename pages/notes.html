@@ -1202,7 +1202,9 @@ document.addEventListener("keydown", e => {
 /* Area menu jumps the cursor to that area's first line */
 $("areaNav").addEventListener("click", e => {
   const a = e.target.closest("a"); if (!a) return; e.preventDefault();
-  const first = document.querySelector(a.getAttribute("href") + " .stop"); if (first) go(stops.indexOf(first));
+  // by id, not a "#id" selector: an anchor can start with a number ("01-zanarkand"), which isn't a valid selector
+  const area = document.getElementById(a.getAttribute("href").slice(1));
+  const first = stops.find(s => area?.contains(s)); if (first) go(stops.indexOf(first));
   document.body.classList.remove("nav-open"); applyNav();
 });
 
