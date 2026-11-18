@@ -302,6 +302,14 @@ Wrap the notes that only apply to some options in `:::if … :::`. This works ar
 
 Every toggle also has a **?** option, for "not known yet". It's the default, so before the Blitzball game, or before the sphere drop, every option's notes show with a small label such as *Blitzball: Loss*. The chosen options are remembered and also go into the page address (`notes.html?blitz=loss&spheres=return2`), so a link opens the notes on the same route.
 
+To ask the runner at the point in the notes where the run decides a toggle, add a question line (one line, no closing `:::`):
+
+```
+:::ask blitz | Did you win Blitzball?
+```
+
+It shows as a card with a button for each option (or keys **1**, **2**, **3**… while the cursor is on it). Answering sets the toggle, exactly like clicking it in the right-hand panel, then steps past the question. Once answered, the card shows the answer and a **Change** button, which sets the toggle back to **?**. Without the `| question`, the card asks the toggle's name, such as *Blitzball?*.
+
 Numbers that depend on the route go under `targets:` in `category.yml`. The Power Sphere tracker reads `power-bonus` and shows a range, such as 8–9, until the variant is chosen:
 
 ```yaml

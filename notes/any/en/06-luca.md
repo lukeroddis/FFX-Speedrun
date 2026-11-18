@@ -130,6 +130,8 @@ After each Blitzoff...
 Winning is faster due to obtaining a Strength Sphere, but you can proceed with a loss.
 :::
 
+:::ask blitz | Did you win Blitzball?
+
 17. SD, Do not Save, CS (0:40).
 
 :::battle Sahagin Chiefs | 170HP each

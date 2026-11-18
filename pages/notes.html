@@ -303,6 +303,15 @@
   .vgroup { list-style: none; border-left: 3px solid #9fdcff; padding: 2px 0 2px 10px; }
   .vgroup > .items { margin-top: 8px; }
   .branch.vbranch { border-left-color: #9fdcff; }
+  /* ":::ask key | question": a question that sets a route toggle */
+  .step.ask { box-shadow: inset 3px 0 0 #9fdcff; }
+  .step.ask.current { box-shadow: inset 3px 0 0 var(--gold); }
+  .step.ask .num { background: #9fdcff; border-color: #9fdcff; color: #0b2350; text-shadow: none; }
+  .step.ask .body { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+  .step.ask .q { font-weight: 700; }
+  .step.ask .opts { display: flex; flex-wrap: wrap; gap: 6px; }
+  .step.ask .opts button { padding: 3px 14px; }
+  .step.ask .change { padding: 1px 8px; font-size: .78rem; margin-left: auto; }
   /* ":::optional <when>": steps only some runners do, in a dashed gold frame */
   .optional { list-style: none; border: 2px dashed rgba(255,216,74,.55); border-radius: 4px; padding: 6px 8px; }
   .optional > .ohead { all: unset; cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; width: 100%; }
@@ -644,7 +653,7 @@ function applyVariants(text, vars) {
   const sink = () => [...stack].reverse().find(f => f.lines).lines;
   for (const line of text.split("\n")) {
     const open = line.match(/^:::(\w+)\s*(.*)$/);
-    if (open && open[1] === "use") { sink().push(line); continue; }   // one line, no closing ":::"
+    if (open && (open[1] === "use" || open[1] === "ask")) { sink().push(line); continue; }   // one line, no closing ":::"
     if (open && open[1] === "if") {
       stack.push({ isIf: true, lines: [], decision: evalCond(parseCond(open[2]), vars), inBlock: stack.some(f => f.block) });
       continue;
@@ -700,10 +709,16 @@ function parseArea(lines) {
     if (!line.trim() || /^# /.test(line)) continue;
     const open = line.match(/^:::(\w+)\s*(.*)$/);
     if (open && open[1] === "use") { items.push({ kind: "use", name: open[2].trim() }); continue; }
+    // ":::ask blitz | Did you win Blitzball?": a question that sets a route toggle (one line, no closing ":::")
+    if (open && open[1] === "ask") {
+      const [key, question] = open[2].split("|").map(s => s.trim());
+      items.push({ kind: "ask", key, question });
+      continue;
+    }
     if (open) {
       const inner = []; let depth = 1;
       for (i++; i < lines.length; i++) {
-        if (/^:::(?!use\b)\w/.test(lines[i])) depth++;
+        if (/^:::(?!(?:use|ask)\b)\w/.test(lines[i])) depth++;
         else if (lines[i].trim() === ":::" && --depth === 0) break;
         inner.push(lines[i]);
       }
@@ -872,7 +887,7 @@ const kindOf = it => ({ battle: "battle", spheregrid: "spheregrid", shop: "shops
    or a Power Sphere drop */
 const keyStep = it => it.important || /\*\*/.test(it.text + JSON.stringify(it.sub || [])) || dropsOf(it.text || "") > 0;
 function visible(it) {
-  if (it.kind === "party") return true;
+  if (it.kind === "party" || it.kind === "ask") return true;
   if (it.kind === "block") { const k = kindOf(it); return k ? !!show[k] : true; }
   return show.steps === "all" || (show.steps === "key" && keyStep(it));   // steps, paragraphs and images
 }
@@ -907,8 +922,24 @@ function useHTML(it, counter) {
     .replace(/(<div class="bbody">)/, `$1<span class="bref"></span>`);
   return hide(html, visible(b));
 }
+/* ":::ask key | question": the route toggle for that variant, asked where the run decides it.
+   Unanswered, it shows a button per option; answered, one line with the answer and a Change button.
+   It reads and sets the same choice as the toggle in the ROUTE panel. */
+function askHTML(it) {
+  const v = VARIANT[it.key];
+  if (!v) {
+    console.warn(`:::ask ${it.key}: isn't one of the variants in notes/${P.cat}/category.yml`);
+    return `<li class="step"><div class="body" style="color:var(--text-dim)">[No route toggle called “${esc(it.key)}”]</div></li>`;
+  }
+  const q = fmt(it.question || `${v.name}?`), chosen = v.options.find(o => o.id === vars[it.key]);
+  const body = chosen
+    ? `<span class="q">${q}</span><span class="vtag">${esc(chosen.label)}</span><button class="change" data-v="">Change</button>`
+    : `<span class="q">${q}</span><span class="opts">${v.options.map((o, i) => `<button data-v="${esc(o.id)}" title="Key ${i + 1}">${esc(o.label)}</button>`).join("")}</span>`;
+  return `<li class="step ask stop${chosen ? " answered" : ""}" data-ask="${esc(it.key)}"><span class="num">?</span><div class="body">${body}</div></li>`;
+}
 function itemHTML(it, counter) {
   return (
+    it.kind === "ask" ? askHTML(it) :
     it.kind === "step" ? stepHTML(it, ++counter.n) :
     it.kind === "block" ? blockHTML(it) :
     it.kind === "party" ? `<li class="party-mark" hidden data-party="${esc(it.names.join(","))}"></li>`   /* invisible: only updates the Party panel */ :
@@ -1016,6 +1047,13 @@ function setVariant(key, id) {
   history.replaceState(null, "", location.pathname + (qs.toString() ? "?" + qs : "") + location.hash);
   build();
 }
+/* A question in the notes answered: set its toggle, then (unless it was "Change") step past the question */
+function answer(ask, id) {
+  const n = [...document.querySelectorAll(".ask")].indexOf(ask);
+  setVariant(ask.dataset.ask, id);
+  const el = document.querySelectorAll(".ask")[n], i = stops.indexOf(el);
+  if (i >= 0) go(id ? i + 1 : i);
+}
 /* The route toggles (one row per variant) and the Game text toggle. Drawn into every .var-host:
    the ROUTE box in the right-hand panel, and the phone bar's Route drop-down. */
 function renderToggles() {
@@ -1117,6 +1155,7 @@ function build() {
     if (next) next.dataset.setParty = m.dataset.party;
   }
   allStops.forEach(el => el.addEventListener("click", e => { e.stopPropagation(); const i = stops.indexOf(el); if (i >= 0) go(i); }));
+  document.querySelectorAll(".ask button").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); answer(b.closest(".ask"), b.dataset.v); }));
   document.querySelectorAll(".sg svg").forEach(mountGrid);
   renderToggles();
   renderShow();
@@ -1243,6 +1282,9 @@ $("mPrev").onclick = () => go(cur - 1);
 $("mNext").onclick = () => go(cur + 1);
 document.addEventListener("keydown", e => {
   if (e.target.closest("input, textarea")) return;
+  // on an unanswered question, 1, 2, 3… pick its answers
+  const ask = stops[cur]?.matches(".ask:not(.answered)") && stops[cur];
+  if (ask && /^[1-9]$/.test(e.key)) { const b = ask.querySelectorAll(".opts button")[+e.key - 1]; if (b) { e.preventDefault(); answer(ask, b.dataset.v); } return; }
   if (e.key === " " || e.key === "ArrowDown") { e.preventDefault(); go(cur + 1); }
   else if (e.key === "ArrowUp") { e.preventDefault(); go(cur - 1); }
 });
