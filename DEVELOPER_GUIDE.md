@@ -53,10 +53,14 @@ assets/             Shared code and styles for the site
   grid-layout.js      Shared link shapes and label positions
   route-engine.js     Plays Sphere Grid routes: moves, Sphere Levels, unlocks, teleports, spheres and rule checks
   notes-map.js        Draws the area maps (shared by the notes and the Map Editor)
+  notes-parse.js      Reads the notes' Markdown into steps, blocks and questions, and applies the route toggles
+  notes-grid.js       Draws and animates the Sphere Grid blocks in the notes
+  notes.css           The run notes page's styles
   ingame.css          In-game styles: the item-name chips and the maps
   logo/               The logo and browser icons, with the full-size originals they're made from
   portraits.js        Shows character portraits on tiles when an image exists
   portraits/          Character portrait images (see the README inside)
+tests/              Tests for the notes parser: run "node --test" in this folder
 tools/
   route-builder.html  Build Sphere Grid routes by clicking, and export them as route files
   map-editor.html     Trace area maps over a screenshot, and save them as map files

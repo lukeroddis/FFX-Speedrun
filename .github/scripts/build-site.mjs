@@ -12,7 +12,7 @@ import { parseYaml } from "./twitch-live.mjs";
 
 const OUT = "_site";
 const SKIP_DIR = "hub/skips";
-const LEAVE_OUT = new Set([".git", ".github", OUT, "reference", ".claude", "node_modules"]);
+const LEAVE_OUT = new Set([".git", ".github", OUT, "reference", ".claude", "node_modules", "tests"]);
 const VERSION_LABEL = { hd: "HD Remaster", ps2: "PS2", console: "HD Console", pc: "PC", csr: "Cutscene Remover" };
 
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
