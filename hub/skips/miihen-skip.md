@@ -1,7 +1,7 @@
 ---
 name: Mi'ihen Skip
 area: Mi'ihen Highroad
-notes: mihen-highroad
+notes: miihen-highroad
 categories: [any]
 difficulty: 3
 summary: Speak to the Guy in Blue as you walk into the cutscene, giving you freedom of movement to exit the area.

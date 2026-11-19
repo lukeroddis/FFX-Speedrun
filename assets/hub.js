@@ -106,7 +106,7 @@
     return `<div class="card skipcard">
       ${id ? `<a class="video" href="${esc(s.link)}" aria-label="${esc(s.name)}"><img src="https://i.ytimg.com/vi/${id}/hqdefault.jpg" alt="" loading="lazy"></a>` : ""}
       <h3><a href="${esc(s.link)}">${esc(s.name)}</a></h3>
-      ${s.area ? `<p><b>${esc(s.area)}</b></p>` : ""}${starsHTML(s.difficulty)}
+      ${s.area ? `<p><b>${esc(s.area)}</b></p>` : ""}${starsHTML(s.difficulty)}${timeSave(s) ? `<p class="saves">Saves ${esc(timeSave(s))}</p>` : ""}
       ${s.summary ? `<p>${esc(s.summary)}</p>` : ""}
       ${by.length ? `<p class="by">Video${s.versions.length > 1 ? "s" : ""} by ${by.map(esc).join(" and ")}</p>` : ""}
       <div class="foot">${labels.map(l => `<span class="tag">${esc(l)}</span>`).join("")}${(s.categoryNames || []).map(c => `<span class="tag soon">${esc(c)}</span>`).join("")}</div></div>`;
@@ -115,6 +115,13 @@
   async function tools() {
     const y = await yaml("hub/tools.yml").catch(() => ({}));
     return Object.entries(y).map(([id, t]) => ({ id, ...t, link: /^https?:/.test(t.link || "") ? t.link : url(t.link || "") }));
+  }
+  /* the time a skip saves: "time_save" in its file, or each version's own ("25s (PS2) · 10s (PC)") */
+  function timeSave(s) {
+    if (s.time_save) return s.time_save;
+    const per = (s.versions || []).filter(v => v.time_save);
+    return per.length === 1 && s.versions.length === 1 ? per[0].time_save
+      : per.map(v => v.label ? `${v.time_save} (${v.label})` : v.time_save).join(" · ");
   }
   /* difficulty 1–5 as stars, e.g. ★★☆☆☆ */
   function starsHTML(n) {
@@ -367,5 +374,5 @@
     return `Updated ${ago(new Date(Math.min(...ats)).toISOString())} ago from speedrun.com · refreshes once a day`.replace("Updated 0 min ago", "Updated just now");
   }
 
-  window.Hub = { url, esc, local: LOCAL, requireLocal, nav, footer, links, skips, skipCardHTML, notBuilt, tools, byHTML, starsHTML, categories, notesUrl, boards, board, boardHTML, personHTML, recentRuns, recentHTML, time, videoHTML, youtubeId, live, liveHTML, streamViewer, updatedText };
+  window.Hub = { url, esc, local: LOCAL, requireLocal, nav, footer, links, skips, skipCardHTML, timeSave, notBuilt, tools, byHTML, starsHTML, categories, notesUrl, boards, board, boardHTML, personHTML, recentRuns, recentHTML, time, videoHTML, youtubeId, live, liveHTML, streamViewer, updatedText };
 })();

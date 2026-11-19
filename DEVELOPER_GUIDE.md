@@ -273,6 +273,19 @@ by: Someone
 - The whole map can also be written inside the block instead of a file, which is handy for a quick one-off.
 - Maps are a kind of their own in the **Show** filter, kept in both presets.
 
+### Skips
+
+To show a skip from the skips library (`hub/skips/`) in the notes, name it in a `:::skip` block. Its name, or any of its `aliases`, works:
+
+```markdown
+:::skip Mi'ihen Skip
+:::
+```
+
+The block shows the skip's difficulty, the time it saves, its summary and the video for the chosen **Version** (each version's video, labelled, while it's **?**). Below that is the skip's guide, folded under **How to do it**, then a link to its full page. So a skip is only ever written once, in its file in `hub/skips/`. Lines written inside the block show after the guide, for anything this route does differently.
+
+Like skip links, the block needs the built site (see *Running it locally*); served straight from this folder, it shows the skip's name and says so. Skips are a kind of their own in the **Show** filter, hidden in **Menus only**.
+
 ### Route toggles
 
 Parts of the route depend on how the run goes. Each of these is a **variant**, with a toggle in the right-hand panel. Which variants and options exist is set in `category.yml`, and each language's `index.md` gives them their wording:
@@ -352,7 +365,7 @@ route: luca-tidus
 
 ### Lighter views
 
-The **Show** box lets a runner hide what they no longer need. **Full notes** shows everything, for a first run. **Menus only** keeps battles, sphere grids, shops, equips and encounters, and only the *key* steps. Each kind of block can also be switched on or off by itself, and steps can be All, Key only or None.
+The **Show** box lets a runner hide what they no longer need. **Full notes** shows everything, for a first run. **Menus only** keeps battles, sphere grids, shops, equips, maps and encounters, and only the *key* steps. Each kind of block can also be switched on or off by itself, and steps can be All, Key only or None.
 
 A step counts as **key** when it has something in **bold** (a key item, a **Formation:**, a warning) or a Power Sphere drop. To keep a step that doesn't, start it with `!`:
 

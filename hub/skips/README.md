@@ -12,6 +12,7 @@ Start a new skip by copying one of these files. The part between the `---` lines
 | `notes` | Optional: the area of the notes where it's used, as in the notes' address (e.g. `guadosalam`), for a "Used in the notes" link |
 | `categories` | Which categories use it, e.g. `[any]` |
 | `difficulty` | 1 (easy) to 5 (hardest), shown as stars |
+| `time_save` | Optional: about how much time it saves, as you'd say it, e.g. `25s` or `1m 10s`. Shown on the card, the skip's page and in the notes. If it differs by version, give each version its own `time_save` under `versions` instead. |
 | `summary` | One sentence on what it does. Shown on the card, and by search engines. |
 | `video`, `by`, `by_url` | The video, who made it, and a link to them, for a skip that's the same on every version |
 | `versions` | Instead, one set of `video`, `by` and `by_url` per version (`hd`, `ps2`), when the versions differ. The page shows a tab for each. |

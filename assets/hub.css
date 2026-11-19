@@ -43,6 +43,7 @@ h2.section a { font-size: .9rem; font-weight: 500; }
 .skipcard a.video:hover img { transform: scale(1.03); }
 .skipcard a.video img { transition: transform .2s ease; }
 .card p.difficulty { font-size: .85rem; display: flex; align-items: center; gap: 6px; }
+.card p.saves { font-size: .85rem; font-weight: 700; margin-top: 2px; }
 .stars { font-size: 1.05rem; letter-spacing: 1px; line-height: 1; }
 .stars .on { color: var(--gold); }
 .stars .off { color: var(--border); }

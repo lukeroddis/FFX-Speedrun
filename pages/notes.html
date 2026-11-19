@@ -292,6 +292,7 @@ function blockHTML(b) {
     ${b.title ? `<span class="title">${fmt(b.title)}</span>` : ""}
     ${b.extra ? (/HP/.test(b.extra) ? `<span class="hp">HP<b>${esc(b.extra.replace(/\s*HP/, ""))}</b></span>` : `<span class="hp">${esc(b.extra)}</span>`) : ""}</div>`;
   let inner;
+  if (b.type === "skip") return skipHTML(b, plainList(tree.children));
   if (b.type === "battle") {
     // each line is a turn you can step to; the block itself is not a stop
     return `<li class="block kind-battle" data-drops="${drop}"${setParty.length ? ` data-start-party="${esc(setParty.join(","))}"` : ""}>${head}<div class="bbody">${intro}<ol class="turns">${tree.children.map(t => turnHTML(t, b.title || "Enemy")).join("")}</ol>${drops}</div></li>`;
@@ -342,6 +343,46 @@ function blockHTML(b) {
   } else inner = plainList(tree.children);
   return `<li class="block stop kind-${esc(b.type)}" data-drops="${drop}">${head}<div class="bbody">${intro}${inner}${drops}</div></li>`;
 }
+/* ":::skip Mi'ihen Skip": the skip from the skips library (hub/skips/), so it's only written once.
+   Its difficulty, time save, summary and the video for the chosen Version, with its guide folded underneath.
+   Lines written in the block show after the skip, for what this route does differently. */
+const SKIP_VERSION = { ps2: "ps2", console: "hd", pc: "pc", csr: "csr" };   // the notes' Version toggle → the skip files' names
+function skipHTML(b, own) {
+  const s = skipByName.get((b.title || "").toLowerCase());
+  const head = (title, extra = "") => `<div class="bhead"><span class="kind">SKIP</span><span class="title">${title}</span>${extra}</div>`;
+  if (!s) {
+    const why = SKIPS.length ? `isn't in the skips library (hub/skips/)` : `shows here on the built site (see DEVELOPER_GUIDE.md)`;
+    return `<li class="block stop kind-skip">${head(esc(b.title || "?"))}<div class="bbody"><p class="intro">This skip ${why}.</p>${own}</div></li>`;
+  }
+  // Cutscene Remover is a PC mod: without a video of its own, it shows the PC one
+  const has = k => s.versions.some(v => v.key.split(" ").includes(k));
+  const want = vars.version === "csr" && !has("csr") ? "pc" : SKIP_VERSION[vars.version];
+  // the chosen Version's video; while it's "?", each video, labelled with its versions
+  const forVersion = v => !v.key || v.key.split(" ").includes(want);
+  const shown = want ? s.versions.filter(forVersion).slice(0, 1) : s.versions.filter(v => v.video);
+  const saves = Hub.timeSave(want ? { ...s, versions: shown } : s);
+  const d = Math.max(0, Math.min(5, Math.round(s.difficulty || 0)));
+  const stars = d ? `<span class="stars" title="Difficulty ${d} out of 5">${"★".repeat(d)}<span class="off">${"★".repeat(5 - d)}</span></span>` : "";
+  const extra = `<span class="hp skipinfo">${stars}${saves ? `<span>Saves <b>${esc(saves)}</b></span>` : ""}</span>`;
+  const videos = shown.map(v => `<div class="svideo">${shown.length > 1 && v.label ? `<span class="vtag">${esc(v.label)}</span>` : ""}
+    ${Hub.videoHTML(v.video, `the ${s.name} video`)}
+    ${v.by ? `<p class="by">Video by ${v.by_url ? `<a href="${esc(v.by_url)}" target="_blank" rel="noopener">${esc(v.by)}</a>` : esc(v.by)}</p>` : ""}</div>`).join("");
+  const none = want && !shown.some(v => v.video) && s.versions.some(v => v.video) ? `<p class="intro">No video for this version yet.</p>` : "";
+  // the guide's ":::if version=…" text: only the chosen version's, or each one's labelled
+  const guide = document.createElement("template");
+  guide.innerHTML = s.guide || "";
+  for (const t of guide.content.querySelectorAll(".vtext")) {
+    const keys = t.dataset.version.split(" ");
+    if (want) { if (!keys.includes(want)) t.remove(); }
+    else t.insertAdjacentHTML("afterbegin", `<span class="vtag">${esc(keys.map(k => ({ ps2: "PS2", hd: "HD", pc: "PC", csr: "CSR" })[k] || k).join(" or "))}</span>`);
+  }
+  return `<li class="block stop kind-skip">${head(esc(s.name), extra)}<div class="bbody">
+    ${s.summary ? `<p class="intro">${esc(s.summary)}</p>` : ""}
+    ${videos ? `<div class="svideos">${videos}</div>` : ""}${none}
+    ${guide.innerHTML.trim() ? `<details class="sguide"><summary>How to do it</summary><div class="guide">${guide.innerHTML}</div></details>` : ""}
+    ${own}
+    <p class="slink"><a href="${esc(s.link)}" target="_blank" rel="noopener">Full guide ↗</a></p></div></li>`;
+}
 function stepHTML(it, n) {
   // "**Formation:** Tidus, Kimahri, Auron" anywhere in a step: drawn with portraits, and it sets the Party panel
   const FORMATION = /\*\*Formation:\*\*\s*([A-Z][\w']*(?:,\s*[A-Z][\w']*)*)/g;
@@ -372,15 +413,15 @@ function areaHTML(a, vars) {
    Hidden items are still drawn (with "hidden"), so Power Sphere drops and party changes in them still count. */
 const SHOW_KINDS = [
   ["battle", "Battles"], ["spheregrid", "Sphere Grid"], ["shops", "Shops & Equip"],
-  ["encounters", "Encounters"], ["maps", "Maps"], ["trial", "Trials"], ["blitzball", "Blitzball"],
+  ["encounters", "Encounters"], ["maps", "Maps"], ["trial", "Trials"], ["blitzball", "Blitzball"], ["skips", "Skips"],
 ];
 const PRESETS = {
-  full:  { label: "Full notes", show: { battle: 1, spheregrid: 1, shops: 1, encounters: 1, maps: 1, trial: 1, blitzball: 1, steps: "all" } },
-  menus: { label: "Menus only", show: { battle: 1, spheregrid: 1, shops: 1, encounters: 1, maps: 1, trial: 0, blitzball: 0, steps: "key" } },
+  full:  { label: "Full notes", show: { battle: 1, spheregrid: 1, shops: 1, encounters: 1, maps: 1, trial: 1, blitzball: 1, skips: 1, steps: "all" } },
+  menus: { label: "Menus only", show: { battle: 1, spheregrid: 1, shops: 1, encounters: 1, maps: 1, trial: 0, blitzball: 0, skips: 0, steps: "key" } },
 };
 let show;
 try { show = { ...PRESETS.full.show, ...JSON.parse(store.get("ffx-show", "{}")) }; } catch { show = { ...PRESETS.full.show }; }
-const kindOf = it => ({ battle: "battle", spheregrid: "spheregrid", shop: "shops", equip: "shops", encounters: "encounters", map: "maps", trial: "trial", blitzball: "blitzball" })[it.type];
+const kindOf = it => ({ battle: "battle", spheregrid: "spheregrid", shop: "shops", equip: "shops", encounters: "encounters", map: "maps", trial: "trial", blitzball: "blitzball", skip: "skips" })[it.type];
 /* key steps stay in a lighter view: ones marked "!", or with something in bold (key items, Formation),
    or a Power Sphere drop */
 const keyStep = it => it.important || /\*\*/.test(it.text + JSON.stringify(it.sub || [])) || dropsOf(it.text || "") > 0;
@@ -575,7 +616,8 @@ function build() {
     const next = allStops.find(el => m.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING);
     if (next) next.dataset.setParty = m.dataset.party;
   }
-  allStops.forEach(el => el.addEventListener("click", e => { e.stopPropagation(); const i = stops.indexOf(el); if (i >= 0) go(i); }));
+  // (a click on a video also reaches hub.js, which starts it playing)
+  allStops.forEach(el => el.addEventListener("click", e => { if (!e.target.closest(".video")) e.stopPropagation(); const i = stops.indexOf(el); if (i >= 0) go(i); }));
   document.querySelectorAll(".ask button").forEach(b => b.addEventListener("click", e => { e.stopPropagation(); answer(b.closest(".ask"), b.dataset.v); }));
   document.querySelectorAll(".sg svg").forEach(mountGrid);
   renderToggles();

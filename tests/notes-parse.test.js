@@ -82,3 +82,9 @@ test("parseList builds a tree and keeps paragraphs with their position", () => {
   assert.equal(tree.children[0].children[0].text, "b");
   assert.deepEqual(tree.paras, [{ text: "Intro", after: 0 }, { text: "Outro", after: 2 }]);
 });
+
+test(":::skip is a block, with its own lines inside", () => {
+  const items = NotesParse.parseArea([":::skip Mi'ihen Skip", "- Then run north", ":::", "1. After"]);
+  assert.deepEqual(items.map(i => i.kind), ["block", "step"]);
+  assert.deepEqual([items[0].type, items[0].title, items[0].lines], ["skip", "Mi'ihen Skip", ["- Then run north"]]);
+});

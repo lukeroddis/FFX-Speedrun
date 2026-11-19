@@ -77,7 +77,7 @@ function frontMatter(text) {
 function versionsOf(meta) {
   // "versions: [pc]": a skip for some versions only, with one video (or none) for all of them
   if (Array.isArray(meta.versions))
-    return [{ key: meta.versions.join(" "), label: meta.versions.map(k => VERSION_LABEL[k] || k).join(" and "), video: meta.video || "", by: meta.by || "", by_url: meta.by_url || "" }];
+    return [{ key: meta.versions.join(" "), label: meta.versions.map(k => VERSION_LABEL[k] || k).join(" and "), video: meta.video || "", by: meta.by || "", by_url: meta.by_url || "", time_save: "" }];
   // one entry per version; versions listed with nothing under them share the next video (hd:, pc:, csr: video…),
   // so they become one tab, e.g. "HD Remaster, PC and Cutscene Remover" with key "hd pc csr"
   if (meta.versions && typeof meta.versions === "object") {
@@ -85,16 +85,16 @@ function versionsOf(meta) {
     let waiting = [];
     for (const [key, v] of Object.entries(meta.versions)) {
       waiting.push(key);
-      if (v && typeof v === "object" && v.video) { groups.push({ keys: waiting, v }); waiting = []; }
+      if (v && typeof v === "object" && (v.video || v.time_save)) { groups.push({ keys: waiting, v }); waiting = []; }
     }
     if (waiting.length) groups.push({ keys: waiting, v: {} });   // left over: no video for these
     const and = l => l.length > 1 ? `${l.slice(0, -1).join(", ")} and ${l.at(-1)}` : l[0];
     return groups.map(({ keys, v }) => ({
       key: keys.join(" "), label: and(keys.map(k => VERSION_LABEL[k] || k)), labels: keys.map(k => VERSION_LABEL[k] || k),
-      video: v.video || "", by: v.by || "", by_url: v.by_url || "",
+      video: v.video || "", by: v.by || "", by_url: v.by_url || "", time_save: String(v.time_save ?? ""),
     }));
   }
-  return [{ key: "", label: "", video: meta.video || "", by: meta.by || "", by_url: meta.by_url || "" }];
+  return [{ key: "", label: "", video: meta.video || "", by: meta.by || "", by_url: meta.by_url || "", time_save: "" }];
 }
 async function readSkips(notesAreas, categoryNames) {
   const files = (await readdir(SKIP_DIR)).filter(f => f.endsWith(".md") && f.toLowerCase() !== "readme.md").sort();
@@ -109,6 +109,7 @@ async function readSkips(notesAreas, categoryNames) {
     skips.push({
       id, name: meta.name, aliases: list(meta.aliases), area: meta.area || "", difficulty: +meta.difficulty || 0,
       categories, categoryNames: categories.map(c => categoryNames[c] || c), summary: meta.summary || "",
+      time_save: String(meta.time_save ?? ""),   // the same on every version; or each version's own, in versions
       notes: notesCat ? `pages/notes.html?cat=${notesCat}#${meta.notes}` : "",
       versions: versionsOf(meta), body,
     });
@@ -137,6 +138,7 @@ function skipPage(s, site) {
     return `<div class="vblock" data-version="${esc(v.key)}">
       ${id ? `<div class="video big" data-yt="${id}" role="button" tabindex="0" aria-label="Play the ${esc(s.name)} video${v.label ? ` (${esc(v.label)})` : ""}"><img src="https://i.ytimg.com/vi/${id}/maxresdefault.jpg" onerror="this.onerror=null;this.src='https://i.ytimg.com/vi/${id}/hqdefault.jpg'" alt=""></div>`
            : v.video ? `<p><a href="${esc(v.video)}">Watch the video ↗</a></p>` : ""}
+      ${v.time_save && !s.time_save ? `<p class="saves">Saves ${esc(v.time_save)}${s.versions.length > 1 ? "" : v.label ? ` on ${esc(v.label)}` : ""}</p>` : ""}
       ${v.by ? `<p class="by">Video by ${v.by_url ? `<a href="${esc(v.by_url)}">${esc(v.by)}</a>` : esc(v.by)}${v.video ? ` · <a href="${esc(v.video)}">Watch on YouTube ↗</a>` : ""}</p>` : ""}
     </div>`;
   }).join("");
@@ -170,6 +172,8 @@ ${thumb ? `<meta property="og:image" content="${thumb}">\n<meta name="twitter:ca
   .vonly { margin: 0 0 12px; font-weight: 700; color: var(--muted); }
   .video.big { border-radius: 12px; box-shadow: var(--shadow); }
   .video.big::after { font-size: 3.4rem; }
+  .skip-meta .saves { font-weight: 700; color: var(--head-text); }
+  .vblock .saves { margin: 10px 0 0; font-weight: 700; }
   .vblock .by { margin: 10px 0 0; color: var(--muted); font-size: .92rem; }
   .guide { margin-top: 26px; font-size: 1.04rem; line-height: 1.7; }
   .guide h2 { margin: 30px 0 10px; font-size: 1.35rem; }
@@ -196,7 +200,7 @@ ${s.versions.filter(v => v.key).map(v => `  ${[`body[data-version="${v.key}"] .v
   <p style="margin:0 0 6px"><a href="${R}pages/skips.html" style="color:var(--head-dim)">← All skips</a></p>
   <h1>${esc(s.name)}</h1>
   <p>${esc(s.summary)}</p>
-  <div class="skip-meta">${stars(s.difficulty)}${s.area ? `<span>${esc(s.area)}</span>` : ""}${s.categoryNames.map(c => `<span class="tag">${esc(c)}</span>`).join("")}</div>
+  <div class="skip-meta">${stars(s.difficulty)}${s.time_save ? `<span class="saves">Saves ${esc(s.time_save)}</span>` : ""}${s.area ? `<span>${esc(s.area)}</span>` : ""}${s.categoryNames.map(c => `<span class="tag">${esc(c)}</span>`).join("")}</div>
 </div></div>
 <main class="wrap skip">
   ${tabs}
@@ -265,8 +269,9 @@ async function main() {
     await mkdir(join(OUT, "skips", s.id), { recursive: true });
     await writeFile(join(OUT, "skips", s.id, "index.html"), skipPage(s, site));
   }
-  // the list the Skips page, home page and notes read
-  await writeFile(join(OUT, "skips", "index.json"), JSON.stringify(skips.map(({ body, ...s }) => ({ ...s, url: `skips/${s.id}/` })), null, 2));
+  // the list the Skips page, home page and notes read. The guide is ready-made HTML, for the notes' ":::skip"
+  // blocks; its image paths are written for a page in pages/ (the notes and the Skips page are both there).
+  await writeFile(join(OUT, "skips", "index.json"), JSON.stringify(skips.map(({ body, ...s }) => ({ ...s, url: `skips/${s.id}/`, guide: renderGuide(body, "../hub/skips/") })), null, 2));
 
   // search engines: every page worth finding (not the leaderboards or streams, which only work locally)
   const pages = ["", "pages/notes.html?cat=any", "pages/categories.html", "pages/skips.html", "pages/tools.html", "pages/legal.html",

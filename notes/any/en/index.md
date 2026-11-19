@@ -45,7 +45,7 @@ The English notes. The order of the run is set in `../category.yml`; this list g
 - [S.S. Liki](04-ss-liki.md)
 - [Kilika](05-kilika.md)
 - [Luca](06-luca.md)
-- [Mi'ihen Highroad](07-mihen-highroad.md)
+- [Mi'ihen Highroad](07-miihen-highroad.md)
 - [Mushroom Rock Road](08-mushroom-rock-road.md)
 - [Djose](09-djose.md)
 - [Moonflow](10-moonflow.md)

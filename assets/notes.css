@@ -301,6 +301,28 @@ button.unset.on { background: linear-gradient(180deg, #c9cbf0, #8d8fc4); color: 
 .step.ask .opts { display: flex; flex-wrap: wrap; gap: 6px; }
 .step.ask .opts button { padding: 3px 14px; }
 .step.ask .change { padding: 1px 8px; font-size: .78rem; margin-left: auto; }
+/* ":::skip name": a skip from the skips library, with its video */
+.kind-skip .skipinfo { display: inline-flex; gap: 10px; align-items: center; }
+.kind-skip .stars { color: var(--gold); letter-spacing: 1px; }
+.kind-skip .stars .off { color: rgba(255,255,255,.3); }
+.kind-skip .svideos { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); margin: 8px 0; }
+.kind-skip .svideo .vtag { margin-bottom: 4px; }
+.kind-skip .video { position: relative; aspect-ratio: 16 / 9; max-width: 640px; border-radius: 6px; overflow: hidden; background: #000; cursor: pointer; }
+.kind-skip .video img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: .9; }
+.kind-skip .video::after { content: "▶"; position: absolute; inset: 0; display: grid; place-items: center; font-size: 2.2rem; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,.7); }
+.kind-skip .video:hover img { opacity: 1; }
+.kind-skip .video iframe { width: 100%; height: 100%; border: 0; display: block; }
+.kind-skip .video.playing::after { display: none; }
+.kind-skip .by, .kind-skip .slink { margin: 4px 0 0; font-size: .85rem; color: var(--text-dim); }
+.kind-skip a { color: #9fdcff; }
+.kind-skip .sguide { margin: 8px 0; }
+.kind-skip .sguide > summary { cursor: pointer; font-weight: 700; color: var(--gold); }
+.kind-skip .guide { margin-top: 6px; line-height: 1.5; }
+.kind-skip .guide h2, .kind-skip .guide h3, .kind-skip .guide h4 { font-size: 1rem; margin: 10px 0 4px; }
+.kind-skip .guide img { max-width: 100%; border-radius: 4px; }
+.kind-skip .guide .vtext .vtag { margin-right: 6px; }
+.kind-skip .guide .callout { margin: 8px 0; padding: 6px 10px; border-left: 3px solid #9fdcff; background: rgba(255,255,255,.06); }
+:root[data-mode="light"] .kind-skip a { color: #1f5fa8; }
 /* ":::optional <when>": steps only some runners do, in a dashed gold frame */
 .optional { list-style: none; border: 2px dashed rgba(255,216,74,.55); border-radius: 4px; padding: 6px 8px; }
 .optional > .ohead { all: unset; cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; width: 100%; }
