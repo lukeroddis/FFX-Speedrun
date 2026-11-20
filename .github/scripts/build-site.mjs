@@ -103,6 +103,10 @@ async function readSkips(notesAreas, categoryNames) {
     const { meta, body } = frontMatter(await readFile(join(SKIP_DIR, f), "utf8"));
     const id = f.replace(/\.md$/, "");
     if (!meta.name) { console.warn(`${f}: no name, left out`); continue; }
+    // mistakes that would leave a hole in the page: images that aren't there, and HTML, which shows as text
+    for (const [, src] of body.matchAll(/!\[[^\]]*\]\(([^)\s]+)\)/g))
+      if (!/^https?:/.test(src) && !(await exists(join(SKIP_DIR, src)))) console.warn(`${f}: no image at hub/skips/${src} (put skip images in hub/skips/images/)`);
+    if (/^\s*<[a-z]/im.test(body)) console.warn(`${f}: HTML tags aren't supported and show as text; use Markdown, e.g. ![What it shows](images/picture.png)`);
     const categories = list(meta.categories);
     // a "Used in the notes" link, when that area of the notes exists
     const notesCat = categories.find(c => notesAreas[c]?.has(meta.notes));

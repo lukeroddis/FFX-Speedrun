@@ -28,6 +28,4 @@ The timing to do this on the HD Remaster is more difficult compared to PS2 as th
 
 On PS2 also, you can prevent encounters by running when dialogue is being spoken, and stop running when there are brief pauses in the spoken dialogue, similar a 'red light, green light' game.
 
-<p align="center">
-  <img src="assets/images/MiihenSkipHD.png" alt="Mi'ihen Skip [HD Remaster]" width="850">
-</p>
+![Mi'ihen Skip (HD Remaster)](images/MiihenSkipHD.png)
