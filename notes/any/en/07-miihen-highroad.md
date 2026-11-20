@@ -1,8 +1,7 @@
 # Mi'ihen Highroad
 
-1. **Formation:** Tidus, Wakka, Auron
-
-2. Run north to Raldo tutorial, 1 Guaranteed Power Sphere, bonus sphere if Overkill.
+1. Run north to Raldo tutorial, 1 Guaranteed Power Sphere, bonus sphere if Overkill.
+2. **Formation:** Tidus, Wakka, Auron
 3. Run north further and SD for Maechen scene.
 4. Flee from all encounters. Heal if Tidus is low HP.
 
